@@ -12,7 +12,8 @@ class Ark(BaseModel):
 
 
 # An in-memory list of ARKS that persists as long as the app is
-# running in the dev web server.Ideally, ARKS would be storedin a db.
+# running in the dev web server.For demo purposes only. Eventually,
+# ARKS will be stored in a db.
 test_arks = dict({'ark:/19837/10': 'https://www.lib.sfu.ca'})
 
 
@@ -20,9 +21,9 @@ test_arks = dict({'ark:/19837/10': 'https://www.lib.sfu.ca'})
 async def read_ark(naan: str, identifier: str):
     """
     ARK resolver. Redirects the client to the target URL
-    associated with this ARK. Sample query:
+    associated with the ARK. Sample query:
 
-    curl "http://127.0.0.1:8000/ark:/19837/12"
+    curl -L "http://127.0.0.1:8000/ark:/19837/12"
 
     - **naan**: the nann portion of the ARK.
     - **identifier**: the identifier portion of the ARK.
@@ -35,15 +36,27 @@ async def read_ark(naan: str, identifier: str):
 
 
 @app.get("/larkm")
-async def read_ark(ark: str = ''):
+async def read_ark(ark: Optional[str] = '', target: Optional[str] = ''):
     """
-    Get the target URL associated with an ARK. Sample query:
+    Get the target URL associated with an ARK, or the ARK assoicated
+    with a target URL. Sample query:
 
-    curl "http://127.0.0.1:8000/larkm?ark=ark:/19837/12"
+    curl "http://127.0.0.1:8000/larkm?ark=ark:/19837/12" or
+    curl "http://127.0.0.1:8000/larkm?target=https://www.lib.sfu.ca"
 
-    - **ark**: the ARK the client wants to know everything about.
+    - **ark**: the ARK the client wants to get the target for, in the
+      form 'ark:/naan/id_string'.
+    - **target**: the target the client wants to get the ark for, in
+      the form of a fully qualified URL.
     """
-    return {"ark": ark, "target": test_arks[ark]}
+    if len(ark) > 0:
+        return {"ark": ark, "target": test_arks[ark]}
+    if len(target) > 0:
+        for ark, target_url in test_arks.items():
+            if target_url.strip() == target.strip():
+                return {"ark": ark, "target": test_arks[ark]}
+    # If no ARK found, raise a 404.
+        raise HTTPException(status_code=404, detail="ARK not found")
 
 
 @app.post("/larkm", status_code=201)
