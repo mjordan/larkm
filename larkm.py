@@ -50,13 +50,13 @@ async def read_ark(ark: Optional[str] = '', target: Optional[str] = ''):
       the form of a fully qualified URL.
     """
     if ark.strip() in test_arks.keys():
-        return {"ark": ark, "target": test_arks[ark]}
+        return {"ark_string": ark, "target": test_arks[ark]}
     else:
         raise HTTPException(status_code=404, detail="ARK not found")
     if len(target) > 0:
         for ark, target_url in test_arks.items():
             if target_url.strip() == target.strip():
-                return {"ark": ark, "target": test_arks[ark]}
+                return {"ark_string": ark, "target": test_arks[ark]}
     # If no ARK found, raise a 404.
         raise HTTPException(status_code=404, detail="Target not found")
 
