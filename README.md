@@ -2,9 +2,16 @@
 
 # Overview
 
-A simple [ARK](https://arks.org/) resolver. Currently only a proof of concept as we learn about locally mananging ARKs. Features such as persisting to a database and access control, and tests are yet to come.
+larkm is a simple [ARK](https://arks.org/) resolver that can:
 
-larkm can resolve ARKs to their target URLs, can persist new ARKs, can update the target URLs of existing ARKs, and can provide the target URLs of ARKs it manages. ARK resolution is provided using requests to larkm's host followed by an ARK (e.g. `https://myhost.net/ark:/9999/abcd`) and the other operations are provided via standare REST requests to larkm's management endpoint (`/larkm`).
+* persist new ARKs
+* resolve ARKs to their target URLs
+* update the target URLs of existing ARKs
+* provide the target URLs of ARKs it manages.
+
+ARK resolution is provided via requests to larkm's host followed by an ARK (e.g. `https://myhost.net/ark:/9999/abcd`) and the other operations are provided through standard REST requests to larkm's management endpoint (`/larkm`).
+
+larkm is currently only a proof of concept as we learn about locally mananging ARKs. Features such as minting new ARKs, persisting to a database, access control for the REST interface, and tests are yet to come.
 
 ## Requirements
 
@@ -35,7 +42,7 @@ If you now visit `http://127.0.0.1:8000/ark:/19837/12` in your web browser, you 
 
 Update an ARK using a request like:
 
-`curl -v -X PUR "http://127.0.0.1:8000/larkm/ark:/19837/12" -H 'Content-Type: application/json' -d '{"ark_string": "ark:/19837/12", "target": "https://summit.sfu.ca"}'`
+`curl -v -X PUT "http://127.0.0.1:8000/larkm/ark:/19837/12" -H 'Content-Type: application/json' -d '{"ark_string": "ark:/19837/12", "target": "https://summit.sfu.ca"}'`
 
 ## API docs
 
@@ -48,4 +55,3 @@ If you have a registered NAAN that points to the server running larkm, you can s
 ## License
 
 MIT
-
