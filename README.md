@@ -44,9 +44,25 @@ Update an ARK using a request like:
 
 `curl -v -X PUT "http://127.0.0.1:8000/larkm/ark:/19837/12" -H 'Content-Type: application/json' -d '{"ark_string": "ark:/19837/12", "target": "https://summit.sfu.ca"}'`
 
+### Getting the target URL for an ARK, or an ARK of a URL
+
+If you want to know the target URL associated with an ARK without resolving to that URL, do this:
+
+`curl "http://127.0.0.1:8000/larkm?ark=ark:/19837/12"`
+
+If you want the ARK for a URL, do this:
+
+`curl "http://127.0.0.1:8000/larkm?target=https://www.lib.sfu.ca"`
+
+In both cases, larkm will return a JSON response body that looks like this:
+
+`{"ark": "ark:/19837/12", "target": "https://www.lib.sfu.ca"}`
+
+or a 404 if what you used in your request wasn't found.
+
 ## API docs
 
-Thanks to the magic of [OpenAPI](https://github.com/OAI/OpenAPI-Specification), you can see larkm's API docs by visiting http://127.0.0.1:8000/docs#.
+Thanks to [OpenAPI](https://github.com/OAI/OpenAPI-Specification), you can see larkm's API docs by visiting http://127.0.0.1:8000/docs#.
 
 ## Using Names to Things' redirection service
 

@@ -92,7 +92,7 @@ async def update_ark(naan: str, identifier: str, ark: Ark):
     # Update the ARK in test_arks.
     ark_string = f'ark:/{naan}/{identifier}'
     if ark_string != ark.ark_string:
-        raise HTTPException(status_code=409, detail="NAAN/identifier combination an ark_string do not match.")
+        raise HTTPException(status_code=409, detail="NAAN/identifier combination and ark_string do not match.")
     if ark.ark_string.strip() in test_arks.keys() and len(ark.target.strip()) > 0:
         test_arks[ark_string.strip()] = ark.target.strip()
         return {"ark_string": ark.ark_string, "target": ark.target}
