@@ -7,7 +7,7 @@ larkm is a simple [ARK](https://arks.org/) resolver that can:
 * persist new ARKs
 * resolve ARKs to their target URLs
 * update the target URLs of existing ARKs
-* provide the target URLs of ARKs it manages.
+* provide the target URLs of ARKs it manages, and provide the ARK associated with a URL.
 
 ARK resolution is provided via requests to larkm's host followed by an ARK (e.g. `https://myhost.net/ark:/9999/abcd`) and the other operations are provided through standard REST requests to larkm's management endpoint (`/larkm`).
 
