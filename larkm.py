@@ -18,7 +18,7 @@ test_arks = dict({'ark:/19837/10': 'https://www.lib.sfu.ca'})
 
 
 @app.get("/ark:/{naan}/{identifier}")
-async def read_ark(naan: str, identifier: str):
+async def resolve_ark(naan: str, identifier: str):
     """
     The ARK resolver. Redirects the client to the target URL
     associated with the ARK. Sample query:

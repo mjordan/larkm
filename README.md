@@ -27,7 +27,7 @@ Visit `http://127.0.0.1:8000/ark:/19837/10` in your browser. You will be redirec
 
 To add a new ARK (for example, to resolve to https://digital.lib.sfu.ca), issue the following request using curl:
 
-`curl -v -X POST "http://127.0.0.1:8000/larkm" -H 'Content-Type: application/json' -d '{"ark_string": "ark:/19837/12", "target": "https://digital.lib.sfu.ca"}'`
+`curl -v -X POST "http://127.0.0.1:8000/larkm/ark:/19837/12" -H 'Content-Type: application/json' -d '{"ark_string": "ark:/19837/12", "target": "https://digital.lib.sfu.ca"}'`
 
 If you now visit `http://127.0.0.1:8000/ark:/19837/12` in your web browser, you will be redirected to https://digital.lib.sfu.ca.
 
@@ -43,7 +43,7 @@ Thanks to the magic of [OpenAPI](https://github.com/OAI/OpenAPI-Specification), 
 
 ## Using Names to Things' redirection service
 
-If you have a registered NAAN that points to the server running larkm, you can see use the Names to Things domain redirection feature by replacing the hostname of the server larkm is running on with `https://n2t.net/`. For example, if your the local server larkm is runnin on is `https://ids.myorg.ca`, and your insitution's NAAN is registered to use that hostname, you can publish ARKs like `https://n2t.net/ark:/19837/10` (using your NAAN instead of `19837`) and they will resolve through larkm running on `https://ids.myorg.ca` to their target URLs.
+If you have a registered NAAN that points to the server running larkm, you can see use the Names to Things domain redirection feature by replacing the hostname of the server larkm is running on with `https://n2t.net/`. For example, if your the local server larkm is runnin on is `https://ids.myorg.ca`, and your insitution's NAAN is registered to use that hostname, you can use a local instance of larkm to manage ARKs like `https://n2t.net/ark:/19837/10` (using your NAAN instead of `19837`) and they will resolve through your local larkm running on `https://ids.myorg.ca` to their target URLs.
 
 ## License
 
