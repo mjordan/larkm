@@ -27,7 +27,7 @@ Visit `http://127.0.0.1:8000/ark:/19837/10` in your browser. You will be redirec
 
 To add a new ARK (for example, to resolve to https://digital.lib.sfu.ca), issue the following request using curl:
 
-`curl -v -X POST "http://127.0.0.1:8000/larkm/ark:/19837/12" -H 'Content-Type: application/json' -d '{"ark_string": "ark:/19837/12", "target": "https://digital.lib.sfu.ca"}'`
+`curl -v -X POST "http://127.0.0.1:8000/larkm" -H 'Content-Type: application/json' -d '{"ark_string": "ark:/19837/12", "target": "https://digital.lib.sfu.ca"}'`
 
 If you now visit `http://127.0.0.1:8000/ark:/19837/12` in your web browser, you will be redirected to https://digital.lib.sfu.ca.
 
@@ -35,7 +35,7 @@ If you now visit `http://127.0.0.1:8000/ark:/19837/12` in your web browser, you 
 
 Update an ARK using a request like:
 
-`curl -v -X PUR "http://127.0.0.1:8000/larkm" -H 'Content-Type: application/json' -d '{"ark_string": "ark:/19837/12", "target": "https://summit.sfu.ca"}'`
+`curl -v -X PUR "http://127.0.0.1:8000/larkm/ark:/19837/12" -H 'Content-Type: application/json' -d '{"ark_string": "ark:/19837/12", "target": "https://summit.sfu.ca"}'`
 
 ## API docs
 
