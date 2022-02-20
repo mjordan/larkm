@@ -18,7 +18,7 @@ test_arks = dict({'ark:/19837/10': 'https://www.lib.sfu.ca'})
 
 
 @app.get("/ark:/{naan}/{identifier}")
-async def resolve_ark(naan: str, identifier: str):
+def resolve_ark(naan: str, identifier: str):
     """
     The ARK resolver. Redirects the client to the target URL
     associated with the ARK. Sample query:
@@ -36,7 +36,7 @@ async def resolve_ark(naan: str, identifier: str):
 
 
 @app.get("/larkm")
-async def read_ark(ark: Optional[str] = '', target: Optional[str] = ''):
+def read_ark(ark: Optional[str] = '', target: Optional[str] = ''):
     """
     Get the target URL associated with an ARK, or the ARK assoicated
     with a target URL. Sample query:
@@ -62,7 +62,7 @@ async def read_ark(ark: Optional[str] = '', target: Optional[str] = ''):
 
 
 @app.post("/larkm", status_code=201)
-async def create_ark(ark: Ark):
+def create_ark(ark: Ark):
     """
     Create a new ARK. Sample query:
 
@@ -78,7 +78,7 @@ async def create_ark(ark: Ark):
 
 
 @app.put("/larkm/ark:/{naan}/{identifier}", response_model=Ark)
-async def update_ark(naan: str, identifier: str, ark: Ark):
+def update_ark(naan: str, identifier: str, ark: Ark):
     """
     Update an ARK with a new target. Sample query:
 
@@ -96,3 +96,23 @@ async def update_ark(naan: str, identifier: str, ark: Ark):
     if ark.ark_string.strip() in test_arks.keys() and len(ark.target.strip()) > 0:
         test_arks[ark_string.strip()] = ark.target.strip()
         return {"ark_string": ark.ark_string, "target": ark.target}
+
+
+@app.delete("/larkm/ark:/{naan}/{identifier}", status_code=204)
+def delete_ark(naan: str, identifier: str):
+    """
+    Delete an ARK using its ARK string. Sample query:
+
+    curl -v -X DELETE  "http://127.0.0.1:8000/larkm/ark:/19837/12"
+
+    - **naan**: the nann portion of the ARK.
+    - **identifier**: the identifier portion of the ARK.
+    """
+    # Update the ARK in test_arks.
+    ark_string = f'ark:/{naan}/{identifier}'
+    # If no ARK found, raise a 404.
+    if ark_string.strip() not in test_arks.keys():
+        raise HTTPException(status_code=404, detail="ARK not found")
+    # If ARK found, delete it.
+    else:
+        del test_arks[ark_string.strip()]

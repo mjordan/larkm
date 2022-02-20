@@ -1,4 +1,4 @@
-# larkm: The Lightweight ARK Manager
+# larkm: A Lightweight ARK Manager
 
 # Overview
 
@@ -8,6 +8,7 @@ larkm is a simple [ARK](https://arks.org/) resolver that can:
 * resolve ARKs to their target URLs
 * update the target URLs of existing ARKs
 * provide the target URLs of ARKs it manages, and provide the ARK associated with a URL.
+* delete ARKs
 
 ARK resolution is provided via requests to larkm's host followed by an ARK (e.g. `https://myhost.net/ark:/9999/abcd`) and the other operations are provided through standard REST requests to larkm's management endpoint (`/larkm`).
 
@@ -59,6 +60,14 @@ In both cases, larkm will return a JSON response body that looks like this:
 `{"ark": "ark:/19837/12", "target": "https://www.lib.sfu.ca"}`
 
 or a 404 if what you used in your request wasn't found.
+
+### Deleting an ARK
+
+Delete an ARK using a request like:
+
+`curl -v -X DELETE "http://127.0.0.1:8000/larkm/ark:/19837/12"`
+
+If the ARK was deleted, larkm returns a `204 No Content` response with no body. If the ARK was not found, larkm returns a `404` response with the body `{"detail":"ARK not found"}`.
 
 ## API docs
 
