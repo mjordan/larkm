@@ -25,7 +25,7 @@ def resolve_ark(naan: str, identifier: str):
 
     curl -L "http://127.0.0.1:8000/ark:/19837/12"
 
-    - **naan**: the nann portion of the ARK.
+    - **naan**: the NAAN portion of the ARK.
     - **identifier**: the identifier portion of the ARK.
     """
     ark = f'ark:/{naan}/{identifier}'
@@ -66,7 +66,7 @@ def create_ark(ark: Ark):
     """
     Create a new ARK. Sample query:
 
-    curl -v -X POST  "http://127.0.0.1:8000/larkm" \
+    curl -v -X POST "http://127.0.0.1:8000/larkm" \
         -H 'Content-Type: application/json' \
         -d '{"ark_string": "ark:/19837/12", "target": "https://digital.lib.sfu.ca"}'
 
@@ -82,11 +82,11 @@ def update_ark(naan: str, identifier: str, ark: Ark):
     """
     Update an ARK with a new target. Sample query:
 
-    curl -v -X PUT  "http://127.0.0.1:8000/larkm/ark:/19837/12" \
+    curl -v -X PUT "http://127.0.0.1:8000/larkm/ark:/19837/12" \
         -H 'Content-Type: application/json' \
         -d '{"ark_string": "ark:/19837/12", "target": "https://summit.sfu.ca"}'
 
-    - **naan**: the nann portion of the ARK.
+    - **naan**: the NAAN portion of the ARK.
     - **identifier**: the identifier portion of the ARK.
     """
     # Update the ARK in test_arks.
@@ -103,12 +103,11 @@ def delete_ark(naan: str, identifier: str):
     """
     Delete an ARK using its ARK string. Sample query:
 
-    curl -v -X DELETE  "http://127.0.0.1:8000/larkm/ark:/19837/12"
+    curl -v -X DELETE "http://127.0.0.1:8000/larkm/ark:/19837/12"
 
-    - **naan**: the nann portion of the ARK.
+    - **naan**: the NAAN portion of the ARK.
     - **identifier**: the identifier portion of the ARK.
     """
-    # Update the ARK in test_arks.
     ark_string = f'ark:/{naan}/{identifier}'
     # If no ARK found, raise a 404.
     if ark_string.strip() not in test_arks.keys():
