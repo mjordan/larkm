@@ -2,7 +2,7 @@
 
 # Overview
 
-larkm is a simple [ARK](https://arks.org/) resolver that can:
+larkm is a simple [ARK](https://arks.org/) manager that can:
 
 * persist new ARKs
 * resolve ARKs to their target URLs
@@ -12,7 +12,7 @@ larkm is a simple [ARK](https://arks.org/) resolver that can:
 
 ARK resolution is provided via requests to larkm's host followed by an ARK (e.g. `https://myhost.net/ark:/9999/abcd`) and the other operations are provided through standard REST requests to larkm's management endpoint (`/larkm`).
 
-larkm is currently only a proof of concept as we learn about locally mananging ARKs. Features such as minting new ARKs, persisting to a database, access control for the REST interface, and tests are yet to come.
+larkm is currently only a proof of concept as we learn about locally mananging ARKs. Features such as minting new ARKs, support for [policy statements](https://arks.org/about/best-practices/), persisting to a database, access control for the REST interface, and automated code tests are yet to come.
 
 It is considered "lightweight" because it supports only a subset of ARK functionality, focusing on providing ways to manage ARKs locally and on ARKs as persistent, resolvable identifiers. ARK features such as suffix passthrough, metadata management, and support for shoulders are currently out of scope.
 
@@ -61,7 +61,7 @@ In both cases, larkm will return a JSON response body that looks like this:
 
 `{"ark": "ark:/19837/12", "target": "https://www.lib.sfu.ca"}`
 
-or a 404 if what you used in your request wasn't found.
+or a 404 if the ARK or URL you used in your request wasn't found.
 
 ### Deleting an ARK
 
@@ -77,7 +77,7 @@ Thanks to [OpenAPI](https://github.com/OAI/OpenAPI-Specification), you can see l
 
 ## Using Names to Things' redirection service
 
-If you have a registered NAAN that points to the server running larkm, you can see use the Names to Things global ARK resolver's domain redirection feature by replacing the hostname of the server larkm is running on with `https://n2t.net/`. For example, if your the local server larkm is runnin on is `https://ids.myorg.ca`, and your insitution's NAAN is registered to use that hostname, you can use a local instance of larkm to manage ARKs like `https://n2t.net/ark:/19837/10` (using your NAAN instead of `19837`) and they will resolve through your local larkm running on `https://ids.myorg.ca` to their target URLs.
+If you have a registered NAAN that points to the server running larkm, you can use the Names to Things global ARK resolver's domain redirection feature by replacing the hostname of the server larkm is running on with `https://n2t.net/`. For example, if your the local server larkm is runnin on is `https://ids.myorg.ca`, and your insitution's NAAN is registered to use that hostname, you can use a local instance of larkm to manage ARKs like `https://n2t.net/ark:/19837/10` (using your NAAN instead of `19837`) and they will resolve through your local larkm running on `https://ids.myorg.ca` to their target URLs. An advantage of doing this is that if your local resolver needs to be changed from `https://ids.myorg.ca/ark:/19837/10` to another host,assuming you update your NAAN record to use the new host, requests to `https://n2t.net/ark:/19837/10` will continue to resolve to their targets.
 
 ## License
 
