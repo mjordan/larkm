@@ -5,14 +5,15 @@
 larkm is a simple [ARK](https://arks.org/) manager that can:
 
 * persist new ARKs
+* mint ARKs using UUID (v4) strings
 * resolve ARKs to their target URLs
 * update the target URLs of existing ARKs
 * provide the target URLs of ARKs it manages, and provide the ARK associated with a URL.
 * delete ARKs
 
-ARK resolution is provided via requests to larkm's host followed by an ARK (e.g. `https://myhost.net/ark:/9999/abcd`) and the other operations are provided through standard REST requests to larkm's management endpoint (`/larkm`).
+ARK resolution is provided via requests to larkm's host followed by an ARK (e.g. `https://myhost.net/ark:/9999/1111`) and the other operations are provided through standard REST requests to larkm's management endpoint (`/larkm`).
 
-larkm is currently only a proof of concept as we learn about locally mananging ARKs. Features such as minting new ARKs, support for [policy statements](https://arks.org/about/best-practices/), persisting to a database, access control for the REST interface, and automated code tests are yet to come.
+larkm is currently only a proof of concept as we learn about locally mananging ARKs. Features such as support for [policy statements](https://arks.org/about/best-practices/), persisting to a database, access control for the REST interface, and automated code tests are yet to come.
 
 It is considered "lightweight" because it supports only a subset of ARK functionality, focusing on providing ways to manage ARKs locally and on ARKs as persistent, resolvable identifiers. ARK features such as suffix passthrough, metadata management, and support for shoulders are currently out of scope.
 
@@ -40,6 +41,16 @@ To add a new ARK (for example, to resolve to https://digital.lib.sfu.ca), issue 
 `curl -v -X POST "http://127.0.0.1:8000/larkm" -H 'Content-Type: application/json' -d '{"ark_string": "ark:/19837/12", "target": "https://digital.lib.sfu.ca"}'`
 
 If you now visit `http://127.0.0.1:8000/ark:/19837/12` in your web browser, you will be redirected to https://digital.lib.sfu.ca.
+
+In this case, the client provides a full ARK string, including the NAAN and identifier. If you want larkm to mint a new ARK using a UUID (v4) as the identifier, replace "ark_string" in your request body with "naan":
+
+`curl -v -X POST "http://127.0.0.1:8000/larkm" -H 'Content-Type: application/json' -d '{"naan": "19837", "target": "https://digital.lib.sfu.ca"}'`
+
+Your request body must contain either "ark_string" or "naan", but can only contain one or other other.
+
+In both cases, the response body will contain the "ark_string" and "target" (and the "naan" if one was provided):
+
+`{"ark":{"naan":"19837","ark_string":"ark:/19837/fb5a9ce4-7092-4eaa-8897-d2ba21eea159","target":"https://digital.lib.sfu.ca"}}`
 
 ### Updating the target URL associated with an ARK
 
