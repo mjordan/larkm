@@ -34,7 +34,7 @@ To start the larkm app within local Uvicorn we server, in a terminal run `python
 
 Visit `http://127.0.0.1:8000/ark:/19837/10` in your browser. You will be redirected to https://www.lib.sfu.ca.
 
-### Adding a new ARK
+### Creating a new ARK
 
 To add a new ARK (for example, to resolve to https://digital.lib.sfu.ca), issue the following request using curl:
 
@@ -88,7 +88,9 @@ Thanks to [OpenAPI](https://github.com/OAI/OpenAPI-Specification), you can see l
 
 ## Using Names to Things' redirection service
 
-If you have a registered NAAN that points to the server running larkm, you can use the Names to Things global ARK resolver's domain redirection feature by replacing the hostname of the server larkm is running on with `https://n2t.net/`. For example, if your the local server larkm is runnin on is `https://ids.myorg.ca`, and your insitution's NAAN is registered to use that hostname, you can use a local instance of larkm to manage ARKs like `https://n2t.net/ark:/19837/10` (using your NAAN instead of `19837`) and they will resolve through your local larkm running on `https://ids.myorg.ca` to their target URLs. An advantage of doing this is that if your local resolver needs to be changed from `https://ids.myorg.ca/ark:/19837/10` to another host,assuming you update your NAAN record to use the new host, requests to `https://n2t.net/ark:/19837/10` will continue to resolve to their targets.
+If you have a registered NAAN that points to the server running larkm, you can use the Names to Things global ARK resolver's domain redirection feature by replacing the hostname of the server larkm is running on with `https://n2t.net/`. For example, if your the local server larkm is runnin on is `https://ids.myorg.ca`, and your insitution's NAAN is registered to use that hostname, you can use a local instance of larkm to manage ARKs like `https://n2t.net/ark:/19837/10` (using your NAAN instead of `19837`) and they will resolve through your local larkm running on `https://ids.myorg.ca` to their target URLs.
+
+An advantage of doing this is that if your local resolver needs to be changed from `https://ids.myorg.ca/ark:/19837/10` to another host, assuming you update your NAAN record to use the new host, requests to `https://n2t.net/ark:/19837/10` will continue to resolve to their targets.
 
 ## License
 
