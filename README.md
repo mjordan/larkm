@@ -46,7 +46,7 @@ In this case, the client provides a full ARK string, including the NAAN and iden
 
 `curl -v -X POST "http://127.0.0.1:8000/larkm" -H 'Content-Type: application/json' -d '{"naan": "19837", "target": "https://digital.lib.sfu.ca"}'`
 
-Your request body must contain either "ark_string" or "naan", but can only contain one or other other.
+Your request body must contain either "ark_string" or "naan", but can only contain one or the other.
 
 In both cases, the response body will contain the "ark_string" and "target" (and the "naan" if one was provided):
 
@@ -90,7 +90,7 @@ Thanks to [OpenAPI](https://github.com/OAI/OpenAPI-Specification), you can see l
 
 If you have a registered NAAN that points to the server running larkm, you can use the Names to Things global ARK resolver's domain redirection feature by replacing the hostname of the server larkm is running on with `https://n2t.net/`. For example, if your the local server larkm is runnin on is `https://ids.myorg.ca`, and your insitution's NAAN is registered to use that hostname, you can use a local instance of larkm to manage ARKs like `https://n2t.net/ark:/19837/10` (using your NAAN instead of `19837`) and they will resolve through your local larkm running on `https://ids.myorg.ca` to their target URLs.
 
-An advantage of doing this is that if your local resolver needs to be changed from `https://ids.myorg.ca/ark:/19837/10` to another host, assuming you update your NAAN record to use the new host, requests to `https://n2t.net/ark:/19837/10` will continue to resolve to their targets.
+An advantage of doing this is that if your local resolver needs to be changed from `https://ids.myorg.ca/` to another host, assuming you update your NAAN record to use the new host, requests to `https://n2t.net/ark:/19837/10` will continue to resolve to their targets.
 
 ## License
 
