@@ -19,7 +19,7 @@ class Ark(BaseModel):
 # During development and for demo purposes only, we use an in-memory
 # dictionary of ARKS that persists as long as the app is running in
 # the dev web server. In production, ARKS would be stored in a db.
-test_arks = dict({'ark:/19837/10': 'https://www.lib.sfu.ca'})
+test_arks = dict({'ark:/99999/10': 'https://www.lib.sfu.ca'})
 
 
 @app.get("/ark:/{naan}/{identifier}")
@@ -28,7 +28,7 @@ def resolve_ark(naan: str, identifier: str):
     The ARK resolver. Redirects the client to the target URL
     associated with the ARK. Sample query:
 
-    curl -L "http://127.0.0.1:8000/ark:/19837/12"
+    curl -L "http://127.0.0.1:8000/ark:/99999/12"
 
     - **naan**: the NAAN portion of the ARK.
     - **identifier**: the identifier portion of the ARK.
@@ -41,12 +41,12 @@ def resolve_ark(naan: str, identifier: str):
 
 
 @app.get("/larkm")
-def read_ark(ark: Optional[str] = '', target: Optional[str] = ''):
+def read_ark(ark_string: Optional[str] = '', target: Optional[str] = ''):
     """
     Get the target URL associated with an ARK, or the ARK assoicated
     with a target URL. Sample query:
 
-    curl "http://127.0.0.1:8000/larkm?ark=ark:/19837/12" or
+    curl "http://127.0.0.1:8000/larkm?ark=ark:/99999/12" or
     curl "http://127.0.0.1:8000/larkm?target=https://www.lib.sfu.ca"
 
     - **ark**: the ARK the client wants to get the target for, in the
@@ -54,14 +54,14 @@ def read_ark(ark: Optional[str] = '', target: Optional[str] = ''):
     - **target**: the target the client wants to get the ark for, in
       the form of a fully qualified URL.
     """
-    if ark.strip() in test_arks.keys():
-        return {"ark_string": ark, "target": test_arks[ark]}
+    if ark_string.strip() in test_arks.keys():
+        return {"ark_string": ark_string, "target": test_arks[ark_string]}
     else:
         raise HTTPException(status_code=404, detail="ARK not found")
     if len(target) > 0:
-        for ark, target_url in test_arks.items():
+        for ark_string, target_url in test_arks.items():
             if target_url.strip() == target.strip():
-                return {"ark_string": ark, "target": test_arks[ark]}
+                return {"ark_string": ark_string, "target": test_arks[ark_string]}
     # If no ARK found, raise a 404.
         raise HTTPException(status_code=404, detail="Target not found")
 
@@ -74,7 +74,7 @@ def create_ark(ark: Ark):
 
     curl -v -X POST "http://127.0.0.1:8000/larkm" \
         -H 'Content-Type: application/json' \
-        -d '{"ark_string": "ark:/19837/12", "target": "https://digital.lib.sfu.ca"}'
+        -d '{"ark_string": "ark:/99999/12", "target": "https://digital.lib.sfu.ca"}'
 
     Sample request with only a target, which asks larkm to generate an ARK string
     based on the NAAN specified in configuration settings and a v4 UUID:
@@ -98,9 +98,9 @@ def update_ark(naan: str, identifier: str, ark: Ark):
     """
     Update an ARK with a new target. Sample query:
 
-    curl -v -X PUT "http://127.0.0.1:8000/larkm/ark:/19837/12" \
+    curl -v -X PUT "http://127.0.0.1:8000/larkm/ark:/99999/12" \
         -H 'Content-Type: application/json' \
-        -d '{"ark_string": "ark:/19837/12", "target": "https://summit.sfu.ca"}'
+        -d '{"ark_string": "ark:/99999/12", "target": "https://summit.sfu.ca"}'
 
     - **naan**: the NAAN portion of the ARK.
     - **identifier**: the identifier portion of the ARK.
@@ -119,7 +119,7 @@ def delete_ark(naan: str, identifier: str):
     """
     Delete an ARK using its ARK string. Sample query:
 
-    curl -v -X DELETE "http://127.0.0.1:8000/larkm/ark:/19837/12"
+    curl -v -X DELETE "http://127.0.0.1:8000/larkm/ark:/99999/12"
 
     - **naan**: the NAAN portion of the ARK.
     - **identifier**: the identifier portion of the ARK.

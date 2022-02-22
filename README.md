@@ -56,7 +56,7 @@ In this case, the client provides a full ARK string, including the NAAN and iden
 
 `curl -v -X POST "http://127.0.0.1:8000/larkm" -H 'Content-Type: application/json' -d '{"target": "https://digital.lib.sfu.ca"}'`
 
-In both cases, the response body will contain the "ark_string" and "target" (and the "naan" if one was provided):
+In both cases, the response body will contain the "ark_string" and "target":
 
 `{"ark":{"ark_string":"ark:/99999/fb5a9ce4-7092-4eaa-8897-d2ba21eea159","target":"https://digital.lib.sfu.ca"}}`
 
@@ -66,11 +66,13 @@ Update an ARK using a request like:
 
 `curl -v -X PUT "http://127.0.0.1:8000/larkm/ark:/99999/12" -H 'Content-Type: application/json' -d '{"ark_string": "ark:/99999/12", "target": "https://summit.sfu.ca"}'`
 
+Note that the ARK string in the request URL and in the "ark_string" body field must be identical.
+
 ### Getting the target URL for an ARK, or an ARK of a URL
 
 If you want to know the target URL associated with an ARK without resolving to that URL, do this:
 
-`curl "http://127.0.0.1:8000/larkm?ark=ark:/99999/12"`
+`curl "http://127.0.0.1:8000/larkm?ark_string=ark:/99999/12"`
 
 If you want the ARK for a URL, do this:
 
@@ -78,7 +80,7 @@ If you want the ARK for a URL, do this:
 
 In both cases, larkm will return a JSON response body that looks like this:
 
-`{"ark": "ark:/99999/12", "target": "https://www.lib.sfu.ca"}`
+`{"ark_string": "ark:/99999/12", "target": "https://www.lib.sfu.ca"}`
 
 or a 404 if the ARK or URL you used in your request wasn't found.
 
