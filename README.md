@@ -26,6 +26,16 @@ It is considered "lightweight" because it supports only a subset of ARK function
 
 ## Usage
 
+### Configuration
+
+larkm uses a JSON configuration file in the same directory as `larkm.py` named `larkm.json`. This configuration file is not distributed with larkm. You must create it yourself. Currently, it contains one setting, "NAAN", which is your insitution's Name Assigning Authority Number.
+
+```json
+{
+  "NAAN": "19837"
+}
+```
+
 ### Starting larkm
 
 To start the larkm app within local Uvicorn we server, in a terminal run `python3 -m uvicorn larkm:app`
@@ -42,15 +52,13 @@ To add a new ARK (for example, to resolve to https://digital.lib.sfu.ca), issue 
 
 If you now visit `http://127.0.0.1:8000/ark:/19837/12` in your web browser, you will be redirected to https://digital.lib.sfu.ca.
 
-In this case, the client provides a full ARK string, including the NAAN and identifier. If you want larkm to mint a new ARK using a UUID (v4) as the identifier, replace "ark_string" in your request body with "naan":
+In this case, the client provides a full ARK string, including the NAAN and identifier. If you want larkm to mint a new ARK using the NAAN defined in your configuration file and a UUID (v4) as the identifier, remove "ark_string" from your request body:
 
-`curl -v -X POST "http://127.0.0.1:8000/larkm" -H 'Content-Type: application/json' -d '{"naan": "19837", "target": "https://digital.lib.sfu.ca"}'`
-
-Your request body must contain either "ark_string" or "naan", but can only contain one or the other.
+`curl -v -X POST "http://127.0.0.1:8000/larkm" -H 'Content-Type: application/json' -d '{"target": "https://digital.lib.sfu.ca"}'`
 
 In both cases, the response body will contain the "ark_string" and "target" (and the "naan" if one was provided):
 
-`{"ark":{"naan":"19837","ark_string":"ark:/19837/fb5a9ce4-7092-4eaa-8897-d2ba21eea159","target":"https://digital.lib.sfu.ca"}}`
+`{"ark":{"ark_string":"ark:/19837/fb5a9ce4-7092-4eaa-8897-d2ba21eea159","target":"https://digital.lib.sfu.ca"}}`
 
 ### Updating the target URL associated with an ARK
 

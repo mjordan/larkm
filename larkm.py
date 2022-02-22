@@ -3,12 +3,15 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 from uuid import uuid4
+import json
+
+with open("larkm.json", "r") as config_file:
+    config = json.load(config_file)
 
 app = FastAPI()
 
 
 class Ark(BaseModel):
-    naan: Optional[str] = None
     ark_string: Optional[str] = None
     target: Optional[str] = None
 
@@ -73,26 +76,19 @@ def create_ark(ark: Ark):
         -H 'Content-Type: application/json' \
         -d '{"ark_string": "ark:/19837/12", "target": "https://digital.lib.sfu.ca"}'
 
-    Sample request with only a NAAN, which asks larkm to generate an ARK string
-    based on a UUID:
+    Sample request with only a target, which asks larkm to generate an ARK string
+    based on the NAAN specified in configuration settings and a v4 UUID:
 
     curl -v -X POST "http://127.0.0.1:8000/larkm" \
         -H 'Content-Type: application/json' \
-        -d '{"naan": "19837/", "target": "https://digital.lib.sfu.ca"}'
-
-    One of "ark_string" or "naan" are required in the request body. If both are
-    present, larkm returns a 409 Conflict response.
+        -d '{"target": "https://digital.lib.sfu.ca"}'
 
     - **ark**: the ARK to create, consisting of an ARK and a target URL.
     """
-    if ark.ark_string is None and ark.naan is None:
-        raise HTTPException(status_code=409, detail="The request body must contain either 'naan' or 'ark_string'.")
-    if ark.ark_string is not None and ark.naan is not None:
-        raise HTTPException(status_code=409, detail="The request body must contain one one of 'naan' or 'ark_string'.")
     # Add it to test_arks so it can be requested by a client.
     if ark.ark_string is None:
         identifier = uuid4()
-        ark.ark_string = f'ark:/{ark.naan}/{identifier}'
+        ark.ark_string = f'ark:/{config["NAAN"]}/{identifier}'
     test_arks[ark.ark_string.strip()] = ark.target.strip()
     return {"ark": ark}
 
