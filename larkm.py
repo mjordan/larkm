@@ -12,6 +12,7 @@ app = FastAPI()
 
 
 class Ark(BaseModel):
+    shoulder: Optional[str] = None
     ark_string: Optional[str] = None
     target: Optional[str] = None
 
@@ -74,21 +75,42 @@ def create_ark(ark: Ark):
 
     curl -v -X POST "http://127.0.0.1:8000/larkm" \
         -H 'Content-Type: application/json' \
-        -d '{"ark_string": "ark:/99999/12", "target": "https://digital.lib.sfu.ca"}'
+        -d '{"shoulder": "x1", "ark_string": "ark:/99999/12", "target": "https://digital.lib.sfu.ca"}'
 
-    Sample request with only a target, which asks larkm to generate an ARK string
-    based on the NAAN specified in configuration settings and a v4 UUID:
+    Sample request with only a target and a shoulder, which asks larkm to generate
+    an ARK string based on the NAAN specified in configuration settings, the supplied
+    shoulder, and a v4 UUID:
 
     curl -v -X POST "http://127.0.0.1:8000/larkm" \
         -H 'Content-Type: application/json' \
-        -d '{"target": "https://digital.lib.sfu.ca"}'
+        -d '{"shoulder": "x1", "target": "https://digital.lib.sfu.ca"}'
+
+    If "shoulder" is absent from the request body, larkm will use the default
+    shoulder specified in its config.
 
     - **ark**: the ARK to create, consisting of an ARK and a target URL.
     """
-    # Add it to test_arks so it can be requested by a client.
+    config["allowed_shoulders"].insert(0, config["default_shoulder"])
+
+    # Validate provided shoulder if provided.
+    if ark.shoulder is not None:
+        for sh in config["allowed_shoulders"]:
+            if ark.shoulder not in config["allowed_shoulders"]:
+                raise HTTPException(status_code=422, detail="Provided shoulder is invalid.")
+
+    # Validate shoulder of provided ARK string.
+    if ark.ark_string is not None:
+        for sh in config["allowed_shoulders"]:
+            if ark.ark_string.startswith(sh) is False:
+                raise HTTPException(status_code=422, detail="ARK contains an invalid shoulder.")
+
+    if ark.shoulder is None:
+        ark.shoulder = config["default_shoulder"]
     if ark.ark_string is None:
         identifier = uuid4()
-        ark.ark_string = f'ark:/{config["NAAN"]}/{identifier}'
+        ark.ark_string = f'ark:/{config["NAAN"]}/{ark.shoulder}{identifier}'
+
+    # Add it to test_arks so it can be requested by a client.
     test_arks[ark.ark_string.strip()] = ark.target.strip()
     return {"ark": ark}
 

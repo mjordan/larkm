@@ -1,3 +1,5 @@
 {
-  "NAAN": "99999"
+  "NAAN": "99999",
+  "default_shoulder": "s1",
+  "allowed_shoulders": ["x9", "z8"]
 }
