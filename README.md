@@ -6,6 +6,7 @@ larkm is a simple [ARK](https://arks.org/) manager that can:
 
 * persist new ARKs
 * mint ARKs using UUID (v4) strings
+* validate ARK shoulders
 * resolve ARKs to their target URLs
 * update the target URLs of existing ARKs
 * provide the target URLs of ARKs it manages, and provide the ARK associated with a URL.
@@ -15,7 +16,7 @@ ARK resolution is provided via requests to larkm's host followed by an ARK (e.g.
 
 larkm is currently only a proof of concept as we learn about locally mananging ARKs. Features such as support for [policy statements](https://arks.org/about/best-practices/), persisting to a database, access control for the REST interface, and automated code tests are yet to come.
 
-It is considered "lightweight" because it supports only a subset of ARK functionality, focusing on providing ways to manage ARKs locally and on ARKs as persistent, resolvable identifiers. ARK features such as suffix passthrough, and metadata management are currently out of scope.
+It is considered "lightweight" because it supports only a subset of ARK functionality, focusing on providing ways to manage ARKs locally and on ARKs as persistent, resolvable identifiers. ARK features such as suffix passthrough and metadata management are currently out of scope.
 
 ## Requirements
 
@@ -64,9 +65,9 @@ In the previous request, the ARK string will include the default shoulder. If yo
 
 If the provided shoulder is not present in your configuration settings, or the provided ARK string does not begin with one of the configured shoulders, larkm will return a 422 HTTP response.
 
-In all cases, the response body will contain the "shoulder, "ark_string" and "target":
+All responses to a PUT will include in their body the "shoulder, "ark_string" and "target":
 
-`{"ark":{"shoulder": "x1", "ark_string":"ark:/99999/fb5a9ce4-7092-4eaa-8897-d2ba21eea159","target":"https://digital.lib.sfu.ca"}}`
+`{"ark":{"shoulder": "x1", "ark_string":"ark:/99999/x1fb5a9ce4-7092-4eaa-8897-d2ba21eea159","target":"https://digital.lib.sfu.ca"}}`
 
 ### Updating the target URL associated with an ARK
 
@@ -106,7 +107,7 @@ Thanks to [OpenAPI](https://github.com/OAI/OpenAPI-Specification), you can see l
 
 ## Shoulders
 
-Following ARK best practice, larkm requires the use of [shoulders](https://wiki.lyrasis.org/display/ARKs/ARK+Identifiers+FAQ#ARKIdentifiersFAQ-shouldersWhatisashoulder?) in newly added ARKs. Shoulders allowed within your NAAN are defined in the "default_shoulder" and "allowed_shoulders" configuration settings. When a new ARK is added, larkm will validate that the ARK string starts with either the default or one of the allowed shoulders. Note however that larkm does not validate the [format of shoulders](https://wiki.lyrasis.org/display/ARKs/ARK+Shoulders+FAQ#ARKShouldersFAQ-HowdoIformatashoulder?).
+Following ARK best practice, larkm requires the use of [shoulders](https://wiki.lyrasis.org/display/ARKs/ARK+Identifiers+FAQ#ARKIdentifiersFAQ-shouldersWhatisashoulder?) in newly added ARKs. Shoulders allowed within your NAAN are defined in the "default_shoulder" and "allowed_shoulders" configuration settings. When a new ARK is added, larkm will validate that the ARK string starts with either the default shoulder or one of the allowed shoulders. Note however that larkm does not validate the [format of shoulders](https://wiki.lyrasis.org/display/ARKs/ARK+Shoulders+FAQ#ARKShouldersFAQ-HowdoIformatashoulder?).
 
 ## Using Names to Things' redirection service
 
