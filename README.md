@@ -42,7 +42,8 @@ Currently, there are four config settings:
 {
   "NAAN": "12345",
   "default_shoulder": "s1",
-  "allowed_shoulders": ["x1", "z9"]
+  "allowed_shoulders": ["x1", "z9"],
+  "committment_statement": "We promise to maintain this ARK for a long time."
 }
 ```
 
