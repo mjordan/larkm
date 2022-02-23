@@ -14,7 +14,7 @@ larkm is a simple [ARK](https://arks.org/) manager that can:
 
 ARK resolution is provided via requests to larkm's host followed by an ARK (e.g. `https://myhost.net/ark:/12345/876543`) and the other operations are provided through standard REST requests to larkm's management endpoint (`/larkm`).
 
-larkm is currently only a proof of concept as we learn about locally mananging ARKs. Features such as support for [policy statements](https://arks.org/about/best-practices/), metadata provision, access control for the REST interface, persisting to a database, and automated code tests are yet to come.
+larkm is currently only a proof of concept as we learn about locally mananging ARKs. Features such as support for ARK-specific [committment statements](https://arks.org/about/best-practices/), metadata provision, access control for the REST interface, persisting to a database, and automated code tests are yet to come.
 
 It is considered "lightweight" because it supports only a subset of ARK functionality, focusing on providing ways to manage ARKs locally and on using ARKs as persistent, resolvable identifiers. ARK features such as suffix passthrough and ARK qualifiers are currently out of scope.
 
@@ -29,7 +29,14 @@ It is considered "lightweight" because it supports only a subset of ARK function
 
 ### Configuration
 
-larkm uses a JSON configuration file in the same directory as `larkm.py` named `larkm.json`. Copy the sample configuration file, `larkm.json.sample`, to `larkm.json`, make any changes you need, and you are good to go. Currently, there are three config settings, "NAAN" (which is your insitution's Name Assigning Authority Number), "default_shoulder" (the ARK shoulder applied to new ARKs if one is not provided), and "allowed_shoulders" (a list of shoulders that are allowed in new ARKs provided by clients). If your default shoulder is the only one currently used by your NAAN, provide an empty list for "allowed_shoulders" (e.g. `[]`).
+larkm uses a JSON configuration file in the same directory as `larkm.py` named `larkm.json`. Copy the sample configuration file, `larkm.json.sample`, to `larkm.json`, make any changes you need, and you are good to go.
+
+Currently, there are four config settings:
+
+* "NAAN", which is your insitution's Name Assigning Authority Number
+* "default_shoulder", the ARK shoulder applied to new ARKs if one is not provided)
+* "allowed_shoulders", a list of shoulders that are allowed in new ARKs provided by clients). If your default shoulder is the only one currently used by your NAAN, provide an empty list for "allowed_shoulders" (e.g. `[]`).
+* "committment_statement", your institution's statement expressing its committment to maintaining the ARK (currently, this applies to all ARKs managed by larkm)
 
 ```json
 {
@@ -46,6 +53,10 @@ To start the larkm app within local Uvicorn we server, in a terminal run `python
 ### Resolving an ARK
 
 Visit `http://127.0.0.1:8000/ark:/12345/x910` in your browser. You will be redirected to https://www.lib.sfu.ca.
+
+To see the configured committment statement for the ARK instead of resolving to its target, append `?info` to the end of the ARK, e.g., `http://127.0.0.1:8000/ark:/12345/x910?info`.
+
+
 
 ### Creating a new ARK
 

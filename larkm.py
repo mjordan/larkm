@@ -1,5 +1,5 @@
 from typing import Optional
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, Response, HTTPException
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 from uuid import uuid4
@@ -24,7 +24,7 @@ test_arks = dict({'ark:/12345/x910': 'https://www.lib.sfu.ca'})
 
 
 @app.get("/ark:/{naan}/{identifier}")
-def resolve_ark(naan: str, identifier: str):
+def resolve_ark(naan: str, identifier: str, info: Optional[str] = None):
     """
     The ARK resolver. Redirects the client to the target URL
     associated with the ARK. Sample query:
@@ -33,7 +33,13 @@ def resolve_ark(naan: str, identifier: str):
 
     - **naan**: the NAAN portion of the ARK.
     - **identifier**: the identifier portion of the ARK.
+    - **info**: As described in the ARK specification, '?info' appended
+      to the ARK string should return a committment statement and resource
+      metadata. For now, return the configured committment statement only.
     """
+    if info is not None:
+        return Response(content=config["committment_statement"], media_type="text/plain")
+
     ark = f'ark:/{naan}/{identifier}'
     if ark.strip() in test_arks.keys() and test_arks.get(ark) is not None:
         return RedirectResponse(test_arks[ark])

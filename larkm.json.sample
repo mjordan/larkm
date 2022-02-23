@@ -1,5 +1,6 @@
 {
   "NAAN": "99999",
   "default_shoulder": "s1",
-  "allowed_shoulders": ["x9", "z8"]
+  "allowed_shoulders": ["x9", "z8"],
+  "committment_statement": "We promise to maintain this ARK for a long time."
 }
