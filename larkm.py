@@ -20,7 +20,7 @@ class Ark(BaseModel):
 # During development and for demo purposes only, we use an in-memory
 # dictionary of ARKS that persists as long as the app is running in
 # the dev web server. In production, ARKS would be stored in a db.
-test_arks = dict({'ark:/99999/10': 'https://www.lib.sfu.ca'})
+test_arks = dict({'ark:/12345/x910': 'https://www.lib.sfu.ca'})
 
 
 @app.get("/ark:/{naan}/{identifier}")
@@ -29,7 +29,7 @@ def resolve_ark(naan: str, identifier: str):
     The ARK resolver. Redirects the client to the target URL
     associated with the ARK. Sample query:
 
-    curl -L "http://127.0.0.1:8000/ark:/99999/12"
+    curl -L "http://127.0.0.1:8000/ark:/12345/12"
 
     - **naan**: the NAAN portion of the ARK.
     - **identifier**: the identifier portion of the ARK.
@@ -47,13 +47,16 @@ def read_ark(ark_string: Optional[str] = '', target: Optional[str] = ''):
     Get the target URL associated with an ARK, or the ARK assoicated
     with a target URL. Sample query:
 
-    curl "http://127.0.0.1:8000/larkm?ark=ark:/99999/12" or
+    curl "http://127.0.0.1:8000/larkm?ark_string=ark:/12345/12" or
     curl "http://127.0.0.1:8000/larkm?target=https://www.lib.sfu.ca"
 
-    - **ark**: the ARK the client wants to get the target for, in the
+    - **ark_string**: the ARK the client wants to get the target for, in the
       form 'ark:/naan/id_string'.
     - **target**: the target the client wants to get the ark for, in
       the form of a fully qualified URL.
+
+      Include either the "ark_string" or the "target" in requests, not both
+      at the same time.
     """
     if ark_string.strip() in test_arks.keys():
         return {"ark_string": ark_string, "target": test_arks[ark_string]}
@@ -75,7 +78,7 @@ def create_ark(ark: Ark):
 
     curl -v -X POST "http://127.0.0.1:8000/larkm" \
         -H 'Content-Type: application/json' \
-        -d '{"shoulder": "x1", "ark_string": "ark:/99999/12", "target": "https://digital.lib.sfu.ca"}'
+        -d '{"shoulder": "x1", "ark_string": "ark:/12345/12", "target": "https://digital.lib.sfu.ca"}'
 
     Sample request with only a target and a shoulder, which asks larkm to generate
     an ARK string based on the NAAN specified in configuration settings, the supplied
@@ -92,7 +95,7 @@ def create_ark(ark: Ark):
     """
     config["allowed_shoulders"].insert(0, config["default_shoulder"])
 
-    # Validate provided shoulder if provided.
+    # Validate shoulder if provided.
     if ark.shoulder is not None:
         for sh in config["allowed_shoulders"]:
             if ark.shoulder not in config["allowed_shoulders"]:
@@ -120,9 +123,9 @@ def update_ark(naan: str, identifier: str, ark: Ark):
     """
     Update an ARK with a new target. Sample query:
 
-    curl -v -X PUT "http://127.0.0.1:8000/larkm/ark:/99999/12" \
+    curl -v -X PUT "http://127.0.0.1:8000/larkm/ark:/12345/12" \
         -H 'Content-Type: application/json' \
-        -d '{"ark_string": "ark:/99999/12", "target": "https://summit.sfu.ca"}'
+        -d '{"ark_string": "ark:/12345/12", "target": "https://summit.sfu.ca"}'
 
     - **naan**: the NAAN portion of the ARK.
     - **identifier**: the identifier portion of the ARK.
@@ -141,7 +144,7 @@ def delete_ark(naan: str, identifier: str):
     """
     Delete an ARK using its ARK string. Sample query:
 
-    curl -v -X DELETE "http://127.0.0.1:8000/larkm/ark:/99999/12"
+    curl -v -X DELETE "http://127.0.0.1:8000/larkm/ark:/12345/12"
 
     - **naan**: the NAAN portion of the ARK.
     - **identifier**: the identifier portion of the ARK.
