@@ -13,6 +13,7 @@ app = FastAPI()
 
 class Ark(BaseModel):
     shoulder: Optional[str] = None
+    identifier: Optional[str] = None
     ark_string: Optional[str] = None
     target: Optional[str] = None
 
@@ -20,7 +21,7 @@ class Ark(BaseModel):
 # During development and for demo purposes only, we use an in-memory
 # dictionary of ARKS that persists as long as the app is running in
 # the dev web server. In production, ARKS would be stored in a db.
-test_arks = dict({'ark:/12345/x910': 'https://www.lib.sfu.ca'})
+test_arks = dict({'ark:/12345/x977777': 'https://www.lib.sfu.ca'})
 
 
 @app.get("/ark:/{naan}/{identifier}")
@@ -37,14 +38,19 @@ def resolve_ark(naan: str, identifier: str, info: Optional[str] = None):
       to the ARK string should return a committment statement and resource
       metadata. For now, return the configured committment statement only.
     """
-    if info is not None:
-        return Response(content=config["committment_statement"], media_type="text/plain")
-
     ark = f'ark:/{naan}/{identifier}'
-    if ark.strip() in test_arks.keys() and test_arks.get(ark) is not None:
-        return RedirectResponse(test_arks[ark])
+    if info is None:
+        if ark.strip() in test_arks.keys() and test_arks.get(ark) is not None:
+            return RedirectResponse(test_arks[ark])
+        else:
+            raise HTTPException(status_code=404, detail="ARK not found")
     else:
-        raise HTTPException(status_code=404, detail="ARK not found")
+        config["allowed_shoulders"].insert(0, config["default_shoulder"])
+        for sh in config["allowed_shoulders"]:
+            if ark.startswith(sh):
+                return Response(content=config["committment_statement"][sh], media_type="text/plain")
+            else:
+                return Response(content=config["committment_statement"]["default"], media_type="text/plain")
 
 
 @app.get("/larkm")
@@ -79,45 +85,63 @@ def read_ark(ark_string: Optional[str] = '', target: Optional[str] = ''):
 @app.post("/larkm", status_code=201)
 def create_ark(ark: Ark):
     """
-    Create a new ARK, optionally minting a new ARK. Sample request with an
-    existing ARK string (i.e. provided by client):
+    Create a new ARK, optionally minting a new ARK. Clients can provide
+    an ID/name string and/or a shoulder. If either of these is not provided,
+    larkm will provide one. If an ID/name is provided, it should not contain
+    a shoulder. Clients cannot provide a NAAN. Clients must always provide
+    a target.
+
+    Sample request with an provided ID/name and shoulder:
 
     curl -v -X POST "http://127.0.0.1:8000/larkm" \
         -H 'Content-Type: application/json' \
-        -d '{"shoulder": "x1", "ark_string": "ark:/12345/12", "target": "https://digital.lib.sfu.ca"}'
+        -d '{"shoulder": "x1", "identifier": "12345", "target": "https://digital.lib.sfu.ca"}'
+
+    Sample request with only a target and an ID/name, which asks larkm to generate
+    an ARK string based on the NAAN specified in configuration settings, the default
+    soulder, and the provided ID/name:
+
+    curl -v -X POST "http://127.0.0.1:8000/larkm" \
+        -H 'Content-Type: application/json' \
+        -d '{"identifier": "45679", "target": "https://digital.lib.sfu.ca"}'
 
     Sample request with only a target and a shoulder, which asks larkm to generate
-    an ARK string based on the NAAN specified in configuration settings, the supplied
-    shoulder, and a v4 UUID:
+    an ARK string based on the NAAN specified in configuration settings and the supplied
+    shoulder. If the ID/name is not provided, larkm will provide one in the form of a
+    v4 UUID:
 
     curl -v -X POST "http://127.0.0.1:8000/larkm" \
         -H 'Content-Type: application/json' \
         -d '{"shoulder": "x1", "target": "https://digital.lib.sfu.ca"}'
 
-    If "shoulder" is absent from the request body, larkm will use the default
-    shoulder specified in its config.
+    Sample request with no target or shoulder. larkm will generate an ARK using
+    the configured NAAN, the default shoulder, and a v4 UUID.
+
+    curl -v -X POST "http://127.0.0.1:8000/larkm" \
+        -H 'Content-Type: application/json' \
+        -d '{"target": "https://digital.lib.sfu.ca"}'
 
     - **ark**: the ARK to create, consisting of an ARK and a target URL.
     """
-    config["allowed_shoulders"].insert(0, config["default_shoulder"])
+    if ark.target is None:
+        raise HTTPException(status_code=422, detail="Missing target.")
 
     # Validate shoulder if provided.
+    config["allowed_shoulders"].insert(0, config["default_shoulder"])
     if ark.shoulder is not None:
         for sh in config["allowed_shoulders"]:
             if ark.shoulder not in config["allowed_shoulders"]:
                 raise HTTPException(status_code=422, detail="Provided shoulder is invalid.")
 
-    # Validate shoulder of provided ARK string.
-    if ark.ark_string is not None:
-        for sh in config["allowed_shoulders"]:
-            if ark.ark_string.startswith(sh) is False:
-                raise HTTPException(status_code=422, detail="ARK contains an invalid shoulder.")
-
+    # Assemble the ARK. Generate parts the client didn't provide.
     if ark.shoulder is None:
         ark.shoulder = config["default_shoulder"]
-    if ark.ark_string is None:
+    if ark.identifier is None:
         identifier = uuid4()
-        ark.ark_string = f'ark:/{config["NAAN"]}/{ark.shoulder}{identifier}'
+    else:
+        identifier = ark.identifier
+
+    ark.ark_string = f'ark:/{config["NAAN"]}/{ark.shoulder}{identifier}'
 
     # Add it to test_arks so it can be requested by a client.
     test_arks[ark.ark_string.strip()] = ark.target.strip()

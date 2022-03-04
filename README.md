@@ -10,11 +10,12 @@ larkm is a simple [ARK](https://arks.org/) manager that can:
 * resolve ARKs to their target URLs
 * update the target URLs of existing ARKs
 * provide the target URLs of ARKs it manages, and provide the ARK associated with a URL.
+* provide [committment statements](https://arks.org/about/best-practices/) that are specific to shoulders
 * delete ARKs
 
 ARK resolution is provided via requests to larkm's host followed by an ARK (e.g. `https://myhost.net/ark:/12345/876543`) and the other operations are provided through standard REST requests to larkm's management endpoint (`/larkm`).
 
-larkm is currently only a proof of concept as we learn about locally mananging ARKs. Features such as support for ARK-specific [committment statements](https://arks.org/about/best-practices/), metadata provision, access control for the REST interface, persisting to a database, and automated code tests are yet to come.
+larkm is currently only a proof of concept as we learn about locally mananging ARKs. Features such as metadata provision, access control for the REST interface, persisting to a database, and automated code tests are yet to come.
 
 It is considered "lightweight" because it supports only a subset of ARK functionality, focusing on providing ways to manage ARKs locally and on using ARKs as persistent, resolvable identifiers. ARK features such as suffix passthrough and ARK qualifiers are currently out of scope.
 
@@ -36,14 +37,18 @@ Currently, there are four config settings:
 * "NAAN", which is your insitution's Name Assigning Authority Number
 * "default_shoulder", the ARK shoulder applied to new ARKs if one is not provided)
 * "allowed_shoulders", a list of shoulders that are allowed in new ARKs provided by clients). If your default shoulder is the only one currently used by your NAAN, provide an empty list for "allowed_shoulders" (e.g. `[]`).
-* "committment_statement", your institution's statement expressing its committment to maintaining the ARK (currently, this applies to all ARKs managed by larkm)
+* "committment_statement", a mapping from shoulders to text expressing your institution's committment to maintaining the ARKs
 
 ```json
 {
   "NAAN": "12345",
   "default_shoulder": "s1",
-  "allowed_shoulders": ["x1", "z9"],
-  "committment_statement": "We promise to maintain this ARK for a long time."
+  "allowed_shoulders": ["s8", "s9", "x9"],
+  "committment_statement": {
+       "s1": "ACME University commits to maintain ARKs that have 's1' as a shoulder for a long time.",
+       "s8": "ACME University commits to maintain ARKs that have 's8' as a shoulder until the end of 2025.",
+       "default": "Default committment statement."
+  }
 }
 ```
 
@@ -57,29 +62,21 @@ Visit `http://127.0.0.1:8000/ark:/12345/x910` in your browser. You will be redir
 
 To see the configured committment statement for the ARK instead of resolving to its target, append `?info` to the end of the ARK, e.g., `http://127.0.0.1:8000/ark:/12345/x910?info`.
 
-
-
 ### Creating a new ARK
+
+REST clients can provide a `shoulder` and/or an `identifer` value in the requst body. If either of these is not provided, larkm will provide one. If an identifier is provided, it should not contain a shoulder. Clients cannot provide a NAAN. Clients must always provide a `target`.
 
 To add a new ARK (for example, to resolve to https://digital.lib.sfu.ca), issue the following request using curl:
 
-`curl -v -X POST "http://127.0.0.1:8000/larkm" -H 'Content-Type: application/json' -d '{"ark_string": "ark:/12345/x912", "target": "https://digital.lib.sfu.ca"}'`
+`curl -v -X POST "http://127.0.0.1:8000/larkm" -H 'Content-Type: application/json' -d '{shoulder": "s1", "identifier": "ark:/12345/222222", "target": "https://digital.lib.sfu.ca"}'`
 
-If you now visit `http://127.0.0.1:8000/ark:/12345/x912` in your web browser, you will be redirected to https://digital.lib.sfu.ca.
+If you now visit `http://127.0.0.1:8000/ark:/12345/s1222222` in your web browser, you will be redirected to https://digital.lib.sfu.ca.
 
-In this case, the client provides a full ARK string (including the shoulder), including the NAAN and identifier. If you want larkm to mint a new ARK using the NAAN defined in your configuration file and a UUID (v4) as the identifier, remove "ark_string" from your request body:
+If you omit the `shoulder`, the configured default shoulder will be used. If you omit the `identifier`, larkm will mint one using a v4 UUID.
 
-`curl -v -X POST "http://127.0.0.1:8000/larkm" -H 'Content-Type: application/json' -d '{"target": "https://digital.lib.sfu.ca"}'`
+All responses to a POST will include in their body the "shoulder, "identifier" and "target":
 
-In the previous request, the ARK string will include the default shoulder. If you want larkm to mint an ARK but use a different shoulder, include the shoulder in your request body, like this:
-
-`curl -v -X POST "http://127.0.0.1:8000/larkm" -H 'Content-Type: application/json' -d '{"shoulder": "x1", "target": "https://digital.lib.sfu.ca"}'`
-
-If the provided shoulder is not present in your configuration settings, or the provided ARK string does not begin with one of the configured shoulders, larkm will return a 422 HTTP response.
-
-All responses to a PUT will include in their body the "shoulder, "ark_string" and "target":
-
-`{"ark":{"shoulder": "x1", "ark_string":"ark:/12345/x1fb5a9ce4-7092-4eaa-8897-d2ba21eea159","target":"https://digital.lib.sfu.ca"}}`
+`{"ark":{"shoulder": "x1", "identifier": "fb5a9ce4-7092-4eaa-8897-d2ba21eea159"", "ark_string":"ark:/12345/x1fb5a9ce4-7092-4eaa-8897-d2ba21eea159","target":"https://digital.lib.sfu.ca"}}`
 
 ### Updating the target URL associated with an ARK
 
