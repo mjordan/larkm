@@ -15,7 +15,7 @@ larkm is a simple [ARK](https://arks.org/) manager that can:
 
 ARK resolution is provided via requests to larkm's host followed by an ARK (e.g. `https://myhost.net/ark:/12345/876543`) and the other operations are provided through standard REST requests to larkm's management endpoint (`/larkm`).
 
-larkm is currently only a proof of concept as we learn about locally mananging ARKs. Features such as metadata provision, access control for the REST interface, persisting to a database, and automated code tests are yet to come.
+larkm is currently a proof of concept as we learn about locally mananging ARKs. Features such as metadata provision, access control for the REST interface, persisting to a database, and automated code tests are yet to come.
 
 It is considered "lightweight" because it supports only a subset of ARK functionality, focusing on providing ways to manage ARKs locally and on using ARKs as persistent, resolvable identifiers. ARK features such as suffix passthrough and ARK qualifiers are currently out of scope.
 
@@ -68,7 +68,7 @@ REST clients can provide a `shoulder` and/or an `identifer` value in the requst 
 
 To add a new ARK (for example, to resolve to https://digital.lib.sfu.ca), issue the following request using curl:
 
-`curl -v -X POST "http://127.0.0.1:8000/larkm" -H 'Content-Type: application/json' -d '{shoulder": "s1", "identifier": "ark:/12345/222222", "target": "https://digital.lib.sfu.ca"}'`
+`curl -v -X POST "http://127.0.0.1:8000/larkm" -H 'Content-Type: application/json' -d '{shoulder": "s1", "identifier": "222222", "target": "https://digital.lib.sfu.ca"}'`
 
 If you now visit `http://127.0.0.1:8000/ark:/12345/s1222222` in your web browser, you will be redirected to https://digital.lib.sfu.ca.
 
@@ -82,7 +82,7 @@ All responses to a POST will include in their body the "shoulder, "identifier" a
 
 Update an ARK using a request like:
 
-`curl -v -X PUT "http://127.0.0.1:8000/larkm/ark:/12345/x912" -H 'Content-Type: application/json' -d '{"ark_string": "ark:/12345/12", "target": "https://summit.sfu.ca"}'`
+`curl -v -X PUT "http://127.0.0.1:8000/larkm/ark:/12345/x912" -H 'Content-Type: application/json' -d '{"ark_string": "ark:/12345/x14444444", "target": "https://summit.sfu.ca"}'`
 
 Note that the ARK string in the request URL and in the "ark_string" body field must be identical.
 
