@@ -1,10 +1,16 @@
 {
   "NAAN": "99999",
   "default_shoulder": "s1",
-  "allowed_shoulders": ["s8", "s9", "x9"],
+  "allowed_shoulders": ["s2", "s3", "x9"],
   "committment_statement": {
-       "s1": "We commits to maintain ARKs that have 's1' as a shoulder for a long time.",
-       "s8": "We commits to maintain ARKs that have 's8' as a shoulder until the end of 2025.",
+       "s1": "ACME University commits to maintain ARKs that have 's1' as a shoulder for a long time.",
+       "s3": "ACME University commits to maintain ARKs that have 's3' as a shoulder until the end of 2025.",
        "default": "Default committment statement."
+  },
+  "erc_metadata_defaults": {
+       "who": ":at",
+       "what": ":at",
+       "when": ":at",
+       "where": ""
   }
 }

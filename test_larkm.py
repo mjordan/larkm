@@ -34,4 +34,6 @@ def test_create_ark():
         },
     )
     assert response.status_code == 201
-    assert response.json() == {"ark": {"shoulder": "s1", "identifier": "9876", "ark_string": "ark:/19837/s19876", "target": "https://example.com"}}
+    assert response.json() == {"ark": {"shoulder": "s1", "identifier": "9876", "ark_string": "ark:/99999/s19876",
+                                       "target": "https://example.com", "who": ":at", "what": ":at", "when": ":at",
+                                       "where": "https://example.com"}}

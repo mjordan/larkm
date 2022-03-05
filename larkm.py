@@ -16,12 +16,17 @@ class Ark(BaseModel):
     identifier: Optional[str] = None
     ark_string: Optional[str] = None
     target: Optional[str] = None
+    who: Optional[str] = None
+    what: Optional[str] = None
+    when: Optional[str] = None
+    where: Optional[str] = None
 
 
 # During development and for demo purposes only, we use an in-memory
 # dictionary of ARKS that persists as long as the app is running in
 # the dev web server. In production, ARKS would be stored in a db.
-test_arks = dict({'ark:/12345/x977777': 'https://www.lib.sfu.ca'})
+test_arks = dict({'ark:/12345/x977777': {'target': 'https://www.lib.sfu.ca', 'who': ':at',
+                  'what': ':at', 'when': ':at', 'where': 'https://www.lib.sfu.ca'}})
 
 
 @app.get("/ark:/{naan}/{identifier}")
@@ -41,7 +46,7 @@ def resolve_ark(naan: str, identifier: str, info: Optional[str] = None):
     ark = f'ark:/{naan}/{identifier}'
     if info is None:
         if ark.strip() in test_arks.keys() and test_arks.get(ark) is not None:
-            return RedirectResponse(test_arks[ark])
+            return RedirectResponse(test_arks[ark]['target'])
         else:
             raise HTTPException(status_code=404, detail="ARK not found")
     else:
@@ -71,13 +76,13 @@ def read_ark(ark_string: Optional[str] = '', target: Optional[str] = ''):
       at the same time.
     """
     if ark_string.strip() in test_arks.keys():
-        return {"ark_string": ark_string, "target": test_arks[ark_string]}
+        return {"ark_string": ark_string, "target": test_arks[ark_string]['target']}
     else:
         raise HTTPException(status_code=404, detail="ARK not found")
     if len(target) > 0:
         for ark_string, target_url in test_arks.items():
             if target_url.strip() == target.strip():
-                return {"ark_string": ark_string, "target": test_arks[ark_string]}
+                return {"ark_string": ark_string, "target": test_arks[ark_string]['target']}
     # If no ARK found, raise a 404.
         raise HTTPException(status_code=404, detail="Target not found")
 
@@ -121,6 +126,15 @@ def create_ark(ark: Ark):
         -H 'Content-Type: application/json' \
         -d '{"target": "https://digital.lib.sfu.ca"}'
 
+    Sample request with ERC metadata values. ERC elements ("who", "what", "when",
+    "where") not included in the request body, they are given defaults from config,
+    except for "where", which is given the value of the ARK's target URL.
+
+    curl -v -X POST "http://127.0.0.1:8000/larkm" \
+        -H 'Content-Type: application/json' \
+        -d '{"who": "Jordan, Mark", "what": "GitBags", "when": "2014", \
+        "target": "https://github.com/mjordan/GitBags"}'
+
     - **ark**: the ARK to create, consisting of an ARK and a target URL.
     """
     if ark.target is None:
@@ -143,8 +157,23 @@ def create_ark(ark: Ark):
 
     ark.ark_string = f'ark:/{config["NAAN"]}/{ark.shoulder}{identifier}'
 
+    if ark.who is None:
+        ark.who = config["erc_metadata_defaults"]["who"]
+    if ark.what is None:
+        ark.what = config["erc_metadata_defaults"]["what"]
+    if ark.when is None:
+        ark.when = config["erc_metadata_defaults"]["when"]
+    if ark.where is None:
+        ark.where = ark.target
+
     # Add it to test_arks so it can be requested by a client.
-    test_arks[ark.ark_string.strip()] = ark.target.strip()
+    ark_details = list()
+    ark_details = {'target': ark.target.strip()}
+    ark_details = {'who': ark.who.strip()}
+    ark_details = {'what': ark.what.strip()}
+    ark_details = {'when': ark.when.strip()}
+    ark_details = {'where': ark.where.strip()}
+    test_arks[ark.ark_string.strip()] = ark_details
     return {"ark": ark}
 
 
