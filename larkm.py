@@ -10,6 +10,9 @@ with open("larkm.json", "r") as config_file:
 
 app = FastAPI()
 
+"""CREATE TABLE arks(shoulder TEXT, identifier TEXT, target TEXT, erc_who TEXT, erc_what TEXT, erc_when TEXT, erc_where TEXT, policy TEXT);
+"""
+
 
 class Ark(BaseModel):
     shoulder: Optional[str] = None
@@ -20,6 +23,7 @@ class Ark(BaseModel):
     what: Optional[str] = None
     when: Optional[str] = None
     where: Optional[str] = None
+    policy: Optional[str] = None
 
 
 # During development and for demo purposes only, we use an in-memory
@@ -91,10 +95,10 @@ def read_ark(ark_string: Optional[str] = '', target: Optional[str] = ''):
 def create_ark(ark: Ark):
     """
     Create a new ARK, optionally minting a new ARK. Clients can provide
-    an ID/name string and/or a shoulder. If either of these is not provided,
-    larkm will provide one. If an ID/name is provided, it should not contain
-    a shoulder. Clients cannot provide a NAAN. Clients must always provide
-    a target.
+    an identifier string and/or a shoulder. If either of these is not provided,
+    larkm will provide one. If an identifier is provided, it should not contain
+    a shoulder, since larkm will always add a shoulder. Clients cannot provide
+    a NAAN. Clients must always provide a target.
 
     Sample request with an provided ID/name and shoulder:
 
@@ -165,6 +169,11 @@ def create_ark(ark: Ark):
         ark.when = config["erc_metadata_defaults"]["when"]
     if ark.where is None:
         ark.where = ark.target
+    if ark.policy is None:
+        if ark.shoulder in config["committment_statement"].keys():
+            ark.policy = config["committment_statement"][ark.shoulder]
+        else:
+            ark.policy = config["committment_statement"]['default']
 
     # Add it to test_arks so it can be requested by a client.
     ark_details = list()
@@ -180,7 +189,8 @@ def create_ark(ark: Ark):
 @app.put("/larkm/ark:/{naan}/{identifier}", response_model=Ark)
 def update_ark(naan: str, identifier: str, ark: Ark):
     """
-    Update an ARK with a new target. Sample query:
+    Update an ARK with a new target, metadta, or policy statement. Shoulders cannot
+    be updated. Sample query:
 
     curl -v -X PUT "http://127.0.0.1:8000/larkm/ark:/12345/12" \
         -H 'Content-Type: application/json' \
@@ -189,7 +199,6 @@ def update_ark(naan: str, identifier: str, ark: Ark):
     - **naan**: the NAAN portion of the ARK.
     - **identifier**: the identifier portion of the ARK.
     """
-    # Update the ARK in test_arks.
     ark_string = f'ark:/{naan}/{identifier}'
     if ark_string != ark.ark_string:
         raise HTTPException(status_code=409, detail="NAAN/identifier combination and ark_string do not match.")
@@ -201,7 +210,7 @@ def update_ark(naan: str, identifier: str, ark: Ark):
 @app.delete("/larkm/ark:/{naan}/{identifier}", status_code=204)
 def delete_ark(naan: str, identifier: str):
     """
-    Delete an ARK using its ARK string. Sample query:
+    Given an ARK string, delete the ARK. Sample query:
 
     curl -v -X DELETE "http://127.0.0.1:8000/larkm/ark:/12345/12"
 
