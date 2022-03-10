@@ -52,6 +52,34 @@ def test_create_ark():
                                        "where": "https://example.com", "policy": "Default committment statement."}}
 
 
+def test_update_ark():
+    response = client.post(
+        "/larkm",
+        json={
+            "shoulder": "s2",
+            "identifier": "012345",
+            "target": "https://example.com"
+        },
+    )
+    assert response.status_code == 201
+    assert response.json() == {"ark": {"shoulder": "s2", "identifier": "012345", "ark_string": "ark:/99999/s2012345",
+                                       "target": "https://example.com", "who": ":at", "what": ":at", "when": ":at",
+                                       "where": "https://example.com", "policy": "Default committment statement."}}
+
+    response = client.put(
+        "/larkm/ark:/99999/s2012345",
+        json={
+            "when": "2020",
+            "what": "A test"
+        },
+    )
+    assert response.status_code == 200
+    assert response.json() == {"ark": {"shoulder": "s2", "identifier": "s2012345", "ark_string": "ark:/99999/s2012345",
+                                       "target": "https://example.com", "who": ":at", "what": "A test", "when": "2020",
+                                       "where": "https://example.com", "policy": "Default committment statement."}}
+
+
+
 def test_delete_ark():
     create_response = client.post(
         "/larkm",

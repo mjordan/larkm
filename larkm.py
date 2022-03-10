@@ -3,6 +3,7 @@ from fastapi import FastAPI, Response, HTTPException
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 from uuid import uuid4
+from copy import deepcopy
 import json
 
 with open("larkm.json", "r") as config_file:
@@ -29,8 +30,9 @@ class Ark(BaseModel):
 # During development and for demo purposes only, we use an in-memory
 # dictionary of ARKS that persists as long as the app is running in
 # the dev web server. In production, ARKS would be stored in a db.
-test_arks = dict({'ark:/12345/x977777': {'target': 'https://www.lib.sfu.ca', 'who': ':at',
-                  'what': ':at', 'when': ':at', 'where': 'https://www.lib.sfu.ca'}})
+test_arks = dict({'ark:/12345/x977777': {'shoulder': 'x9', 'identifier': '77777',
+                  'target': 'https://www.lib.sfu.ca', 'who': ':at', 'what': ':at',
+                  'when': ':at', 'where': 'https://www.lib.sfu.ca', 'policy': ''}})
 
 
 @app.get("/ark:/{naan}/{identifier}")
@@ -177,19 +179,21 @@ def create_ark(ark: Ark):
 
     # Add it to test_arks so it can be requested by a client.
     ark_details = list()
-    ark_details = {'target': ark.target.strip()}
-    ark_details = {'who': ark.who.strip()}
-    ark_details = {'what': ark.what.strip()}
-    ark_details = {'when': ark.when.strip()}
-    ark_details = {'where': ark.where.strip()}
+    ark_details.append({'shoulder': ark.shoulder.strip()})
+    ark_details.append({'identifier': identifier})
+    ark_details.append({'target': ark.target.strip()})
+    ark_details.append({'who': ark.who.strip()})
+    ark_details.append({'what': ark.what.strip()})
+    ark_details.append({'when': ark.when.strip()})
+    ark_details.append({'where': ark.where.strip()})
     test_arks[ark.ark_string.strip()] = ark_details
     return {"ark": ark}
 
 
-@app.put("/larkm/ark:/{naan}/{identifier}", response_model=Ark)
+@app.put("/larkm/ark:/{naan}/{identifier}")
 def update_ark(naan: str, identifier: str, ark: Ark):
     """
-    Update an ARK with a new target, metadta, or policy statement. Shoulders cannot
+    Update an ARK with a new target, metadata, or policy statement. Shoulders cannot
     be updated. Sample query:
 
     curl -v -X PUT "http://127.0.0.1:8000/larkm/ark:/12345/12" \
@@ -197,14 +201,29 @@ def update_ark(naan: str, identifier: str, ark: Ark):
         -d '{"ark_string": "ark:/12345/12", "target": "https://summit.sfu.ca"}'
 
     - **naan**: the NAAN portion of the ARK.
-    - **identifier**: the identifier portion of the ARK.
+    - **identifier**: the identifier portion of the ARK, which will include a shouder.
     """
     ark_string = f'ark:/{naan}/{identifier}'
     if ark_string != ark.ark_string:
         raise HTTPException(status_code=409, detail="NAAN/identifier combination and ark_string do not match.")
-    if ark.ark_string.strip() in test_arks.keys() and len(ark.target.strip()) > 0:
-        test_arks[ark_string.strip()] = ark.target.strip()
-        return {"ark_string": ark.ark_string, "target": ark.target}
+
+    # Only update ark properties if they are in the request body.
+    old_ark = deepcopy(test_arks[ark_string.strip()])
+    print(old_ark)
+    ark.shoulder = old_ark['shoulder']
+    ark.identifier = old_ark['identifier']
+    if ark.who is None:
+        ark.who = old_ark['who']
+    if ark.what is None:
+        ark.what = old_ark['what']
+    if ark.when is None:
+        ark.when = old_ark['when']
+    if ark.policy is None:
+        ark.policy = old_ark['policy']
+    if ark.where is None:
+        ark.where = ark.target
+
+    return {"ark": ark}
 
 
 @app.delete("/larkm/ark:/{naan}/{identifier}", status_code=204)
