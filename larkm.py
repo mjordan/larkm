@@ -31,8 +31,9 @@ class Ark(BaseModel):
 # dictionary of ARKS that persists as long as the app is running in
 # the dev web server. In production, ARKS would be stored in a db.
 test_arks = dict({'ark:/12345/x977777': {'shoulder': 'x9', 'identifier': '77777',
-                  'target': 'https://www.lib.sfu.ca', 'who': ':at', 'what': ':at',
-                  'when': ':at', 'where': 'https://www.lib.sfu.ca', 'policy': ''}})
+                                         'target': 'https://www.lib.sfu.ca',
+                                         'who': ':at', 'what': ':at', 'when': ':at',
+                                         'where': 'https://www.lib.sfu.ca', 'policy': ''}})
 
 
 @app.get("/ark:/{naan}/{identifier}")
@@ -155,13 +156,15 @@ def create_ark(ark: Ark):
 
     # Assemble the ARK. Generate parts the client didn't provide.
     if ark.shoulder is None:
-        ark.shoulder = config["default_shoulder"]
+        shoulder = config["default_shoulder"]
+    else:
+        shoulder = ark.shoulder
     if ark.identifier is None:
-        identifier = uuid4()
+        identifier = str(uuid4())
     else:
         identifier = ark.identifier
 
-    ark.ark_string = f'ark:/{config["NAAN"]}/{ark.shoulder}{identifier}'
+    ark.ark_string = f'ark:/{config["NAAN"]}/{shoulder}{identifier}'
 
     if ark.who is None:
         ark.who = config["erc_metadata_defaults"]["who"]
@@ -178,40 +181,35 @@ def create_ark(ark: Ark):
             ark.policy = config["committment_statement"]['default']
 
     # Add it to test_arks so it can be requested by a client.
-    ark_details = list()
-    ark_details.append({'shoulder': ark.shoulder.strip()})
-    ark_details.append({'identifier': identifier})
-    ark_details.append({'target': ark.target.strip()})
-    ark_details.append({'who': ark.who.strip()})
-    ark_details.append({'what': ark.what.strip()})
-    ark_details.append({'when': ark.when.strip()})
-    ark_details.append({'where': ark.where.strip()})
-    test_arks[ark.ark_string.strip()] = ark_details
+    test_arks[ark.ark_string] = ark.dict()
     return {"ark": ark}
 
 
 @app.put("/larkm/ark:/{naan}/{identifier}")
 def update_ark(naan: str, identifier: str, ark: Ark):
     """
-    Update an ARK with a new target, metadata, or policy statement. Shoulders cannot
-    be updated. Sample query:
+    Update an ARK with a new target, metadata, or policy statement. Shoulders,
+    identifiers, and ark_strings cannot be updated. ark_string is a required
+    body field. Sample query:
 
-    curl -v -X PUT "http://127.0.0.1:8000/larkm/ark:/12345/12" \
+    curl -v -X PUT "http://127.0.0.1:8000/larkm/ark:/12345/s912" \
         -H 'Content-Type: application/json' \
-        -d '{"ark_string": "ark:/12345/12", "target": "https://summit.sfu.ca"}'
+        -d '{"ark_string": "ark:/12345/s912", "target": "https://summit.sfu.ca"}'
 
     - **naan**: the NAAN portion of the ARK.
     - **identifier**: the identifier portion of the ARK, which will include a shouder.
     """
-    ark_string = f'ark:/{naan}/{identifier}'
-    if ark_string != ark.ark_string:
+    request_ark_string = f'ark:/{naan}/{identifier}'.strip()
+    old_ark = deepcopy(test_arks[request_ark_string])
+
+    if request_ark_string != ark.ark_string:
         raise HTTPException(status_code=409, detail="NAAN/identifier combination and ark_string do not match.")
 
-    # Only update ark properties if they are in the request body.
-    old_ark = deepcopy(test_arks[ark_string.strip()])
-    print(old_ark)
+    # shoulder, identifier, and ark_string cannot be updated.
     ark.shoulder = old_ark['shoulder']
     ark.identifier = old_ark['identifier']
+    ark.ark_string = old_ark['ark_string']
+    # Only update ark properties that are in the request body.
     if ark.who is None:
         ark.who = old_ark['who']
     if ark.what is None:
@@ -221,7 +219,9 @@ def update_ark(naan: str, identifier: str, ark: Ark):
     if ark.policy is None:
         ark.policy = old_ark['policy']
     if ark.where is None:
-        ark.where = ark.target
+        ark.where = old_ark['where']
+    if ark.target is None:
+        ark.target = old_ark['target']
 
     return {"ark": ark}
 
