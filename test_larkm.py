@@ -12,7 +12,9 @@ def setup_teardown(module):
 def test_resolve_ark():
     response = client.get("/ark:/12345/x977777?info")
     assert response.status_code == 200
-    assert response.text == 'Default committment statement.'
+    response_text = "erc:\nwho: :at\nwhat: :at\nwhen: :at\n"
+    response_text = response_text + "where: https://www.lib.sfu.ca\npolicy: Default committment statement."
+    assert response.text == response_text
 
 
 def test_create_ark():
@@ -46,13 +48,21 @@ def test_create_ark():
         json={
             "shoulder": "x9",
             "identifier": "9876",
-            "target": "https://example.com"
+            "target": "https://example.com/bar",
+            "what": "A new ARK"
         },
     )
     assert response.status_code == 201
     assert response.json() == {"ark": {"shoulder": "x9", "identifier": "9876", "ark_string": "ark:/99999/x99876",
-                                       "target": "https://example.com", "who": ":at", "what": ":at", "when": ":at",
-                                       "where": "https://example.com", "policy": "Default committment statement."}}
+                                       "target": "https://example.com/bar", "who": ":at", "what": "A new ARK", "when": ":at",
+                                       "where": "https://example.com/bar", "policy": "Default committment statement."}}
+
+    # Get the 'info' for this ARK.
+    response = client.get("/ark:/99999/x99876?info")
+    assert response.status_code == 200
+    response_text = "erc:\nwho: :at\nwhat: A new ARK\nwhen: :at\n"
+    response_text = response_text + "where: https://example.com/bar\npolicy: Default committment statement."
+    assert response.text == response_text
 
 
 def test_update_ark():

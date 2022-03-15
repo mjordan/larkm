@@ -54,7 +54,7 @@ Currently, there are four config settings:
 
 ## Metadata
 
-larkm supports the [Electronic Resource Citation](https://www.dublincore.org/groups/kernel/spec/) (ERC) metadata format. Note that larkm accepts the raw values provided by the client and does not validate or format the values in any way.
+larkm supports the [Electronic Resource Citation](https://www.dublincore.org/groups/kernel/spec/) (ERC) metadata format expressed in ANVL syntax. Note that larkm accepts the raw values provided by the client and does not validate or format the values in any way.
 
 ### Starting larkm
 
@@ -141,7 +141,7 @@ An advantage of doing this is that if your local resolver needs to be changed fr
 ## Development
 
 * Run `larkm.py` and `test_larkm.py` through pycodestyle: `pycodestyle --show-source --show-pep8 --ignore=E402,W504 --max-line-length=200 test_larkm.py`
-* To run tests, in the larkm directory execute `pytest`. No need to start the web server to run tests.
+* To run tests, you don't need to start the web server, just execute `pytest` within the larkm directory. Configuration values in `larkm.json.sample` are the ones used in the tests.
 
 ## License
 

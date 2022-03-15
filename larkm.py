@@ -57,12 +57,13 @@ def resolve_ark(naan: str, identifier: str, info: Optional[str] = None):
         else:
             raise HTTPException(status_code=404, detail="ARK not found")
     else:
+        erc = f"erc:\nwho: {test_arks[ark]['who']}\nwhat: {test_arks[ark]['what']}\nwhen: {test_arks[ark]['when']}\nwhere: {test_arks[ark]['where']}\n"
         config["allowed_shoulders"].insert(0, config["default_shoulder"])
         for sh in config["allowed_shoulders"]:
             if ark.startswith(sh):
-                return Response(content=config["committment_statement"][sh], media_type="text/plain")
+                return Response(content=erc + "policy: " + config["committment_statement"][sh], media_type="text/plain")
             else:
-                return Response(content=config["committment_statement"]["default"], media_type="text/plain")
+                return Response(content=erc + "policy: " + config["committment_statement"]["default"], media_type="text/plain")
 
 
 @app.get("/larkm")
