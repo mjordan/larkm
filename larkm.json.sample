@@ -12,5 +12,6 @@
        "what": ":at",
        "when": ":at",
        "where": ""
-  }
+  },
+  "sqlite_db_path": "testdb/larkmtest.db"
 }

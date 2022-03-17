@@ -140,8 +140,11 @@ An advantage of doing this is that if your local resolver needs to be changed fr
 
 ## Development
 
-* Run `larkm.py` and `test_larkm.py` through pycodestyle: `pycodestyle --show-source --show-pep8 --ignore=E402,W504 --max-line-length=200 test_larkm.py`
-* To run tests, you don't need to start the web server, just execute `pytest` within the larkm directory. Configuration values in `larkm.json.sample` are the ones used in the tests.
+* Run `larkm.py` and `test_larkm.py` through pycodestyle: `pycodestyle --show-source --show-pep8 --ignore=E402,W504 --max-line-length=200 *.py`
+* To run tests:
+   * you don't need to start the web server
+   * within the larkm directory, copy `larkm.json.sample` to `larkm.json` (back up `larkm.json` first if you have custom values in it)
+   * execute `pytest`
 
 ## License
 

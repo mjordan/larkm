@@ -3,16 +3,13 @@ from fastapi import FastAPI, Response, HTTPException
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 from uuid import uuid4
-from copy import deepcopy
+import sqlite3
 import json
 
 with open("larkm.json", "r") as config_file:
     config = json.load(config_file)
 
 app = FastAPI()
-
-"""CREATE TABLE arks(shoulder TEXT, identifier TEXT, target TEXT, erc_who TEXT, erc_what TEXT, erc_when TEXT, erc_where TEXT, policy TEXT);
-"""
 
 
 class Ark(BaseModel):
@@ -25,15 +22,6 @@ class Ark(BaseModel):
     when: Optional[str] = None
     where: Optional[str] = None
     policy: Optional[str] = None
-
-
-# During development and for demo purposes only, we use an in-memory
-# dictionary of ARKS that persists as long as the app is running in
-# the dev web server. In production, ARKS would be stored in a db.
-test_arks = dict({'ark:/12345/x977777': {'shoulder': 'x9', 'identifier': '77777',
-                                         'target': 'https://www.lib.sfu.ca',
-                                         'who': ':at', 'what': ':at', 'when': ':at',
-                                         'where': 'https://www.lib.sfu.ca', 'policy': ''}})
 
 
 @app.get("/ark:/{naan}/{identifier}")
@@ -50,20 +38,36 @@ def resolve_ark(naan: str, identifier: str, info: Optional[str] = None):
       to the ARK string should return a committment statement and resource
       metadata. For now, return the configured committment statement only.
     """
-    ark = f'ark:/{naan}/{identifier}'
-    if info is None:
-        if ark.strip() in test_arks.keys() and test_arks.get(ark) is not None:
-            return RedirectResponse(test_arks[ark]['target'])
-        else:
+    ark_string = f'ark:/{naan}/{identifier}'
+    try:
+        con = sqlite3.connect(config["sqlite_db_path"])
+        con.row_factory = sqlite3.Row
+        cur = con.cursor()
+        cur.execute("select * from arks where ark_string = :a_s", {"a_s": ark_string})
+        record = cur.fetchone()
+        if record is None:
+            con.close()
             raise HTTPException(status_code=404, detail="ARK not found")
+        con.close()
+    except sqlite3.DatabaseError as e:
+        # @todo: log (do not add to response!) str(e).
+        raise HTTPException(status_code=500)
+
+    if info is None:
+        return RedirectResponse(record['target'])
     else:
-        erc = f"erc:\nwho: {test_arks[ark]['who']}\nwhat: {test_arks[ark]['what']}\nwhen: {test_arks[ark]['when']}\nwhere: {test_arks[ark]['where']}\n"
+        erc = f"erc:\nwho: {record['erc_who']}\nwhat: {record['erc_what']}\nwhen: {record['erc_when']}\nwhere: {record['erc_where']}\n"
         config["allowed_shoulders"].insert(0, config["default_shoulder"])
-        for sh in config["allowed_shoulders"]:
-            if ark.startswith(sh):
-                return Response(content=erc + "policy: " + config["committment_statement"][sh], media_type="text/plain")
-            else:
-                return Response(content=erc + "policy: " + config["committment_statement"]["default"], media_type="text/plain")
+        if len(record['policy']) > 0:
+            policy = "policy: " + record['policy']
+        else:
+            for sh in config["allowed_shoulders"]:
+                if ark_string.startswith(sh):
+                    policy = "policy: " + config["committment_statement"][sh]
+                else:
+                    policy = "policy: " + config["committment_statement"]["default"]
+
+        return Response(content=erc + policy + "\n\n", media_type="text/plain")
 
 
 @app.get("/larkm")
@@ -83,16 +87,24 @@ def read_ark(ark_string: Optional[str] = '', target: Optional[str] = ''):
       Include either the "ark_string" or the "target" in requests, not both
       at the same time.
     """
-    if ark_string.strip() in test_arks.keys():
-        return {"ark_string": ark_string, "target": test_arks[ark_string]['target']}
-    else:
-        raise HTTPException(status_code=404, detail="ARK not found")
-    if len(target) > 0:
-        for ark_string, target_url in test_arks.items():
-            if target_url.strip() == target.strip():
-                return {"ark_string": ark_string, "target": test_arks[ark_string]['target']}
-    # If no ARK found, raise a 404.
-        raise HTTPException(status_code=404, detail="Target not found")
+    try:
+        con = sqlite3.connect(config["sqlite_db_path"])
+        con.row_factory = sqlite3.Row
+        cur = con.cursor()
+        if ark_string:
+            cur.execute("select * from arks where ark_string=:a_s", {"a_s": ark_string})
+        if target:
+            cur.execute("select * from arks where target=:t", {"t": target})
+        record = cur.fetchone()
+        con.close()
+
+        if record is not None:
+            return {"ark_string": record['ark_string'], "target": record['target']}
+        else:
+            raise HTTPException(status_code=404, detail="ARK not found")
+    except sqlite3.DatabaseError as e:
+        # @todo: log (do not add to response!) str(e).
+        raise HTTPException(status_code=500)
 
 
 @app.post("/larkm", status_code=201)
@@ -101,8 +113,8 @@ def create_ark(ark: Ark):
     Create a new ARK, optionally minting a new ARK. Clients can provide
     an identifier string and/or a shoulder. If either of these is not provided,
     larkm will provide one. If an identifier is provided, it should not contain
-    a shoulder, since larkm will always add a shoulder. Clients cannot provide
-    a NAAN. Clients must always provide a target.
+    a shoulder, since larkm will always add a shoulder to new ARKs. Clients
+    cannot provide a NAAN. Clients must always provide a target.
 
     Sample request with an provided ID/name and shoulder:
 
@@ -181,8 +193,17 @@ def create_ark(ark: Ark):
         else:
             ark.policy = config["committment_statement"]['default']
 
-    # Add it to test_arks so it can be requested by a client.
-    test_arks[ark.ark_string] = ark.dict()
+    try:
+        ark_data = (shoulder, identifier, ark.ark_string, ark.target, ark.who, ark.what, ark.when, ark.where, ark.policy)
+        con = sqlite3.connect(config["sqlite_db_path"])
+        cur = con.cursor()
+        cur.execute("insert into arks values (?,?,?,?,?,?,?,?,?)", ark_data)
+        con.commit()
+        con.close()
+    except sqlite3.DatabaseError as e:
+        # @todo: log (do not add to response!) str(e).
+        print(str(e))
+        raise HTTPException(status_code=500)
     return {"ark": ark}
 
 
@@ -200,29 +221,55 @@ def update_ark(naan: str, identifier: str, ark: Ark):
     - **naan**: the NAAN portion of the ARK.
     - **identifier**: the identifier portion of the ARK, which will include a shouder.
     """
-    request_ark_string = f'ark:/{naan}/{identifier}'.strip()
-    old_ark = deepcopy(test_arks[request_ark_string])
-
-    if request_ark_string != ark.ark_string:
+    ark_string = f'ark:/{naan}/{identifier}'.strip()
+    if ark_string != ark.ark_string:
         raise HTTPException(status_code=409, detail="NAAN/identifier combination and ark_string do not match.")
+
+    try:
+        con = sqlite3.connect(config["sqlite_db_path"])
+        con.row_factory = sqlite3.Row
+        cur = con.cursor()
+        cur.execute("select * from arks where ark_string = :a_s", {"a_s": ark_string})
+        record = cur.fetchone()
+        if record is None:
+            con.close()
+            raise HTTPException(status_code=404, detail="ARK not found")
+        con.close()
+    except sqlite3.DatabaseError as e:
+        # @todo: log (do not add to response!) str(e).
+        raise HTTPException(status_code=500)
+
+    old_ark = dict(zip(record.keys(), record))
 
     # shoulder, identifier, and ark_string cannot be updated.
     ark.shoulder = old_ark['shoulder']
     ark.identifier = old_ark['identifier']
     ark.ark_string = old_ark['ark_string']
     # Only update ark properties that are in the request body.
-    if ark.who is None:
-        ark.who = old_ark['who']
-    if ark.what is None:
-        ark.what = old_ark['what']
-    if ark.when is None:
-        ark.when = old_ark['when']
-    if ark.policy is None:
-        ark.policy = old_ark['policy']
-    if ark.where is None:
-        ark.where = old_ark['where']
     if ark.target is None:
         ark.target = old_ark['target']
+    if ark.who is None:
+        ark.who = old_ark['erc_who']
+    if ark.what is None:
+        ark.what = old_ark['erc_what']
+    if ark.when is None:
+        ark.when = old_ark['erc_when']
+    if ark.where is None:
+        ark.where = old_ark['erc_where']
+    if ark.policy is None:
+        ark.policy = old_ark['policy']
+
+    try:
+        ark_data = (ark.shoulder, ark.identifier, ark.ark_string, ark.target, ark.who, ark.what, ark.when, ark.where, ark.policy, ark.ark_string)
+        con = sqlite3.connect(config["sqlite_db_path"])
+        cur = con.cursor()
+        cur.execute("update arks set shoulder = ?, identifier = ?, ark_string = ?, target = ?, erc_who = ?, erc_what = ?, erc_when = ?, erc_where = ?, policy = ? where ark_string = ?", ark_data)
+        con.commit()
+        con.close()
+    except sqlite3.DatabaseError as e:
+        # @todo: log (do not add to response!) str(e).
+        print(str(e))
+        raise HTTPException(status_code=500)
 
     return {"ark": ark}
 
@@ -239,8 +286,28 @@ def delete_ark(naan: str, identifier: str):
     """
     ark_string = f'ark:/{naan}/{identifier}'
     # If no ARK found, raise a 404.
-    if ark_string.strip() not in test_arks.keys():
-        raise HTTPException(status_code=404, detail="ARK not found")
+
+    try:
+        con = sqlite3.connect(config["sqlite_db_path"])
+        cur = con.cursor()
+        cur.execute("select ark_string from arks where ark_string = :a_s", {"a_s": ark_string})
+        record = cur.fetchone()
+        if record is None:
+            con.close()
+            raise HTTPException(status_code=404, detail="ARK not found")
+        con.close()
+    except sqlite3.DatabaseError as e:
+        # @todo: log (do not add to response!) str(e).
+        raise HTTPException(status_code=500)
+
     # If ARK found, delete it.
     else:
-        del test_arks[ark_string.strip()]
+        try:
+            con = sqlite3.connect(config["sqlite_db_path"])
+            cur = con.cursor()
+            cur.execute("delete from arks where ark_string=:a_s", {"a_s": ark_string})
+            con.commit()
+            con.close()
+        except sqlite3.DatabaseError as e:
+            # @todo: log (do not add to response!) str(e).
+            raise HTTPException(status_code=500)

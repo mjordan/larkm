@@ -1,19 +1,14 @@
 from fastapi.testclient import TestClient
-
 from larkm import app
 
 client = TestClient(app)
-
-
-def setup_teardown(module):
-    os.remove('larkm_test.db')
 
 
 def test_resolve_ark():
     response = client.get("/ark:/12345/x977777?info")
     assert response.status_code == 200
     response_text = "erc:\nwho: :at\nwhat: :at\nwhen: :at\n"
-    response_text = response_text + "where: https://www.lib.sfu.ca\npolicy: Default committment statement."
+    response_text = response_text + "where: https://www.lib.sfu.ca\npolicy: Default committment statement.\n\n"
     assert response.text == response_text
 
 
@@ -41,8 +36,7 @@ def test_create_ark():
                                        "target": "https://example.com", "who": ":at", "what": ":at", "when": ":at",
                                        "where": "https://example.com", "policy": "ACME University commits to maintain ARKs that have 's1' as a shoulder for a long time."}}
 
-    # Provide a shoulder that is mapped to the default
-    # policy statement.
+    # Provide a shoulder that is mapped to the default policy statement.
     response = client.post(
         "/larkm",
         json={
@@ -61,38 +55,37 @@ def test_create_ark():
     response = client.get("/ark:/99999/x99876?info")
     assert response.status_code == 200
     response_text = "erc:\nwho: :at\nwhat: A new ARK\nwhen: :at\n"
-    response_text = response_text + "where: https://example.com/bar\npolicy: Default committment statement."
+    response_text = response_text + "where: https://example.com/bar\npolicy: Default committment statement.\n\n"
     assert response.text == response_text
 
 
 def test_update_ark():
-    # Only provide the required body fields, see if larkm
-    # provides the correct default values for other fields.
+    # Only provide the required body fields, see if larkm provides the correct default values for other fields.
     response = client.post(
         "/larkm",
         json={
             "shoulder": "s2",
-            "identifier": "012345",
+            "identifier": "55555",
             "target": "https://example.com"
 
         },
     )
     assert response.status_code == 201
-    assert response.json() == {"ark": {"shoulder": "s2", "identifier": "012345", "ark_string": "ark:/99999/s2012345",
+    assert response.json() == {"ark": {"shoulder": "s2", "identifier": "55555", "ark_string": "ark:/99999/s255555",
                                        "target": "https://example.com", "who": ":at", "what": ":at", "when": ":at",
                                        "where": "https://example.com", "policy": "Default committment statement."}}
 
     # Then update the when and what body fields.
     response = client.put(
-        "/larkm/ark:/99999/s2012345",
+        "/larkm/ark:/99999/s255555",
         json={
             "when": "2020",
             "what": "A test",
-            "ark_string": "ark:/99999/s2012345"
+            "ark_string": "ark:/99999/s255555"
         },
     )
     assert response.status_code == 200
-    assert response.json() == {"ark": {"shoulder": "s2", "identifier": "012345", "ark_string": "ark:/99999/s2012345",
+    assert response.json() == {"ark": {"shoulder": "s2", "identifier": "55555", "ark_string": "ark:/99999/s255555",
                                        "target": "https://example.com", "who": ":at", "what": "A test", "when": "2020",
                                        "where": "https://example.com", "policy": "Default committment statement."}}
 
@@ -119,8 +112,7 @@ def test_update_ark():
                                        "target": "https://example.com", "who": ":at", "what": "New ARK with its own policy",
                                        "when": ":at", "where": "https://example.com", "policy": "A test policy."}}
 
-    # Intentionally trigger a 409 by mismatching the URL parameters
-    # and the ark_string body field.
+    # Intentionally trigger a 409 by mismatching the URL parameters and the ark_string body field.
     response = client.post(
         "/larkm",
         json={
