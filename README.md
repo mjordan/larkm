@@ -4,7 +4,7 @@
 
 larkm is a simple [ARK](https://arks.org/) manager that can:
 
-* persist new ARKs
+* persist new ARKs to an sqlite database
 * mint ARKs using UUID (v4) strings
 * validate ARK shoulders
 * resolve ARKs to their target URLs
@@ -15,9 +15,7 @@ larkm is a simple [ARK](https://arks.org/) manager that can:
 
 ARK resolution is provided via requests to larkm's host followed by an ARK (e.g. `https://myhost.net/ark:/12345/876543`) and the other operations are provided through standard REST requests to larkm's management endpoint (`/larkm`).
 
-larkm is currently a proof of concept as we learn about locally mananging ARKs. Features such as access control for the REST interface and persisting ARKs to a database are yet to come.
-
-It is considered "lightweight" because it supports only a subset of ARK functionality, focusing on providing ways to manage ARKs locally and on using ARKs as persistent, resolvable identifiers. ARK features such as suffix passthrough and ARK qualifiers are currently out of scope.
+larkm is currently a proof of concept as we learn about locally mananging ARKs. It is considered "lightweight" because it supports only a subset of ARK functionality, focusing on providing ways to manage ARKs locally and on using ARKs as persistent, resolvable identifiers. ARK features such as suffix passthrough and ARK qualifiers are currently out of scope.
 
 ## Requirements
 
@@ -145,6 +143,10 @@ An advantage of doing this is that if your local resolver needs to be changed fr
    * you don't need to start the web server
    * within the larkm directory, copy `larkm.json.sample` to `larkm.json` (back up `larkm.json` first if you have custom values in it)
    * execute `pytest`
+
+## To do
+
+* access control for the REST interface
 
 ## License
 
