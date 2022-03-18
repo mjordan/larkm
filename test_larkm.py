@@ -1,7 +1,14 @@
 from fastapi.testclient import TestClient
 from larkm import app
+import shutil
+import os
+import re
 
 client = TestClient(app)
+
+
+def teardown_module(module):
+    shutil.copyfile('testdb/larkmtest.db.bak', 'testdb/larkmtest.db')
 
 
 def test_resolve_ark():
@@ -21,6 +28,16 @@ def test_create_ark():
         },
     )
     assert response.status_code == 201
+
+    # Test if the generated identifier is a UUID v4.
+    response = client.post(
+        "/larkm",
+        json={
+            "target": "https://example.com/test"
+        },
+    )
+    body = response.json()
+    assert re.match('^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}$', body['ark']['identifier'])
 
     # Provide a shoulder and identifier.
     response = client.post(
@@ -57,6 +74,22 @@ def test_create_ark():
     response_text = "erc:\nwho: :at\nwhat: A new ARK\nwhen: :at\n"
     response_text = response_text + "where: https://example.com/bar\npolicy: Default committment statement.\n\n"
     assert response.text == response_text
+
+    # ARK with some special characters in its metadata.
+    response = client.post(
+        "/larkm",
+        json={
+            "shoulder": "x9",
+            "identifier": "0000000000",
+            "target": "https://example.com/bar",
+            "what": "A test ARK with some 'special' characters (`%&) in its metadata"
+        },
+    )
+    assert response.status_code == 201
+    assert response.json() == {"ark": {"shoulder": "x9", "identifier": "0000000000", "ark_string": "ark:/99999/x90000000000",
+                                       "target": "https://example.com/bar", "who": ":at", "when": ":at",
+                                       "what": "A test ARK with some 'special' characters (`%&) in its metadata",
+                                       "where": "https://example.com/bar", "policy": "Default committment statement."}}
 
 
 def test_update_ark():

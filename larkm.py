@@ -1,5 +1,5 @@
 from typing import Optional
-from fastapi import FastAPI, Response, HTTPException
+from fastapi import FastAPI, Response, Request, HTTPException
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 from uuid import uuid4
@@ -71,7 +71,7 @@ def resolve_ark(naan: str, identifier: str, info: Optional[str] = None):
 
 
 @app.get("/larkm")
-def read_ark(ark_string: Optional[str] = '', target: Optional[str] = ''):
+def read_ark(request: Request, ark_string: Optional[str] = '', target: Optional[str] = ''):
     """
     Get the target URL associated with an ARK, or the ARK assoicated
     with a target URL. Sample query:
@@ -87,6 +87,9 @@ def read_ark(ark_string: Optional[str] = '', target: Optional[str] = ''):
       Include either the "ark_string" or the "target" in requests, not both
       at the same time.
     """
+    if len(config["trusted_ips"]) > 0 and request.client.host not in config["trusted_ips"]:
+        raise HTTPException(status_code=403)
+
     try:
         con = sqlite3.connect(config["sqlite_db_path"])
         con.row_factory = sqlite3.Row
@@ -108,7 +111,7 @@ def read_ark(ark_string: Optional[str] = '', target: Optional[str] = ''):
 
 
 @app.post("/larkm", status_code=201)
-def create_ark(ark: Ark):
+def create_ark(request: Request, ark: Ark):
     """
     Create a new ARK, optionally minting a new ARK. Clients can provide
     an identifier string and/or a shoulder. If either of these is not provided,
@@ -157,6 +160,9 @@ def create_ark(ark: Ark):
 
     - **ark**: the ARK to create, consisting of an ARK and a target URL.
     """
+    if len(config["trusted_ips"]) > 0 and request.client.host not in config["trusted_ips"]:
+        raise HTTPException(status_code=403)
+
     if ark.target is None:
         raise HTTPException(status_code=422, detail="Missing target.")
 
@@ -169,15 +175,11 @@ def create_ark(ark: Ark):
 
     # Assemble the ARK. Generate parts the client didn't provide.
     if ark.shoulder is None:
-        shoulder = config["default_shoulder"]
-    else:
-        shoulder = ark.shoulder
+        ark.shoulder = config["default_shoulder"]
     if ark.identifier is None:
-        identifier = str(uuid4())
-    else:
-        identifier = ark.identifier
+        ark.identifier = str(uuid4())
 
-    ark.ark_string = f'ark:/{config["NAAN"]}/{shoulder}{identifier}'
+    ark.ark_string = f'ark:/{config["NAAN"]}/{ark.shoulder}{ark.identifier}'
 
     if ark.who is None:
         ark.who = config["erc_metadata_defaults"]["who"]
@@ -194,7 +196,7 @@ def create_ark(ark: Ark):
             ark.policy = config["committment_statement"]['default']
 
     try:
-        ark_data = (shoulder, identifier, ark.ark_string, ark.target, ark.who, ark.what, ark.when, ark.where, ark.policy)
+        ark_data = (ark.shoulder, ark.identifier, ark.ark_string, ark.target, ark.who, ark.what, ark.when, ark.where, ark.policy)
         con = sqlite3.connect(config["sqlite_db_path"])
         cur = con.cursor()
         cur.execute("insert into arks values (?,?,?,?,?,?,?,?,?)", ark_data)
@@ -208,7 +210,7 @@ def create_ark(ark: Ark):
 
 
 @app.put("/larkm/ark:/{naan}/{identifier}")
-def update_ark(naan: str, identifier: str, ark: Ark):
+def update_ark(request: Request, naan: str, identifier: str, ark: Ark):
     """
     Update an ARK with a new target, metadata, or policy statement. Shoulders,
     identifiers, and ark_strings cannot be updated. ark_string is a required
@@ -221,6 +223,9 @@ def update_ark(naan: str, identifier: str, ark: Ark):
     - **naan**: the NAAN portion of the ARK.
     - **identifier**: the identifier portion of the ARK, which will include a shouder.
     """
+    if len(config["trusted_ips"]) > 0 and request.client.host not in config["trusted_ips"]:
+        raise HTTPException(status_code=403)
+
     ark_string = f'ark:/{naan}/{identifier}'.strip()
     if ark_string != ark.ark_string:
         raise HTTPException(status_code=409, detail="NAAN/identifier combination and ark_string do not match.")
@@ -275,7 +280,7 @@ def update_ark(naan: str, identifier: str, ark: Ark):
 
 
 @app.delete("/larkm/ark:/{naan}/{identifier}", status_code=204)
-def delete_ark(naan: str, identifier: str):
+def delete_ark(request: Request, naan: str, identifier: str):
     """
     Given an ARK string, delete the ARK. Sample query:
 
@@ -284,8 +289,10 @@ def delete_ark(naan: str, identifier: str):
     - **naan**: the NAAN portion of the ARK.
     - **identifier**: the identifier portion of the ARK.
     """
+    if len(config["trusted_ips"]) > 0 and request.client.host not in config["trusted_ips"]:
+        raise HTTPException(status_code=403)
+
     ark_string = f'ark:/{naan}/{identifier}'
-    # If no ARK found, raise a 404.
 
     try:
         con = sqlite3.connect(config["sqlite_db_path"])

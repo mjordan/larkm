@@ -36,6 +36,8 @@ Currently, there are four config settings:
 * "default_shoulder", the ARK shoulder applied to new ARKs if one is not provided).
 * "allowed_shoulders", a list of shoulders that are allowed in new ARKs provided by clients). If your default shoulder is the only one currently used by your NAAN, provide an empty list for "allowed_shoulders" (e.g. `[]`).
 * "committment_statement", a mapping from shoulders to text expressing your institution's committment to maintaining the ARKs.
+* "sqlite_db_path": absolute or relative (to larkm.py) path to larkm's sqlite3 database file.
+* "trusted_ips": list of client IP addresses that can create, update, and delete ARKs; leave empty to no restrict access to these functions (e.g. during testing).
 
 ```json
 {
@@ -46,7 +48,8 @@ Currently, there are four config settings:
        "s1": "ACME University commits to maintain ARKs that have 's1' as a shoulder for a long time.",
        "s8": "ACME University commits to maintain ARKs that have 's8' as a shoulder until the end of 2025.",
        "default": "Default committment statement."
-  }
+  },
+  "sqlite_db_path": "testdb/larkmtest.db"
 }
 ```
 
@@ -146,6 +149,8 @@ An advantage of doing this is that if your local resolver needs to be changed fr
 
 ## To do
 
+* add more tests
+* put test database back to its clean state
 * access control for the REST interface
 
 ## License
