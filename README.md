@@ -8,12 +8,12 @@ larkm is a simple [ARK](https://arks.org/) manager that can:
 * mint ARKs using UUID (v4) strings
 * validate ARK shoulders
 * resolve ARKs to their target URLs
-* update the target URLs, ERC/Kernel metadata, and policy statements of existing ARKs
+* update the target URLs, ERC/Kernel metadata, and committment statements of existing ARKs
 * provide the target URLs of ARKs it manages, and provide the ARK associated with a URL
-* provide [committment statements](https://arks.org/about/best-practices/) that are specific to shoulders
+* provide basic [committment statements](https://arks.org/about/best-practices/) that are specific to shoulders
 * delete ARKs
 
-ARK resolution is provided via requests to larkm's host followed by an ARK (e.g. `https://myhost.net/ark:/12345/876543`) and the other operations are provided through standard REST requests to larkm's management endpoint (`/larkm`).
+ARK resolution is provided via requests to larkm's host followed by an ARK (e.g. `https://myhost.net/ark:/12345/876543`) and the other operations are provided through standard REST requests to larkm's management endpoint (`/larkm`). This REST interface allows creating, persisting, updating, and deleting ARKs, and can expose a subset of larkm's configuration data to clients. Access to the REST endpoints can be controlled by registering the IP addresses of trused clients, as explained in the "Configuration" section below.
 
 larkm is currently a proof of concept as we learn about locally mananging ARKs. It is considered "lightweight" because it supports only a subset of ARK functionality, focusing on providing ways to manage ARKs locally and on using ARKs as persistent, resolvable identifiers. ARK features such as suffix passthrough and ARK qualifiers are currently out of scope.
 
@@ -22,9 +22,20 @@ larkm is currently a proof of concept as we learn about locally mananging ARKs. 
 * Python 3.6+
 * [FastAPI](https://fastapi.tiangolo.com/)
 * [Uvicorn](https://www.uvicorn.org/) for demo/testing, or some other ASGI web server for production uses.
+* sqlite3 (installed by default with Python)
 * To have your ARKs resolve from [N2T](http://n2t.net/), you will to register a NAAN (Name Assigning Authority Number) using [this form](https://goo.gl/forms/bmckLSPpbzpZ5dix1).
 
 ## Usage
+
+### Creating the database
+
+larkm provides an empty sqlite database that you can use, `larkm_template.db`.
+
+If you want to create your own, run the following commands:
+
+1. `sqlite3 path/to/mydb.db`
+1. within sqlite, run `CREATE TABLE arks(shoulder TEXT NOT NULL, identifier TEXT NOT NULL, ark_string TEXT NOT NULL, target TEXT NOT NULL, erc_who TEXT NOT NULL, erc_what TEXT NOT NULL, erc_when TEXT NOT NULL, erc_where TEXT NOT NULL, policy TEXT NOT NULL);`
+1. `.quit`
 
 ### Configuration
 
@@ -49,13 +60,22 @@ Currently, there are four config settings:
        "s8": "ACME University commits to maintain ARKs that have 's8' as a shoulder until the end of 2025.",
        "default": "Default committment statement."
   },
-  "sqlite_db_path": "testdb/larkmtest.db"
+  "erc_metadata_defaults": {
+       "who": ":at",
+       "what": ":at",
+       "when": ":at",
+       "where": ""
+  },
+  "sqlite_db_path": "testdb/larkmtest.db",
+  "trusted_ips": []
 }
 ```
 
-## Metadata
+## Metadata support
 
 larkm supports the [Electronic Resource Citation](https://www.dublincore.org/groups/kernel/spec/) (ERC) metadata format expressed in ANVL syntax. Note that larkm accepts the raw values provided by the client and does not validate or format the values in any way.
+
+If the default "where" ERC metadata is an empty string (as illustrated in the configuration data above), larkm assigns the ARK's target value to it.
 
 ### Starting larkm
 
@@ -125,6 +145,12 @@ Delete an ARK using a request like:
 
 If the ARK was deleted, larkm returns a `204 No Content` response with no body. If the ARK was not found, larkm returns a `404` response with the body `{"detail":"ARK not found"}`.
 
+### Getting larkm's configuration data
+
+`curl -v "http://127.0.0.1:8000/larkm/config"`
+
+Note that larkm returns only the subset of configuration data that clients need to create new ARKs, specifically the "default_shoulder", "allowed_shoulders", "committment_statement", and "erc_metadata_defaults" configuration data.
+
 ## API docs
 
 Thanks to [OpenAPI](https://github.com/OAI/OpenAPI-Specification), you can see larkm's API docs by visiting http://127.0.0.1:8000/docs#.
@@ -133,7 +159,7 @@ Thanks to [OpenAPI](https://github.com/OAI/OpenAPI-Specification), you can see l
 
 Following ARK best practice, larkm requires the use of [shoulders](https://wiki.lyrasis.org/display/ARKs/ARK+Identifiers+FAQ#ARKIdentifiersFAQ-shouldersWhatisashoulder?) in newly added ARKs. Shoulders allowed within your NAAN are defined in the "default_shoulder" and "allowed_shoulders" configuration settings. When a new ARK is added, larkm will validate that the ARK string starts with either the default shoulder or one of the allowed shoulders. Note however that larkm does not validate the [format of shoulders](https://wiki.lyrasis.org/display/ARKs/ARK+Shoulders+FAQ#ARKShouldersFAQ-HowdoIformatashoulder?).
 
-## Using Names to Things' global resolver
+## Using the Names to Things global resolver
 
 If you have a registered NAAN that points to the server running larkm, you can use the Names to Things global ARK resolver's domain redirection feature by replacing the hostname of the server larkm is running on with `https://n2t.net/`. For example, if your the local server larkm is runnin on is `https://ids.myorg.ca`, and your insitution's NAAN is registered to use that hostname, you can use a local instance of larkm to manage ARKs like `https://n2t.net/ark:/12345/x910` (using your NAAN instead of `12345`) and they will resolve through your local larkm running on `https://ids.myorg.ca` to their target URLs.
 
@@ -143,15 +169,9 @@ An advantage of doing this is that if your local resolver needs to be changed fr
 
 * Run `larkm.py` and `test_larkm.py` through pycodestyle: `pycodestyle --show-source --show-pep8 --ignore=E402,W504 --max-line-length=200 *.py`
 * To run tests:
-   * you don't need to start the web server
+   * you don't need to start the web server or create a database
    * within the larkm directory, copy `larkm.json.sample` to `larkm.json` (back up `larkm.json` first if you have custom values in it)
    * execute `pytest`
-
-## To do
-
-* add more tests
-* put test database back to its clean state
-* access control for the REST interface
 
 ## License
 

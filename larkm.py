@@ -3,6 +3,7 @@ from fastapi import FastAPI, Response, Request, HTTPException
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 from uuid import uuid4
+import copy
 import sqlite3
 import json
 
@@ -187,7 +188,7 @@ def create_ark(request: Request, ark: Ark):
         ark.what = config["erc_metadata_defaults"]["what"]
     if ark.when is None:
         ark.when = config["erc_metadata_defaults"]["when"]
-    if ark.where is None:
+    if ark.where is None or len(ark.where) == 0:
         ark.where = ark.target
     if ark.policy is None:
         if ark.shoulder in config["committment_statement"].keys():
@@ -318,3 +319,19 @@ def delete_ark(request: Request, naan: str, identifier: str):
         except sqlite3.DatabaseError as e:
             # @todo: log (do not add to response!) str(e).
             raise HTTPException(status_code=500)
+
+
+@app.get("/larkm/config")
+def return_config():
+    """
+    Returns a subset larkm's configuration data to the client.
+    """
+    if len(config["trusted_ips"]) > 0 and request.client.host not in config["trusted_ips"]:
+        raise HTTPException(status_code=403)
+
+    # Remove configuration data the client doesn't need to know.
+    subset = copy.deepcopy(config)
+    del subset['NAAN']
+    del subset['trusted_ips']
+    del subset['sqlite_db_path']
+    return subset

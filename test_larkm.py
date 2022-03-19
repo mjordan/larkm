@@ -15,7 +15,7 @@ def test_resolve_ark():
     response = client.get("/ark:/12345/x977777?info")
     assert response.status_code == 200
     response_text = "erc:\nwho: :at\nwhat: :at\nwhen: :at\n"
-    response_text = response_text + "where: https://www.lib.sfu.ca\npolicy: Default committment statement.\n\n"
+    response_text = response_text + "where: https://example.ca/foo\npolicy: Default committment statement.\n\n"
     assert response.text == response_text
 
 
