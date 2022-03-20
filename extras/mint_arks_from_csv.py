@@ -39,10 +39,10 @@ for row in input_csv_reader:
         data['who'] = row['who']
     if 'when' in row and len(row['when']) > 0:
         data['when'] = row['when']
-    r = requests.post(endpoint, json=data, headers=headers)
     if 'policy' in row:
         data['policy'] = row['policy']
 
+    r = requests.post(endpoint, json=data, headers=headers)
     if r.status_code == 201:
         body = json.loads(r.text)
         row['arks_local_resolver'] = f'{larkm_host}/{body["ark"]["ark_string"]}'
