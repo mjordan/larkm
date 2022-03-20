@@ -29,7 +29,7 @@ larkm is currently a proof of concept as we learn about locally mananging ARKs. 
 
 ### Creating the database
 
-larkm provides an empty sqlite database that you can use, `larkm_template.db`.
+larkm provides an empty sqlite database that you can use, `larkm_template.db` in the extras directory.
 
 If you want to create your own, run the following commands:
 
@@ -70,12 +70,6 @@ Currently, there are four config settings:
   "trusted_ips": []
 }
 ```
-
-## Metadata support
-
-larkm supports the [Electronic Resource Citation](https://www.dublincore.org/groups/kernel/spec/) (ERC) metadata format expressed in ANVL syntax. Note that larkm accepts the raw values provided by the client and does not validate or format the values in any way.
-
-If the default "where" ERC metadata is an empty string (as illustrated in the configuration data above), larkm assigns the ARK's target value to it.
 
 ### Starting larkm
 
@@ -151,9 +145,11 @@ If the ARK was deleted, larkm returns a `204 No Content` response with no body. 
 
 Note that larkm returns only the subset of configuration data that clients need to create new ARKs, specifically the "default_shoulder", "allowed_shoulders", "committment_statement", and "erc_metadata_defaults" configuration data.
 
-## API docs
+## Metadata support
 
-Thanks to [OpenAPI](https://github.com/OAI/OpenAPI-Specification), you can see larkm's API docs by visiting http://127.0.0.1:8000/docs#.
+larkm supports the [Electronic Resource Citation](https://www.dublincore.org/groups/kernel/spec/) (ERC) metadata format expressed in ANVL syntax. Note that larkm accepts the raw values provided by the client and does not validate or format the values in any way.
+
+If the default "where" ERC metadata is an empty string (as illustrated in the configuration data above), larkm assigns the ARK's target value to it.
 
 ## Shoulders
 
@@ -164,6 +160,19 @@ Following ARK best practice, larkm requires the use of [shoulders](https://wiki.
 If you have a registered NAAN that points to the server running larkm, you can use the Names to Things global ARK resolver's domain redirection feature by replacing the hostname of the server larkm is running on with `https://n2t.net/`. For example, if your the local server larkm is runnin on is `https://ids.myorg.ca`, and your insitution's NAAN is registered to use that hostname, you can use a local instance of larkm to manage ARKs like `https://n2t.net/ark:/12345/x910` (using your NAAN instead of `12345`) and they will resolve through your local larkm running on `https://ids.myorg.ca` to their target URLs.
 
 An advantage of doing this is that if your local resolver needs to be changed from `https://ids.myorg.ca/` to another host, assuming you update your NAAN record to use the new host, requests to `https://n2t.net/ark:/12345/x910` will continue to resolve to their targets.
+
+## API docs
+
+Thanks to [OpenAPI](https://github.com/OAI/OpenAPI-Specification), you can see larkm's API docs by visiting http://127.0.0.1:8000/docs#.
+
+## Scripts
+
+The "extras" directory contains two sample scripts:
+
+1. a script to test larkm's performance
+1. a script to mint ARKs from a CSV file
+
+Instructions are at the top of each file.
 
 ## Development
 
