@@ -2,7 +2,7 @@
   "NAAN": "99999",
   "default_shoulder": "s1",
   "allowed_shoulders": ["s2", "s3", "x9"],
-  "committment_statement": {
+  "committment_statements": {
        "s1": "ACME University commits to maintain ARKs that have 's1' as a shoulder for a long time.",
        "s3": "ACME University commits to maintain ARKs that have 's3' as a shoulder until the end of 2025.",
        "default": "Default committment statement."

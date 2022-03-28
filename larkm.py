@@ -4,6 +4,7 @@ from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 from uuid import uuid4
 import copy
+import re
 import sqlite3
 import json
 
@@ -40,6 +41,11 @@ def resolve_ark(naan: str, identifier: str, info: Optional[str] = None):
       metadata. For now, return the configured committment statement only.
     """
     ark_string = f'ark:/{naan}/{identifier}'
+
+    ark_string = normalize_ark_string(ark_string)
+    if not ark_string:
+        raise HTTPException(status_code=422, detail="Invalid ARK string.")
+
     try:
         con = sqlite3.connect(config["sqlite_db_path"])
         con.row_factory = sqlite3.Row
@@ -64,9 +70,9 @@ def resolve_ark(naan: str, identifier: str, info: Optional[str] = None):
         else:
             for sh in config["allowed_shoulders"]:
                 if ark_string.startswith(sh):
-                    policy = "policy: " + config["committment_statement"][sh]
+                    policy = "policy: " + config["committment_statements"][sh]
                 else:
-                    policy = "policy: " + config["committment_statement"]["default"]
+                    policy = "policy: " + config["committment_statements"]["default"]
 
         return Response(content=erc + policy + "\n\n", media_type="text/plain")
 
@@ -174,6 +180,11 @@ def create_ark(request: Request, ark: Ark):
             if ark.shoulder not in config["allowed_shoulders"]:
                 raise HTTPException(status_code=422, detail="Provided shoulder is invalid.")
 
+    # Validate UUID if provided.
+    if ark.identifier is not None:
+        if not re.match('^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}$', ark.identifier):
+            raise HTTPException(status_code=422, detail="Provided UUID is invalid.")
+
     # Assemble the ARK. Generate parts the client didn't provide.
     if ark.shoulder is None:
         ark.shoulder = config["default_shoulder"]
@@ -191,10 +202,10 @@ def create_ark(request: Request, ark: Ark):
     if ark.where is None or len(ark.where) == 0:
         ark.where = ark.target
     if ark.policy is None:
-        if ark.shoulder in config["committment_statement"].keys():
-            ark.policy = config["committment_statement"][ark.shoulder]
+        if ark.shoulder in config["committment_statements"].keys():
+            ark.policy = config["committment_statements"][ark.shoulder]
         else:
-            ark.policy = config["committment_statement"]['default']
+            ark.policy = config["committment_statements"]['default']
 
     try:
         ark_data = (ark.shoulder, ark.identifier, ark.ark_string, ark.target, ark.who, ark.what, ark.when, ark.where, ark.policy)
@@ -335,3 +346,40 @@ def return_config():
     del subset['trusted_ips']
     del subset['sqlite_db_path']
     return subset
+
+
+def normalize_ark_string(ark_string):
+    """
+    Reconsitutues the hypens in the UUID portion of the ARK string. The ARK
+    spec requires hyphens to be insignificant.
+
+    Assumes that the ARK string contains the optional / after 'ark:',
+    that the NAAN is 5 characters long, and that the shoulder is two
+    characters long.
+
+    - **ark_string**: an ARK string in the form ark:/12345/y2ee65209e67fe-45fc-a9721da0b602c742
+      where the UUID part of the string contains a 2-character shoulder and 0 or more hyphens (-).
+    - **identifier**: the identifier portion of the ARK.
+
+    Returns the reconstituted ARK string or False if the UUID is not a valid UUID v4.
+    """
+
+    # Everthing up to and including the shoulder.
+    prefix = ark_string[:13]
+    # Everything after the shoulder; assumed to be a UUID with or without hyphens.
+    suffix = ark_string[13:]
+
+    uuid_sans_hyphens = suffix.replace('-', '')
+    group5 = uuid_sans_hyphens[20:]
+    group4 = uuid_sans_hyphens[16:20]
+    group3 = uuid_sans_hyphens[12:16]
+    group2 = uuid_sans_hyphens[8:12]
+    group1 = uuid_sans_hyphens[:8]
+
+    reconstituted_uuid = f'{group1}-{group2}-{group3}-{group4}-{group5}'
+    if not re.match('^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}$', reconstituted_uuid):
+        return False
+
+    reconstituted_ark_string = prefix + reconstituted_uuid
+
+    return reconstituted_ark_string
