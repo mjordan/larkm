@@ -32,10 +32,12 @@ def resolve_ark(naan: str, identifier: str, info: Optional[str] = None):
     The ARK resolver. Redirects the client to the target URL
     associated with the ARK. Sample query:
 
-    curl -L "http://127.0.0.1:8000/ark:/12345/12"
+    curl -L "http://127.0.0.1:8000/ark:/12345/x9062cdde7-f9d6-48bb-be17-bd3b9f441ec4"
+"
 
     - **naan**: the NAAN portion of the ARK.
-    - **identifier**: the identifier portion of the ARK.
+    - **identifier**: the identifier portion of the ARK. A v4 UUID prepended
+      with a 2-character shoulder (in this example, "x9").
     - **info**: As described in the ARK specification, '?info' appended
       to the ARK string should return a committment statement and resource
       metadata. For now, return the configured committment statement only.
@@ -83,8 +85,9 @@ def read_ark(request: Request, ark_string: Optional[str] = '', target: Optional[
     Get the target URL associated with an ARK, or the ARK assoicated
     with a target URL. Sample query:
 
-    curl "http://127.0.0.1:8000/larkm?ark_string=ark:/12345/12" or
-    curl "http://127.0.0.1:8000/larkm?target=https://www.lib.sfu.ca"
+    curl "http://127.0.0.1:8000/larkm?ark_string=ark:/12345/x931fd9bec-0bb6-4b6a-a08b-19554e6d711d
+" or
+    curl "http://127.0.0.1:8000/larkm?target=https://example.com/foo"
 
     - **ark_string**: the ARK the client wants to get the target for, in the
       form 'ark:/naan/id_string'.
@@ -122,23 +125,23 @@ def create_ark(request: Request, ark: Ark):
     """
     Create a new ARK, optionally minting a new ARK. Clients can provide
     an identifier string and/or a shoulder. If either of these is not provided,
-    larkm will provide one. If an identifier is provided, it should not contain
-    a shoulder, since larkm will always add a shoulder to new ARKs. Clients
+    larkm will provide one. If a UUID v4 identifier is provided, it should not
+    contain a shoulder, since larkm will always add a shoulder to new ARKs. Clients
     cannot provide a NAAN. Clients must always provide a target.
 
     Sample request with an provided ID/name and shoulder:
 
     curl -v -X POST "http://127.0.0.1:8000/larkm" \
         -H 'Content-Type: application/json' \
-        -d '{"shoulder": "x1", "identifier": "12345", "target": "https://digital.lib.sfu.ca"}'
+        -d '{"shoulder": "x1", "identifier": "fde97fb3-634b-4232-b63e-e5128647efe7", "target": "https://digital.lib.sfu.ca"}'
 
-    Sample request with only a target and an ID/name, which asks larkm to generate
-    an ARK string based on the NAAN specified in configuration settings, the default
-    soulder, and the provided ID/name:
+    Sample request with only a target and an identifier and a name, which asks larkm to
+    generate an ARK string based on the NAAN specified in configuration settings, the
+    default shoulder, and the provided ID/name:
 
     curl -v -X POST "http://127.0.0.1:8000/larkm" \
         -H 'Content-Type: application/json' \
-        -d '{"identifier": "45679", "target": "https://digital.lib.sfu.ca"}'
+        -d '{"identifier": "fde97fb3-634b-4232-b63e-e5128647efe7", "target": "https://digital.lib.sfu.ca"}'
 
     Sample request with only a target and a shoulder, which asks larkm to generate
     an ARK string based on the NAAN specified in configuration settings and the supplied
@@ -228,9 +231,9 @@ def update_ark(request: Request, naan: str, identifier: str, ark: Ark):
     identifiers, and ark_strings cannot be updated. ark_string is a required
     body field. Sample query:
 
-    curl -v -X PUT "http://127.0.0.1:8000/larkm/ark:/12345/s912" \
+    curl -v -X PUT "http://127.0.0.1:8000/larkm/ark:/12345/x931fd9bec-0bb6-4b6a-a08b-19554e6d711d" \
         -H 'Content-Type: application/json' \
-        -d '{"ark_string": "ark:/12345/s912", "target": "https://summit.sfu.ca"}'
+        -d '{"ark_string": "ark:/12345/x931fd9bec-0bb6-4b6a-a08b-19554e6d711d", "target": "https://example.com/foo"}'
 
     - **naan**: the NAAN portion of the ARK.
     - **identifier**: the identifier portion of the ARK, which will include a shouder.
@@ -296,7 +299,7 @@ def delete_ark(request: Request, naan: str, identifier: str):
     """
     Given an ARK string, delete the ARK. Sample query:
 
-    curl -v -X DELETE "http://127.0.0.1:8000/larkm/ark:/12345/12"
+    curl -v -X DELETE "http://127.0.0.1:8000/larkm/ark:/12345/x931fd9bec-0bb6-4b6a-a08b-19554e6d711d"
 
     - **naan**: the NAAN portion of the ARK.
     - **identifier**: the identifier portion of the ARK.
@@ -353,8 +356,8 @@ def normalize_ark_string(ark_string):
     Reconsitutues the hypens in the UUID portion of the ARK string. The ARK
     spec requires hyphens to be insignificant.
 
-    Assumes that the ARK string contains the optional / after 'ark:',
-    that the NAAN is 5 characters long, and that the shoulder is two
+    Assumes that the ARK string contains the optional / after 'ark:', that
+    the NAAN is 5 characters long, and that the shoulder is present and is two
     characters long.
 
     - **ark_string**: an ARK string in the form ark:/12345/y2ee65209e67fe-45fc-a9721da0b602c742
