@@ -77,7 +77,7 @@ To start the larkm app within local Uvicorn we server, in a terminal run `python
 
 ### Resolving an ARK
 
-Visit `http://127.0.0.1:8000/ark:/12345/x9062cdde7-f9d6-48bb-be17-bd3b9f441ec4` using `curl -Lv'. You will see a redirect to `https://example.com/foo`.
+Visit `http://127.0.0.1:8000/ark:/12345/x9062cdde7-f9d6-48bb-be17-bd3b9f441ec4` using `curl -Lv`. You will see a redirect to `https://example.com/foo`.
 
 To see the configured metadata and committment statement for the ARK instead of resolving to its target, append `?info` to the end of the ARK, e.g., `http://127.0.0.1:8000/ark:/12345/x9062cdde7-f9d6-48bb-be17-bd3b9f441ec4?info`.
 
@@ -143,7 +143,7 @@ If the ARK was deleted, larkm returns a `204 No Content` response with no body. 
 
 `curl -v "http://127.0.0.1:8000/larkm/config"`
 
-Note that larkm returns only the subset of configuration data that clients need to create new ARKs, specifically the "default_shoulder", "allowed_shoulders", "committment_statement", and "erc_metadata_defaults" configuration data.
+Note that larkm returns only the subset of configuration data that clients need to create new ARKs, specifically the "default_shoulder", "allowed_shoulders", "committment_statement", and "erc_metadata_defaults" configuration data. Only clients whose IP addresses are listed in the `trusted_ips` configuration option may request configuration data.
 
 ## Metadata support
 
