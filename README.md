@@ -171,6 +171,7 @@ The "extras" directory contains two sample scripts:
 
 1. a script to test larkm's performance
 1. a script to mint ARKs from a CSV file
+1. a script to mint ARKs from the output of the [larkm Integration Drupal module](https://github.com/mjordan/larkm_integration)
 
 Instructions are at the top of each file.
 
