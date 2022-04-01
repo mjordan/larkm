@@ -128,6 +128,27 @@ def test_create_ark():
     assert response.status_code == 422
     assert response.text == '{"detail":"Provided UUID is invalid."}'
 
+    # Create an ARK that uses a UUID already in the database.
+    response = client.post(
+        "/larkm",
+        json={
+            "shoulder": "s1",
+            "identifier": "2d24d07f-ed23-4613-a7a3-0c46155c191f",
+            "target": "https://example.com"
+        },
+    )
+    assert response.status_code == 201
+
+    response = client.post(
+        "/larkm",
+        json={
+            "shoulder": "s1",
+            "identifier": "2d24d07f-ed23-4613-a7a3-0c46155c191f",
+            "target": "https://example.com/foo"
+        },
+    )
+    assert response.status_code == 409
+
 
 def test_update_ark():
     # Only provide the required body fields, see if larkm provides the correct default values for other fields.
@@ -209,13 +230,13 @@ def test_delete_ark():
         "/larkm",
         json={
             "shoulder": "x9",
-            "identifier": "20578b9e-ba6e-494b-b35d-1419e06f9ced",
+            "identifier": "15a1a0a1-20a3-4ef9-a0b5-91a6115bb538",
             "target": "https://example.com"
         },
     )
     assert create_response.status_code == 201
 
     delete_response = client.delete(
-        "/larkm/ark:/99999/x920578b9e-ba6e-494b-b35d-1419e06f9ced"
+        "/larkm/ark:/99999/x915a1a0a1-20a3-4ef9-a0b5-91a6115bb538"
     )
     assert delete_response.status_code == 204

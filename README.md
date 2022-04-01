@@ -85,9 +85,11 @@ To see the configured metadata and committment statement for the ARK instead of 
 
 REST clients can provide a `shoulder` and/or an `identifer` value in the requst body. If either of these is not provided, larkm will provide it. If an identifier is provided, it should not contain a shoulder. Clients must always provide a `target`.  Clients cannot provide a NAAN.
 
+If the UUID that is provided is already in use, larkm will responde to the `POST` request with an HTTP `409` with the body `{"detail":"UUID already in use."}`.
+
 To add a new ARK (for example, to resolve to https://digital.lib.sfu.ca), issue the following request using curl:
 
-`curl -v -X POST "http://127.0.0.1:8000/larkm" -H 'Content-Type: application/json' -d '{shoulder": "s1", "identifier": "fde97fb3-634b-4232-b63e-e5128647efe7", "target": "https://digital.lib.sfu.ca"}'`
+`curl -v -X POST "http://127.0.0.1:8000/larkm" -H 'Content-Type: application/json' -d '{"shoulder": "s1", "identifier": "fde97fb3-634b-4232-b63e-e5128647efe7", "target": "https://digital.lib.sfu.ca"}'`
 
 If you now visit `http://127.0.0.1:8000/ark:/12345/s1fde97fb3-634b-4232-b63e-e5128647efe7`, you will be redirected to https://digital.lib.sfu.ca.
 
@@ -99,7 +101,7 @@ All responses to a POST will include in their body `shoulder`, `identifier` and 
 
 Values provided in the request body for `what`, `who`, `when`, and `policy` will be returned in the response:
 
-`curl -v -X POST "http://127.0.0.1:8000/larkm" -H 'Content-Type: application/json' -d '{shoulder": "s1", "target": "https://digital.lib.sfu.ca", "who": "Jordan, Mark", "when": "2020", "policy": "We commit to maintaining this ARK for a long time."}'`
+`curl -v -X POST "http://127.0.0.1:8000/larkm" -H 'Content-Type: application/json' -d '{"shoulder": "s1", "target": "https://digital.lib.sfu.ca", "who": "Jordan, Mark", "when": "2020", "policy": "We commit to maintaining this ARK for a long time."}'`
 
 will return
 

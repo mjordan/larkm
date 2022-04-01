@@ -129,6 +129,9 @@ def create_ark(request: Request, ark: Ark):
     contain a shoulder, since larkm will always add a shoulder to new ARKs. Clients
     cannot provide a NAAN. Clients must always provide a target.
 
+    If the UUID that is provided is already in use, larkm will responde to the POST
+    request with an HTTP `409` with the body `{"detail":"UUID already in use."}`.
+
     Sample request with an provided ID/name and shoulder:
 
     curl -v -X POST "http://127.0.0.1:8000/larkm" \
@@ -187,6 +190,21 @@ def create_ark(request: Request, ark: Ark):
     if ark.identifier is not None:
         if not re.match('^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}$', ark.identifier):
             raise HTTPException(status_code=422, detail="Provided UUID is invalid.")
+
+        # See if provided UUID is already being used.
+        try:
+            con = sqlite3.connect(config["sqlite_db_path"])
+            con.row_factory = sqlite3.Row
+            cur = con.cursor()
+            cur.execute("select * from arks where identifier = :a_s", {"a_s": ark.identifier})
+            record = cur.fetchone()
+            if record is not None:
+                con.close()
+                raise HTTPException(status_code=409, detail="UUID already in use.")
+            con.close()
+        except sqlite3.DatabaseError as e:
+            # @todo: log (do not add to response!) str(e).
+            raise HTTPException(status_code=500)
 
     # Assemble the ARK. Generate parts the client didn't provide.
     if ark.shoulder is None:
