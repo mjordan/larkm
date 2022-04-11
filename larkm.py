@@ -232,7 +232,7 @@ def create_ark(request: Request, ark: Ark):
         ark_data = (ark.shoulder, ark.identifier, ark.ark_string, ark.target, ark.who, ark.what, ark.when, ark.where, ark.policy)
         con = sqlite3.connect(config["sqlite_db_path"])
         cur = con.cursor()
-        cur.execute("insert into arks values (?,?,?,?,?,?,?,?,?)", ark_data)
+        cur.execute("insert into arks values (datetime(), datetime(), ?,?,?,?,?,?,?,?,?)", ark_data)
         con.commit()
         con.close()
     except sqlite3.DatabaseError as e:
@@ -301,7 +301,7 @@ def update_ark(request: Request, naan: str, identifier: str, ark: Ark):
         ark_data = (ark.shoulder, ark.identifier, ark.ark_string, ark.target, ark.who, ark.what, ark.when, ark.where, ark.policy, ark.ark_string)
         con = sqlite3.connect(config["sqlite_db_path"])
         cur = con.cursor()
-        cur.execute("update arks set shoulder = ?, identifier = ?, ark_string = ?, target = ?, erc_who = ?, erc_what = ?, erc_when = ?, erc_where = ?, policy = ? where ark_string = ?", ark_data)
+        cur.execute("update arks set date_modified = datetime(), shoulder = ?, identifier = ?, ark_string = ?, target = ?, erc_who = ?, erc_what = ?, erc_when = ?, erc_where = ?, policy = ? where ark_string = ?", ark_data)
         con.commit()
         con.close()
     except sqlite3.DatabaseError as e:
