@@ -7,6 +7,8 @@ import copy
 import re
 import sqlite3
 import json
+import logging
+from datetime import datetime
 
 with open("larkm.json", "r") as config_file:
     config = json.load(config_file)
@@ -27,7 +29,7 @@ class Ark(BaseModel):
 
 
 @app.get("/ark:/{naan}/{identifier}")
-def resolve_ark(naan: str, identifier: str, info: Optional[str] = None):
+def resolve_ark(request: Request, naan: str, identifier: str, info: Optional[str] = None):
     """
     The ARK resolver. Redirects the client to the target URL
     associated with the ARK. Sample query:
@@ -56,6 +58,8 @@ def resolve_ark(naan: str, identifier: str, info: Optional[str] = None):
         record = cur.fetchone()
         if record is None:
             con.close()
+            if config["log_file_path"]:
+                log_request(ark_string, request.client.host, request.headers, "ARK not found")
             raise HTTPException(status_code=404, detail="ARK not found")
         con.close()
     except sqlite3.DatabaseError as e:
@@ -63,6 +67,8 @@ def resolve_ark(naan: str, identifier: str, info: Optional[str] = None):
         raise HTTPException(status_code=500)
 
     if info is None:
+        if config["log_file_path"]:
+            log_request(ark_string, request.client.host, request.headers, record['target'])
         return RedirectResponse(record['target'])
     else:
         erc = f"erc:\nwho: {record['erc_who']}\nwhat: {record['erc_what']}\nwhen: {record['erc_when']}\nwhere: {record['erc_where']}\n"
@@ -75,7 +81,8 @@ def resolve_ark(naan: str, identifier: str, info: Optional[str] = None):
                     policy = "policy: " + config["committment_statements"][sh]
                 else:
                     policy = "policy: " + config["committment_statements"]["default"]
-
+        if config["log_file_path"]:
+            log_request(ark_string, request.client.host, request.headers, 'info')
         return Response(content=erc + policy + "\n\n", media_type="text/plain")
 
 
@@ -367,6 +374,20 @@ def return_config():
     del subset['trusted_ips']
     del subset['sqlite_db_path']
     return subset
+
+
+def log_request(ark_string, client_ip, request_headers, request_type):
+    if 'referer' in request_headers:
+        referer = request_headers['referer']
+    else:
+        referer = 'null'
+
+    now = datetime.now()
+    date_format = "%Y-%m-%d %H:%M:%S"
+
+    entry = f"{now.strftime(date_format)}\t{client_ip}\t{ark_string}\t{request_type}\t{referer}"
+    logging.basicConfig(level=logging.INFO, filename=config['log_file_path'], filemode='a', format='%(message)s')
+    logging.info(entry)
 
 
 def normalize_ark_string(ark_string):

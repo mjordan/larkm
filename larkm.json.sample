@@ -14,5 +14,6 @@
        "where": ""
   },
   "sqlite_db_path": "testdb/larkmtest.db",
+  "log_file_path": "/tmp/larkm.log",
   "trusted_ips": []
 }

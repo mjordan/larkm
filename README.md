@@ -12,6 +12,7 @@ larkm is a simple [ARK](https://arks.org/) manager that can:
 * provide the target URLs of ARKs it manages, and provide the ARK associated with a URL
 * provide basic [committment statements](https://arks.org/about/best-practices/) that are specific to shoulders
 * delete ARKs
+* log requests for ARK resolution
 
 ARK resolution is provided via requests to larkm's host followed by an ARK (e.g. `https://myhost.net/ark:/12345/876543`) and the other operations are provided through standard REST requests to larkm's management endpoint (`/larkm`). This REST interface allows creating, persisting, updating, and deleting ARKs, and can expose a subset of larkm's configuration data to clients. Access to the REST endpoints can be controlled by registering the IP addresses of trused clients, as explained in the "Configuration" section below.
 
@@ -67,6 +68,7 @@ Currently, there are four config settings:
        "where": ""
   },
   "sqlite_db_path": "testdb/larkmtest.db",
+  "log_file_path": "/tmp/larkm.log",
   "trusted_ips": []
 }
 ```
@@ -172,6 +174,10 @@ An advantage of doing this is that if your local resolver needs to be changed fr
 
 Thanks to [OpenAPI](https://github.com/OAI/OpenAPI-Specification), you can see larkm's API docs by visiting http://127.0.0.1:8000/docs#.
 
+## Logging
+
+larkm provides basic logging of requests to its resolver endpoint (i.e., `/ark:/foo/bar`). The path to the log is set in the "log_file_path" configuration option. To disable logging, use `false` as the value of this option. The log is a tab-delimited file containing a datestamp, the client's IP address, the requested ARK string, the corresonding target URL (or "ARK not found" if the requested ARK was not found, or "info" if the request was for the ARK's metadata), and the HTTP referer. If the referer is not available, the last value in the TSV is "null".
+
 ## Scripts
 
 The "extras" directory contains two sample scripts:
@@ -184,7 +190,7 @@ Instructions are at the top of each file.
 
 ## Development
 
-* Run `larkm.py` and `test_larkm.py` through pycodestyle: `pycodestyle --show-source --show-pep8 --ignore=E402,E501,W504 --max-line-length=200 *.py`
+* Run `larkm.py` and `test_larkm.py` through pycodestyle: `pycodestyle --show-source --show-pep8 --ignore=E402,E501,W504 *.py`
 * To run tests:
    * you don't need to start the web server or create a database
    * within the larkm directory, copy `larkm.json.sample` to `larkm.json` (back up `larkm.json` first if you have custom values in it)
