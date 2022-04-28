@@ -20,7 +20,7 @@ larkm is currently a proof of concept as we learn about locally mananging ARKs. 
 
 ## Requirements
 
-* Python 3.6+
+* Python 3.7+
 * [FastAPI](https://fastapi.tiangolo.com/)
 * [Uvicorn](https://www.uvicorn.org/) for demo/testing, or some other ASGI web server for production uses.
 * sqlite3 (installed by default with Python)
