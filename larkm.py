@@ -381,16 +381,16 @@ def delete_ark(request: Request, naan: str, identifier: str):
 @app.get("/larkm/config")
 def return_config():
     """
-    Returns a subset larkm's configuration data to the client.
+    Returns a subset of larkm's configuration data to the client.
     """
     if len(config["trusted_ips"]) > 0 and request.client.host not in config["trusted_ips"]:
         raise HTTPException(status_code=403)
 
     # Remove configuration data the client doesn't need to know.
     subset = copy.deepcopy(config)
-    del subset['NAAN']
     del subset['trusted_ips']
     del subset['sqlite_db_path']
+    del subset['log_file_path']
     return subset
 
 
