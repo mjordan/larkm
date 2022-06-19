@@ -73,7 +73,10 @@ def test_create_ark():
     assert response.json() == {"ark": {"shoulder": "s1", "identifier": "14b7f127-b358-4994-8888-5b7392f588d7",
                                        "ark_string": "ark:/99999/s114b7f127-b358-4994-8888-5b7392f588d7",
                                        "target": "https://example.com", "who": ":at", "what": ":at", "when": ":at",
-                                       "where": "https://example.com", "policy": "ACME University commits to maintain ARKs that have 's1' as a shoulder for a long time."}}
+                                       "where": "https://example.com",
+                                       "policy": "ACME University commits to maintain ARKs that have 's1' as a shoulder for a long time."},
+                                       "urls": {"local": "https://resolver.myorg.net/ark:/99999/s114b7f127-b358-4994-8888-5b7392f588d7",
+                                       "global": "https://n2t.net/ark:/99999/s114b7f127-b358-4994-8888-5b7392f588d7"}}
 
     # Provide a shoulder that is mapped to the default policy statement.
     response = client.post(
@@ -89,7 +92,9 @@ def test_create_ark():
     assert response.json() == {"ark": {"shoulder": "x9", "identifier": "20578b9e-ba6e-494b-b35d-1419e06f9ced",
                                        "ark_string": "ark:/99999/x920578b9e-ba6e-494b-b35d-1419e06f9ced",
                                        "target": "https://example.com/bar", "who": ":at", "what": "A new ARK", "when": ":at",
-                                       "where": "https://example.com/bar", "policy": "Default committment statement."}}
+                                       "where": "https://example.com/bar", "policy": "Default committment statement."},
+                                       "urls": {"local": "https://resolver.myorg.net/ark:/99999/x920578b9e-ba6e-494b-b35d-1419e06f9ced",
+                                       "global": "https://n2t.net/ark:/99999/x920578b9e-ba6e-494b-b35d-1419e06f9ced"}}
 
     # Get the 'info' for this ARK.
     response = client.get("/ark:/99999/x920578b9e-ba6e-494b-b35d-1419e06f9ced?info")
@@ -113,7 +118,9 @@ def test_create_ark():
                                        "ark_string": "ark:/99999/x947321e02-7df6-4dfc-aad2-bdb75ab6b92b",
                                        "target": "https://example.com/bar", "who": ":at", "when": ":at",
                                        "what": "A test ARK with some 'special' characters (`%&) in its metadata",
-                                       "where": "https://example.com/bar", "policy": "Default committment statement."}}
+                                       "where": "https://example.com/bar", "policy": "Default committment statement."},
+                                       "urls": {"local": "https://resolver.myorg.net/ark:/99999/x947321e02-7df6-4dfc-aad2-bdb75ab6b92b",
+                                       "global": "https://n2t.net/ark:/99999/x947321e02-7df6-4dfc-aad2-bdb75ab6b92b"}}
 
     # Create an ARK with a bad UUID.
     response = client.post(
@@ -165,7 +172,9 @@ def test_update_ark():
     assert response.json() == {"ark": {"shoulder": "s2", "identifier": "cda60df9-b468-4520-8e97-fc12deb5e324",
                                        "ark_string": "ark:/99999/s2cda60df9-b468-4520-8e97-fc12deb5e324",
                                        "target": "https://example.com", "who": ":at", "what": ":at", "when": ":at",
-                                       "where": "https://example.com", "policy": "Default committment statement."}}
+                                       "where": "https://example.com", "policy": "Default committment statement."},
+                                       "urls": {"local": "https://resolver.myorg.net/ark:/99999/s2cda60df9-b468-4520-8e97-fc12deb5e324",
+                                       "global": "https://n2t.net/ark:/99999/s2cda60df9-b468-4520-8e97-fc12deb5e324"}}
 
     # Then update the when and what body fields.
     response = client.put(
@@ -180,7 +189,9 @@ def test_update_ark():
     assert response.json() == {"ark": {"shoulder": "s2", "identifier": "cda60df9-b468-4520-8e97-fc12deb5e324",
                                        "ark_string": "ark:/99999/s2cda60df9-b468-4520-8e97-fc12deb5e324",
                                        "target": "https://example.com", "who": ":at", "what": "A test", "when": "2020",
-                                       "where": "https://example.com", "policy": "Default committment statement."}}
+                                       "where": "https://example.com", "policy": "Default committment statement."},
+                                       "urls": {"local": "https://resolver.myorg.net/ark:/99999/s2cda60df9-b468-4520-8e97-fc12deb5e324",
+                                       "global": "https://n2t.net/ark:/99999/s2cda60df9-b468-4520-8e97-fc12deb5e324"}}
 
     # Update the policy body field.
     response = client.post(
@@ -204,7 +215,11 @@ def test_update_ark():
     assert response.json() == {"ark": {"shoulder": "s2", "identifier": "aaed59b0-6ad6-4b69-8511-bcf781e386a0",
                                        "ark_string": "ark:/99999/s2aaed59b0-6ad6-4b69-8511-bcf781e386a0",
                                        "target": "https://example.com", "who": ":at", "what": "New ARK with its own policy",
-                                       "when": ":at", "where": "https://example.com", "policy": "A test policy."}}
+                                       "when": ":at", "where": "https://example.com", "policy": "A test policy."},
+                                       "urls": {
+                                           "local": "https://resolver.myorg.net/ark:/99999/s2aaed59b0-6ad6-4b69-8511-bcf781e386a0",
+                                           "global": "https://n2t.net/ark:/99999/s2aaed59b0-6ad6-4b69-8511-bcf781e386a0"}
+                               }
 
     # Intentionally trigger a 409 by mismatching the URL parameters and the ark_string body field.
     response = client.post(

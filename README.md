@@ -49,6 +49,7 @@ Currently, there are four config settings:
 * "allowed_shoulders", a list of shoulders that are allowed in new ARKs provided by clients). If your default shoulder is the only one currently used by your NAAN, provide an empty list for "allowed_shoulders" (e.g. `[]`).
 * "committment_statement", a mapping from shoulders to text expressing your institution's committment to maintaining the ARKs.
 * "sqlite_db_path": absolute or relative (to larkm.py) path to larkm's sqlite3 database file.
+* "resolver_hosts": definition of the resolvers to include in the `urls` list returned to clients. See below for more information.
 * "trusted_ips": list of client IP addresses that can create, update, and delete ARKs; leave empty to no restrict access to these functions (e.g. during testing).
 
 ```json
@@ -69,6 +70,10 @@ Currently, there are four config settings:
   },
   "sqlite_db_path": "testdb/larkmtest.db",
   "log_file_path": "/tmp/larkm.log",
+  "resolver_hosts": {
+     "global": "https://n2t.net/",
+     "local": "https://resolver.myorg.net"
+  },
   "trusted_ips": []
 }
 ```
@@ -102,9 +107,11 @@ If you now visit `http://127.0.0.1:8000/ark:/12345/s1fde97fb3-634b-4232-b63e-e51
 
 If you omit the `shoulder`, the configured default shoulder will be used. If you omit the `identifier`, larkm will mint one using a v4 UUID.
 
-All responses to a POST will include in their body `shoulder`, `identifier` and `target` and metadata and `policy` values provided in the POST request. The `where` value will be identical to the provided`target` value. Metadata values not provided will get the ERC ":at" ("the real value is at the given URL or identifier") value:
+All responses to a POST will include in their body `shoulder`, `identifier`, `target`, metadata and `policy` values provided in the POST request. The `where` value will be identical to the provided`target` value. Metadata values not provided will get the ERC ":at" ("the real value is at the given URL or identifier") value:
 
-`{"ark":{"shoulder": "s1", "identifier": "fde97fb3-634b-4232-b63e-e5128647efe7", "ark_string":"ark:/12345/s1fde97fb3-634b-4232-b63e-e5128647efe7","target":"https://digital.lib.sfu.ca", "who":":at", "when":":at", "where":"https://digital.lib.sfu.ca", "what":":at"}}`
+`{"ark":{"shoulder": "s1", "identifier": "fde97fb3-634b-4232-b63e-e5128647efe7", "ark_string":"ark:/12345/s1fde97fb3-634b-4232-b63e-e5128647efe7","target":"https://digital.lib.sfu.ca", "who":":at", "when":":at", "where":"https://digital.lib.sfu.ca", "what":":at"}, "urls":{"local":"https://resolver.myorg.net/ark:/12345/s1fde97fb3-634b-4232-b63e-e5128647efe7","global":"https://n2t.net/ark:/99999/s1fde97fb3-634b-4232-b63e-e5128647efe7"}}`
+
+Also included in the response are values for global and local `urls`.
 
 Values provided in the request body for `what`, `who`, `when`, and `policy` will be returned in the response:
 
@@ -112,7 +119,7 @@ Values provided in the request body for `what`, `who`, `when`, and `policy` will
 
 will return
 
-`{"ark":{"shoulder": "s1", "identifier": "fde97fb3-634b-4232-b63e-e5128647efe7", "ark_string":"ark:/12345/s1fde97fb3-634b-4232-b63e-e5128647efe7","target":"https://digital.lib.sfu.ca", "who":"Jordan, Mark", "when":"2020", "where":"https://digital.lib.sfu.ca", "policy":"We commit to maintaining this ARK for a long time."}}`
+`{"ark":{"shoulder": "s1", "identifier": "fde97fb3-634b-4232-b63e-e5128647efe7", "ark_string":"ark:/12345/s1fde97fb3-634b-4232-b63e-e5128647efe7","target":"https://digital.lib.sfu.ca", "who":"Jordan, Mark", "when":"2020", "where":"https://digital.lib.sfu.ca", "policy":"We commit to maintaining this ARK for a long time."}, "urls":{"local":"https://resolver.myorg.net/ark:/12345/s1fde97fb3-634b-4232-b63e-e5128647efe7","global":"https://n2t.net/ark:/12345/s1fde97fb3-634b-4232-b63e-e5128647efe7"}}`
 
 ### Updating an ARK's target URL and metadata
 
@@ -136,7 +143,7 @@ If you want the ARK for a URL, do this:
 
 In both cases, larkm will return a JSON response body that looks like this:
 
-`{"ark_string": "ark:/12345/s1fde97fb3-634b-4232-b63e-e5128647efe7", "target": "https://summit.sfu.ca"}`
+`{"ark_string": "ark:/12345/s1fde97fb3-634b-4232-b63e-e5128647efe7", "target": "https://summit.sfu.ca", "urls":{"local":"https://resolver.myorg.net/ark:/12345/s1fde97fb3-634b-4232-b63e-e5128647efe7","global":"https://n2t.net/ark:/12345/s1fde97fb3-634b-4232-b63e-e5128647efe7"}}`
 
 or a 404 if the ARK or URL you used in your request wasn't found.
 

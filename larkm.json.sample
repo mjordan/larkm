@@ -15,5 +15,9 @@
   },
   "sqlite_db_path": "testdb/larkmtest.db",
   "log_file_path": "/tmp/larkm.log",
+  "resolver_hosts": {
+     "global": "https://n2t.net/",
+     "local": "https://resolver.myorg.net"
+  },
   "trusted_ips": []
 }

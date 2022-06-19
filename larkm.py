@@ -92,8 +92,7 @@ def read_ark(request: Request, ark_string: Optional[str] = '', target: Optional[
     Get the target URL associated with an ARK, or the ARK assoicated
     with a target URL. Sample query:
 
-    curl "http://127.0.0.1:8000/larkm?ark_string=ark:/12345/x931fd9bec-0bb6-4b6a-a08b-19554e6d711d
-" or
+    curl "http://127.0.0.1:8000/larkm?ark_string=ark:/12345/x931fd9bec-0bb6-4b6a-a08b-19554e6d711d" or
     curl "http://127.0.0.1:8000/larkm?target=https://example.com/foo"
 
     - **ark_string**: the ARK the client wants to get the target for, in the
@@ -118,8 +117,14 @@ def read_ark(request: Request, ark_string: Optional[str] = '', target: Optional[
         record = cur.fetchone()
         con.close()
 
+        urls = dict()
+        if len(config["resolver_hosts"]["local"]) > 0:
+            urls['local'] = f'{config["resolver_hosts"]["local"].rstrip("/")}/{record["ark_string"]}'
+        if len(config["resolver_hosts"]["global"]) > 0:
+            urls['global'] = f'{config["resolver_hosts"]["global"].rstrip("/")}/{record["ark_string"]}'
+
         if record is not None:
-            return {"ark_string": record['ark_string'], "target": record['target']}
+            return {"ark_string": record['ark_string'], "target": record['target'], "urls": urls}
         else:
             raise HTTPException(status_code=404, detail="ARK not found")
     except sqlite3.DatabaseError as e:
@@ -246,7 +251,14 @@ def create_ark(request: Request, ark: Ark):
         # @todo: log (do not add to response!) str(e).
         print(str(e))
         raise HTTPException(status_code=500)
-    return {"ark": ark}
+
+    urls = dict()
+    if len(config["resolver_hosts"]["local"]) > 0:
+        urls['local'] = f'{config["resolver_hosts"]["local"].rstrip("/")}/{ark.ark_string}'
+    if len(config["resolver_hosts"]["global"]) > 0:
+        urls['global'] = f'{config["resolver_hosts"]["global"].rstrip("/")}/{ark.ark_string}'
+
+    return {"ark": ark, "urls": urls}
 
 
 @app.put("/larkm/ark:/{naan}/{identifier}")
@@ -316,7 +328,13 @@ def update_ark(request: Request, naan: str, identifier: str, ark: Ark):
         print(str(e))
         raise HTTPException(status_code=500)
 
-    return {"ark": ark}
+    urls = dict()
+    if len(config["resolver_hosts"]["local"]) > 0:
+        urls['local'] = f'{config["resolver_hosts"]["local"].rstrip("/")}/{ark.ark_string}'
+    if len(config["resolver_hosts"]["global"]) > 0:
+        urls['global'] = f'{config["resolver_hosts"]["global"].rstrip("/")}/{ark.ark_string}'
+
+    return {"ark": ark, "urls": urls}
 
 
 @app.delete("/larkm/ark:/{naan}/{identifier}", status_code=204)
