@@ -81,7 +81,7 @@ Currently, there are four config settings:
 
 ### Starting larkm
 
-To start the larkm app within local Uvicorn we server, in a terminal run `python3 -m uvicorn larkm:app`
+To start the larkm app with the local Uvicorn web server, in a terminal run `python3 -m uvicorn larkm:app`
 
 ### Resolving an ARK
 
