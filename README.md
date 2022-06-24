@@ -174,7 +174,7 @@ Following ARK best practice, larkm requires the use of [shoulders](https://wiki.
 
 ## Metadata support
 
-larkm supports the [Electronic Resource Citation](https://www.dublincore.org/groups/kernel/spec/) (ERC) metadata format expressed in ANVL syntax. Note that larkm accepts the raw values provided by the client and does not validate or format the values in any way.
+larkm supports the [Electronic Resource Citation](https://www.dublincore.org/groups/kernel/spec/) (ERC) metadata format expressed in ANVL syntax. Note that larkm accepts the raw values provided by the client and does not validate or format the values against any schema.
 
 If the default "where" ERC metadata is an empty string (as illustrated in the configuration data above), larkm assigns the ARK's target value to it.
 
@@ -182,7 +182,7 @@ If the default "where" ERC metadata is an empty string (as illustrated in the co
 
 larkm supports fulltext indexing of ERC metadata and other ARK properties via the [Whoosh](https://pypi.org/project/Whoosh/) indexer. This feature is not intended as a general-purpose, end-uer search interface but rather to be used for administrative purposes. Access to the `/larkm/search` endpoint is restricted to the IP addresses registered in the "trusted_ips" configuration setting. An simple example search is:
 
-http://127.0.0.1:8000/larkm/search?q=water"
+`http://127.0.0.1:8000/larkm/search?q=water"`
 
 If the search was successful, larkm returns a 200 HTTP status code. A successful result contains a JSON string with keys "num_results", "page", "page_size", and "arks".
 
@@ -224,11 +224,13 @@ If the search was successful, larkm returns a 200 HTTP status code. A successful
 
 If no results were found, larkm returns the same data, but with a `num_results` value of "0" and an empty `arks` key:
 
-`{"num_results":0,"page":1,"page_size":"20","arks":[]}}`
+```json
+{"num_results":0,"page":1,"page_size":"20","arks":[]}}
+```
 
 If larkm cannot find the Whoosh index directory (or one is not configured), it returns a 204 (No content).
 
-Request parameters:
+The request parameters for the `/larkm/search` endpoint are:
 
 * `q`: the Whoosh query (see examples below). Must be URL-encoded.
 * `page`: the page number. Optional; if omitted, the first page is returned.
@@ -269,6 +271,7 @@ The "extras" directory contains two sample scripts:
 1. a script to test larkm's performance
 1. a script to mint ARKs from a CSV file
 1. a script to mint ARKs from the output of the [larkm Integration Drupal module](https://github.com/mjordan/larkm_integration)
+1. a script to build the Whoosh search index from entries in the database
 
 Instructions are at the top of each file.
 
