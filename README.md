@@ -182,7 +182,7 @@ If the default "where" ERC metadata is an empty string (as illustrated in the co
 
 larkm supports fulltext indexing of ERC metadata and other ARK properties via the [Whoosh](https://pypi.org/project/Whoosh/) indexer. This feature is not intended as a general-purpose, end-uer search interface but rather to be used for administrative purposes. Access to the `/larkm/search` endpoint is restricted to the IP addresses registered in the "trusted_ips" configuration setting. An simple example search is:
 
-`http://127.0.0.1:8000/larkm/search?q=water"`
+`http://127.0.0.1:8000/larkm/search?q=erc_what:water"`
 
 If the search was successful, larkm returns a 200 HTTP status code. A successful result contains a JSON string with keys "num_results", "page", "page_size", and "arks".
 
