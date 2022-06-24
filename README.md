@@ -222,7 +222,7 @@ If the search was successful, larkm returns a 200 HTTP status code. A successful
   }
 ```
 
-If no results were found, larkm returns the same data, but with a `num_results` value of "0" and an empty `arks` key:
+If no results were found, larkm returns the same data, but with a `num_results` value of `0` and an empty `arks` key:
 
 ```json
 {"num_results":0,"page":1,"page_size":"20","arks":[]}
