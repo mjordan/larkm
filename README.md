@@ -11,6 +11,7 @@ larkm is a simple [ARK](https://arks.org/) manager that can:
 * update the target URLs, ERC/Kernel metadata, and committment statements of existing ARKs
 * provide the target URLs of ARKs it manages, and provide the ARK associated with a URL
 * provide basic [committment statements](https://arks.org/about/best-practices/) that are specific to shoulders
+* proivdes fulltext indexing of ERC metadata
 * delete ARKs
 * log requests for ARK resolution
 
@@ -22,7 +23,8 @@ larkm is currently a proof of concept as we learn about locally mananging ARKs. 
 
 * Python 3.7+
 * [FastAPI](https://fastapi.tiangolo.com/)
-* [Uvicorn](https://www.uvicorn.org/) for demo/testing, or some other ASGI web server for production uses.
+* [Uvicorn](https://www.uvicorn.org/) for demo/testing, or some other ASGI web server for production uses
+* [Whoosh](https://pypi.org/project/Whoosh/) for fulltext indexing of metadata
 * sqlite3 (installed by default with Python)
 * To have your ARKs resolve from [N2T](http://n2t.net/), you will to register a NAAN (Name Assigning Authority Number) using [this form](https://goo.gl/forms/bmckLSPpbzpZ5dix1).
 
@@ -51,7 +53,8 @@ Currently, there are four config settings:
 * "sqlite_db_path": absolute or relative (to larkm.py) path to larkm's sqlite3 database file.
 * "log_file_path": absolute or relative (to larkm.py) path to the log file. Directory must exist and be writable by the process running larkm.
 * "resolver_hosts": definition of the resolvers to include in the `urls` list returned to clients.
-* "trusted_ips": list of client IP addresses that can create, update, and delete ARKs; leave empty to no restrict access to these functions (e.g. during testing).
+* "whoose_index_dir_path": absolute or relative (to larkm.py) path to the Whoosh index data directory. Leave empty if you are not indexing ARK data.
+* "trusted_ips": list of client IP addresses that can create, update, delete, and search ARKs; leave empty to no restrict access to these functions (e.g. during testing).
 
 ```json
 {
@@ -75,6 +78,7 @@ Currently, there are four config settings:
      "global": "https://n2t.net/",
      "local": "https://resolver.myorg.net"
   },
+  "whoose_index_dir_path": "index_dir",
   "trusted_ips": []
 }
 ```
@@ -89,7 +93,7 @@ Visit `http://127.0.0.1:8000/ark:/12345/x9062cdde7-f9d6-48bb-be17-bd3b9f441ec4` 
 
 To see the configured metadata and committment statement for the ARK instead of resolving to its target, append `?info` to the end of the ARK, e.g., `http://127.0.0.1:8000/ark:/12345/x9062cdde7-f9d6-48bb-be17-bd3b9f441ec4?info`.
 
-> To comply with the ARK specification, the hyphens in the identifier are optional. Therefore, `http://127.0.0.1:8000/ark:/12345/x9062cdde7-f9d648bbbe17bd3--b9f441ec4` is equivalent to `http://127.0.0.1:8000/ark:/12345/x9062cdde7-f9d6-48bb-be17-bd3b9f441ec4`.  Since hyphens are integral parts of UUIDs, larkm restores the hyphens to their expected location within the UUID to perform its lookups during resolution. Hyphens in UUIDs are optional/ignored only when resolving an ARK. They are required for all other operations described below. 
+> To comply with the ARK specification, the hyphens in the identifier are optional. Therefore, `http://127.0.0.1:8000/ark:/12345/x9062cdde7-f9d648bbbe17bd3--b9f441ec4` is equivalent to `http://127.0.0.1:8000/ark:/12345/x9062cdde7-f9d6-48bb-be17-bd3b9f441ec4`.  Since hyphens are integral parts of UUIDs, larkm restores the hyphens to their expected location within the UUID to perform its lookups during resolution. Hyphens in UUIDs are optional/ignored only when resolving an ARK. They are required for all other operations described below.
 
 ### Creating a new ARK
 
@@ -164,15 +168,85 @@ If the ARK was deleted, larkm returns a `204 No Content` response with no body. 
 
 Note that larkm returns only the subset of configuration data that clients need to create new ARKs, specifically the "default_shoulder", "allowed_shoulders", "committment_statement", and "erc_metadata_defaults" configuration data. Only clients whose IP addresses are listed in the `trusted_ips` configuration option may request configuration data.
 
+## Shoulders
+
+Following ARK best practice, larkm requires the use of [shoulders](https://wiki.lyrasis.org/display/ARKs/ARK+Identifiers+FAQ#ARKIdentifiersFAQ-shouldersWhatisashoulder?) in newly added ARKs. Shoulders allowed within your NAAN are defined in the "default_shoulder" and "allowed_shoulders" configuration settings. When a new ARK is added, larkm will validate that the ARK string starts with either the default shoulder or one of the allowed shoulders. Note however that larkm does not validate the [format of shoulders](https://wiki.lyrasis.org/display/ARKs/ARK+Shoulders+FAQ#ARKShouldersFAQ-HowdoIformatashoulder?).
+
 ## Metadata support
 
 larkm supports the [Electronic Resource Citation](https://www.dublincore.org/groups/kernel/spec/) (ERC) metadata format expressed in ANVL syntax. Note that larkm accepts the raw values provided by the client and does not validate or format the values in any way.
 
 If the default "where" ERC metadata is an empty string (as illustrated in the configuration data above), larkm assigns the ARK's target value to it.
 
-## Shoulders
+### Searching metadata
 
-Following ARK best practice, larkm requires the use of [shoulders](https://wiki.lyrasis.org/display/ARKs/ARK+Identifiers+FAQ#ARKIdentifiersFAQ-shouldersWhatisashoulder?) in newly added ARKs. Shoulders allowed within your NAAN are defined in the "default_shoulder" and "allowed_shoulders" configuration settings. When a new ARK is added, larkm will validate that the ARK string starts with either the default shoulder or one of the allowed shoulders. Note however that larkm does not validate the [format of shoulders](https://wiki.lyrasis.org/display/ARKs/ARK+Shoulders+FAQ#ARKShouldersFAQ-HowdoIformatashoulder?).
+larkm supports fulltext indexing of ERC metadata and other ARK properties via the [Whoosh](https://pypi.org/project/Whoosh/) indexer. This feature is not intended as a general-purpose, end-uer search interface but rather to be used for administrative purposes. Access to the `/larkm/search` endpoint is restricted to the IP addresses registered in the "trusted_ips" configuration setting. An simple example search is:
+
+http://127.0.0.1:8000/larkm/search?q=water"
+
+If the search was successful, larkm returns a 200 HTTP status code. A successful result contains a JSON string with keys "num_results", "page", "page_size", and "arks".
+
+```json
+{
+    "num_results": 2,
+    "page": 1,
+    "page_size": 20,
+    "arks": [
+      {
+        "date_created": "2022-06-23 03:00:45",
+        "date_modified": "2022-06-23 03:00:45",
+        "shoulder": "s1",
+        "identifier": "cea8e7f3-1c84-4919-a694-65bc9997d9fe",
+        "ark_string": "ark:/99999/s1cea8e7f3-1c84-4919-a694-65bc9997d9fe",
+        "target": "http://example.com/15",
+        "erc_who": "Derex Godfry",
+        "erc_what": "5 Ways to Immediately Start Selling Water",
+        "erc_when": ":at",
+        "erc_where": "http://example.com/15",
+        "policy": "We commit to keeping this ARK actionable until 2030."
+      },
+      {
+        "date_created": "2022-06-23 03:00:45",
+        "date_modified": "2022-06-23 03:00:45",
+        "shoulder": "s1",
+        "identifier": "714b3160-e138-49ed-969a-a514f034274f",
+        "ark_string": "ark:/99999/s1714b3160-e138-49ed-969a-a514f034274f",
+        "target": "http://example.com/16",
+        "erc_who": "Toriana Kondo",
+        "erc_what": "Water in Crisis: The Coming Shortages",
+        "erc_when": ":at",
+        "erc_where": "http://example.com/16",
+        "policy": ":at"
+      }
+    ]
+  }
+```
+
+If no results were found, larkm returns the same data, but with a `num_results` value of "0" and an empty `arks` key:
+
+`{"num_results":0,"page":1,"page_size":"20","arks":[]}}`
+
+If larkm cannot find the Whoosh index directory (or one is not configured), it returns a 204 (No content).
+
+Request parameters:
+
+* `q`: the Whoosh query (see examples below). Must be URL-encoded.
+* `page`: the page number. Optional; if omitted, the first page is returned.
+* `page_size`: the number of ARKs to include in the page of results. Optional; default is 20.
+
+Searching uses the [default Whoosh query language](https://whoosh.readthedocs.io/en/latest/querylang.html). Some example queries (not URL-encoded for easy reading) are:
+
+* q=`erc_what:vancouver`
+* q=`erc_what:"Biggest trends in airliners"`
+* q=`shoulder:s1`
+* q=`policy:"commits only to ensuring"`
+* q=`target:'https://example.com*'`
+
+Currently, searching on the `date_created` and `date_modified` fields in the database is not supported.
+
+### Building the search index
+
+Updating the index is not done in realtime; instead, it is generated using the "index_arks.py" script provided in the "extras" directory, which indexes every row in the larkm sqlite3 database. This script would typically scheduled using cron but can be run manually.
 
 ## Using the Names to Things global resolver
 

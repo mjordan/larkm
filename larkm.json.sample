@@ -19,5 +19,6 @@
      "global": "https://n2t.net/",
      "local": "https://resolver.myorg.net"
   },
+  "whoose_index_dir_path": "index_dir",
   "trusted_ips": []
 }

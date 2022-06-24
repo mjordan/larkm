@@ -1,6 +1,6 @@
 """Processes all rows in a table.
 
-   Usage: python index_arks path/to/larkm.json
+   Usage: python index_arks.py path/to/larkm.json
 """
 
 import sys

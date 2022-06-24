@@ -9,6 +9,9 @@ import sqlite3
 import json
 import logging
 from datetime import datetime
+import os, os.path
+from whoosh import index
+from whoosh.qparser import QueryParser
 
 with open("larkm.json", "r") as config_file:
     config = json.load(config_file)
@@ -130,6 +133,60 @@ def read_ark(request: Request, ark_string: Optional[str] = '', target: Optional[
     except sqlite3.DatabaseError as e:
         # @todo: log (do not add to response!) str(e).
         raise HTTPException(status_code=500)
+
+
+@app.get("/larkm/search")
+def search_arks(request: Request, q: Optional[str] = '', page = 1, page_size = 20):
+    """
+    Route for searching the Whoosh index of ARK metadata. Sample query:
+
+    curl "http://127.0.0.1:8000/larkm/search?q=erc_what:example"
+
+    - **q**: the Whoosh query, using Whoosh's default query language. Must be URL escaped.
+      See the README for more information.
+    - **page**: the page number to retrieve from the results.
+    - **page_size**: the number of results to include in the page.
+    """
+    if len(config["trusted_ips"]) > 0 and request.client.host not in config["trusted_ips"]:
+        raise HTTPException(status_code=403)
+
+    if not os.path.exists(config['whoose_index_dir_path']):
+        raise HTTPException(status_code=204)
+
+    idx = index.open_dir(config['whoose_index_dir_path'])
+
+    query_parser = QueryParser("identifier", schema=idx.schema)
+    query = query_parser.parse(q)
+    with idx.searcher() as searcher:
+        results = searcher.search_page(query, int(page), pagelen=int(page_size))
+        number_of_results = len(results)
+        identifier_list = list()
+        for doc in results:
+            identifier_list.append(doc['identifier'])
+
+        if len(identifier_list) == 0:
+            return {"num_results": number_of_results, "page": page, "page_size": page_size, "arks": []}
+
+        try:
+            con = sqlite3.connect(config["sqlite_db_path"])
+            con.row_factory = sqlite3.Row
+            cur = con.cursor()
+            identifier_list_string = ','.join(f'"{i}"' for i in identifier_list)
+            # identifier_list_string is safe to use here since it is not user input.
+            cur.execute("select * from arks where identifier IN (" + identifier_list_string + ")")
+            arks = cur.fetchmany(len(identifier_list))
+            con.close()
+        except sqlite3.DatabaseError as e:
+            # @todo: log (do not add to response!) str(e).
+            raise HTTPException(status_code=500)
+
+    if len(arks) == 0:
+        return {"num_results": number_of_results, "page": page, "page_size": page_size, "arks": []}
+    else:
+        return_list = list()
+        for ark in arks:
+            return_list.append(ark)
+    return {"num_results": number_of_results, "page": page, "page_size": page_size, "arks": return_list}
 
 
 @app.post("/larkm", status_code=201)
