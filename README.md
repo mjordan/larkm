@@ -243,8 +243,8 @@ Searching uses the [default Whoosh query language](https://whoosh.readthedocs.io
 * q=`shoulder:s1`
 * q=`policy:"commits only to ensuring"`
 * q=`target:'https://example.com*'`
-
-Currently, searching on the `date_created` and `date_modified` fields in the database is not supported.
+* q=`date_modified:date_created:2022-02-23`
+* q=`date_created:date_modified:[2022-02-20 TO 2022-02-28]`
 
 ### Building the search index
 

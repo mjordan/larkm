@@ -9,7 +9,7 @@ import os.path
 import sqlite3
 import json
 from uuid import uuid4
-from whoosh.fields import Schema, TEXT, ID
+from whoosh.fields import Schema, TEXT, ID, DATETIME
 from whoosh import index
 
 larkm_config_file = sys.argv[1]
@@ -17,8 +17,8 @@ with open(larkm_config_file, "r") as config_file:
     config = json.load(config_file)
 
 schema = Schema(identifier=ID(stored=True),
-                date_created=TEXT,
-                date_modified=TEXT,
+                date_created=DATETIME,
+                date_modified=DATETIME,
                 shoulder=TEXT,
                 ark_string=TEXT,
                 target=TEXT,
@@ -52,8 +52,8 @@ while offset < num_rows:
     for row in rows:
         writer.add_document(
             identifier=row['identifier'],
-            date_created=row['date_created'],
-            date_modified=row['date_modified'],
+            date_created=row['date_created'].split(' ')[0],
+            date_modified=row['date_modified'].split(' ')[0],
             shoulder=row['shoulder'],
             ark_string=row['ark_string'],
             target=row['target'],
