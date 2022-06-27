@@ -22,10 +22,10 @@ larkm is currently a proof of concept as we learn about locally mananging ARKs. 
 ## Requirements
 
 * Python 3.7+
+* sqlite3 (installed by default with Python)
 * [FastAPI](https://fastapi.tiangolo.com/)
 * [Uvicorn](https://www.uvicorn.org/) for demo/testing, or some other ASGI web server for production uses
 * [Whoosh](https://pypi.org/project/Whoosh/) for fulltext indexing of metadata
-* sqlite3 (installed by default with Python)
 * To have your ARKs resolve from [N2T](http://n2t.net/), you will to register a NAAN (Name Assigning Authority Number) using [this form](https://goo.gl/forms/bmckLSPpbzpZ5dix1).
 
 ## Usage
@@ -243,8 +243,8 @@ Searching uses the [default Whoosh query language](https://whoosh.readthedocs.io
 * q=`shoulder:s1`
 * q=`policy:"commits only to ensuring"`
 * q=`target:'https://example.com*'`
-* q=`date_modified:date_created:2022-02-23`
-* q=`date_created:date_modified:[2022-02-20 TO 2022-02-28]`
+* q=`date_modified:2022-02-23`
+* q=`date_created:[2022-02-20 TO 2022-02-28]`
 
 ### Building the search index
 
