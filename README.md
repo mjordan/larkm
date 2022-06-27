@@ -53,7 +53,7 @@ Currently, there are four config settings:
 * "sqlite_db_path": absolute or relative (to larkm.py) path to larkm's sqlite3 database file.
 * "log_file_path": absolute or relative (to larkm.py) path to the log file. Directory must exist and be writable by the process running larkm.
 * "resolver_hosts": definition of the resolvers to include in the `urls` list returned to clients.
-* "whoose_index_dir_path": absolute or relative (to larkm.py) path to the Whoosh index data directory. Leave empty if you are not indexing ARK data.
+* "whoosh_index_dir_path": absolute or relative (to larkm.py) path to the Whoosh index data directory. Leave empty if you are not indexing ARK data.
 * "trusted_ips": list of client IP addresses that can create, update, delete, and search ARKs; leave empty to no restrict access to these functions (e.g. during testing).
 
 ```json
@@ -78,7 +78,7 @@ Currently, there are four config settings:
      "global": "https://n2t.net/",
      "local": "https://resolver.myorg.net"
   },
-  "whoose_index_dir_path": "index_dir",
+  "whoosh_index_dir_path": "index_dir",
   "trusted_ips": []
 }
 ```
@@ -240,8 +240,9 @@ Searching uses the [default Whoosh query language](https://whoosh.readthedocs.io
 
 * q=`erc_what:vancouver`
 * q=`erc_what:"Biggest trends in airliners"`
-* q=`shoulder:s1`
+* q=`shoulder:s1 OR shoulder:n3`
 * q=`policy:"commits only to ensuring"`
+* * q=`policy:"commits only to ensuring" AND erc_what:vancouver`
 * q=`target:'https://example.com*'`
 * q=`date_modified:2022-02-23`
 * q=`date_created:[2022-02-20 TO 2022-02-28]`
