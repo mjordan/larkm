@@ -242,8 +242,8 @@ Searching uses the [default Whoosh query language](https://whoosh.readthedocs.io
 * q=`erc_what:"Biggest trends in airliners"`
 * q=`shoulder:s1 OR shoulder:n3`
 * q=`policy:"commits only to ensuring"`
-* * q=`policy:"commits only to ensuring" AND erc_what:vancouver`
-* q=`target:'https://example.com*'`
+* q=`policy:"commits only to ensuring" AND erc_what:vancouver`
+* q=`target:"https://example.com*"`
 * q=`date_modified:2022-02-23`
 * q=`date_created:[2022-02-20 TO 2022-02-28]`
 
