@@ -9,6 +9,7 @@ import sqlite3
 import json
 import logging
 from datetime import datetime
+import time
 import os, os.path
 from whoosh import index
 from whoosh.qparser import QueryParser
@@ -34,11 +35,10 @@ class Ark(BaseModel):
 @app.get("/ark:/{naan}/{identifier}")
 def resolve_ark(request: Request, naan: str, identifier: str, info: Optional[str] = None):
     """
-    The ARK resolver. Redirects the client to the target URL
-    associated with the ARK. Sample query:
+    The ARK resolver. Redirects the client to the target URL associated with the ARK.
+    Sample request:
 
     curl -L "http://127.0.0.1:8000/ark:/12345/x9062cdde7-f9d6-48bb-be17-bd3b9f441ec4"
-"
 
     - **naan**: the NAAN portion of the ARK.
     - **identifier**: the identifier portion of the ARK. A v4 UUID prepended
@@ -92,8 +92,8 @@ def resolve_ark(request: Request, naan: str, identifier: str, info: Optional[str
 @app.get("/larkm")
 def read_ark(request: Request, ark_string: Optional[str] = '', target: Optional[str] = ''):
     """
-    Get the target URL associated with an ARK, or the ARK assoicated
-    with a target URL. Sample query:
+    Get the target URL associated with an ARK, or the ARK assoicated with a target URL.
+    Sample request:
 
     curl "http://127.0.0.1:8000/larkm?ark_string=ark:/12345/x931fd9bec-0bb6-4b6a-a08b-19554e6d711d" or
     curl "http://127.0.0.1:8000/larkm?target=https://example.com/foo"
@@ -138,7 +138,7 @@ def read_ark(request: Request, ark_string: Optional[str] = '', target: Optional[
 @app.get("/larkm/search")
 def search_arks(request: Request, q: Optional[str] = '', page = 1, page_size = 20):
     """
-    Route for searching the Whoosh index of ARK metadata. Sample query:
+    Endpoint for searching the Whoosh index of ARK metadata. Sample request:
 
     curl "http://127.0.0.1:8000/larkm/search?q=erc_what:example"
 
@@ -152,6 +152,25 @@ def search_arks(request: Request, q: Optional[str] = '', page = 1, page_size = 2
 
     if not os.path.exists(config['whoose_index_dir_path']):
         raise HTTPException(status_code=204)
+
+    '''
+    request_args = dict(request.query_params)
+    date_is_valid = True
+    if 'date_created' in request_args:
+        try:
+            time.strptime(request_args['date_created'], '%Y-%m-%d')
+        except ValueError:
+            date_is_valid = False
+
+        if date_is_valid is False:
+            raise HTTPException(status_code=422, detail="date_created value is not a valid date.")
+
+    if 'date_modified' in request_args:
+        try:
+            valid_date = time.strptime(request_args['date_modified'], '%Y-%m-%d')
+        except ValueError:
+            raise HTTPException(status_code=422, detail="date_modified value is not a valid date.")
+    '''
 
     idx = index.open_dir(config['whoose_index_dir_path'])
 
@@ -172,7 +191,9 @@ def search_arks(request: Request, q: Optional[str] = '', page = 1, page_size = 2
             con.row_factory = sqlite3.Row
             cur = con.cursor()
             identifier_list_string = ','.join(f'"{i}"' for i in identifier_list)
-            # identifier_list_string is safe to use here since it is not user input.
+            # identifier_list_string is safe to use here since it is not user input, it is
+            # comprised of UUIDs that are validated using regex at the time of creation
+            # in create_ark().
             cur.execute("select * from arks where identifier IN (" + identifier_list_string + ")")
             arks = cur.fetchmany(len(identifier_list))
             con.close()

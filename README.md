@@ -180,7 +180,9 @@ If the default "where" ERC metadata is an empty string (as illustrated in the co
 
 ### Searching metadata
 
-larkm supports fulltext indexing of ERC metadata and other ARK properties via the [Whoosh](https://pypi.org/project/Whoosh/) indexer. This feature is not intended as a general-purpose, end-uer search interface but rather to be used for administrative purposes. Access to the `/larkm/search` endpoint is restricted to the IP addresses registered in the "trusted_ips" configuration setting. An simple example search is:
+larkm supports fulltext indexing of ERC metadata and other ARK properties via the [Whoosh](https://pypi.org/project/Whoosh/) indexer. This feature is not intended as a general-purpose, end-uer search interface but rather to be used for administrative purposes. Access to the `/larkm/search` endpoint is restricted to the IP addresses registered in the "trusted_ips" configuration setting.
+
+A simple example search is:
 
 `http://127.0.0.1:8000/larkm/search?q=erc_what:water"`
 
@@ -232,7 +234,17 @@ If larkm cannot find the Whoosh index directory (or one is not configured), it r
 
 The request parameters for the `/larkm/search` endpoint are:
 
-* `q`: the Whoosh query (see examples below). Must be URL-encoded.
+* `q`: the Whoosh query (see examples below). Must be URL-encoded. Available fields, and the type of value they can have, to include in a search query are:
+   * `erc_what`: free text
+   * `erc_who`: free text
+   * `erc_when`: free text
+   * `erc_where`: free text
+   * `ark_string`: free text
+   * `shoulder`: free text
+   * `policy`: free text
+   * `target`: free text
+   * `date_created`: date in yyyy-mm-dd format, or a range using the `TO` operator
+   * `date_modified`: date in yyyy-mm-dd format, or a range using the `TO` operator
 * `page`: the page number. Optional; if omitted, the first page is returned.
 * `page_size`: the number of ARKs to include in the page of results. Optional; default is 20.
 
