@@ -180,7 +180,7 @@ If the default "where" ERC metadata is an empty string (as illustrated in the co
 
 ### Searching metadata
 
-larkm supports fulltext indexing of ERC metadata and other ARK properties via the [Whoosh](https://pypi.org/project/Whoosh/) indexer. This feature is not intended as a general-purpose, end-uer search interface but rather to be used for administrative purposes. Access to the `/larkm/search` endpoint is restricted to the IP addresses registered in the "trusted_ips" configuration setting.
+larkm supports fulltext indexing of ERC metadata and other ARK properties via the [Whoosh](https://pypi.org/project/Whoosh/) indexer. This feature is not intended as a general-purpose, end-user search interface but rather to be used for administrative purposes. Access to the `/larkm/search` endpoint is restricted to the IP addresses registered in the "trusted_ips" configuration setting.
 
 A simple example search is:
 
@@ -243,12 +243,12 @@ The request parameters for the `/larkm/search` endpoint are:
    * `shoulder`: free text
    * `policy`: free text
    * `target`: free text
-   * `date_created`: date in yyyy-mm-dd format, or a range using the `TO` operator
-   * `date_modified`: date in yyyy-mm-dd format, or a range using the `TO` operator
+   * `date_created`: single date in yyyy-mm-dd format, or a date range in the form `[yyyy-mm-dd TO yyyy-mm-dd ]`
+   * `date_modified`: single date in yyyy-mm-dd format, or a date range in the form `[yyyy-mm-dd TO yyyy-mm-dd ]`
 * `page`: the page number. Optional; if omitted, the first page is returned.
 * `page_size`: the number of ARKs to include in the page of results. Optional; default is 20.
 
-Searching uses the [default Whoosh query language](https://whoosh.readthedocs.io/en/latest/querylang.html). Some example queries (not URL-encoded for easy reading) are:
+Searching uses the [default Whoosh query language](https://whoosh.readthedocs.io/en/latest/querylang.html), which supports boolean operators "AND", "OR", and "NOT", phase searches, and wildcards. Some example queries (not URL-encoded for easy reading) are:
 
 * q=`erc_what:vancouver`
 * q=`erc_what:"Biggest trends in airliners"`

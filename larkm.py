@@ -10,7 +10,8 @@ import json
 import logging
 from datetime import datetime
 import time
-import os, os.path
+import os
+import os.path
 from whoosh import index
 from whoosh.qparser import QueryParser
 
@@ -136,7 +137,7 @@ def read_ark(request: Request, ark_string: Optional[str] = '', target: Optional[
 
 
 @app.get("/larkm/search")
-def search_arks(request: Request, q: Optional[str] = '', page = 1, page_size = 20):
+def search_arks(request: Request, q: Optional[str] = '', page=1, page_size=20):
     """
     Endpoint for searching the Whoosh index of ARK metadata. Sample request:
 
@@ -153,24 +154,25 @@ def search_arks(request: Request, q: Optional[str] = '', page = 1, page_size = 2
     if not os.path.exists(config['whoose_index_dir_path']):
         raise HTTPException(status_code=204)
 
-    '''
+    # Validate values provided in date_created and date_modified fields.
     request_args = dict(request.query_params)
-    date_is_valid = True
-    if 'date_created' in request_args:
-        try:
-            time.strptime(request_args['date_created'], '%Y-%m-%d')
-        except ValueError:
-            date_is_valid = False
-
-        if date_is_valid is False:
-            raise HTTPException(status_code=422, detail="date_created value is not a valid date.")
-
-    if 'date_modified' in request_args:
-        try:
-            valid_date = time.strptime(request_args['date_modified'], '%Y-%m-%d')
-        except ValueError:
-            raise HTTPException(status_code=422, detail="date_modified value is not a valid date.")
-    '''
+    fields_to_validate = ['date_created', 'date_modified']
+    if 'q' in request_args:
+        field_queries = request_args['q'].split('&')
+        for field_query in field_queries:
+            field_name = field_query.split(':')[0]
+            if field_name in fields_to_validate:
+                field_value = field_query.split(':')[1]
+                if 'to'.lower() in field_value.lower():
+                    # We have a range query.
+                    range_dates = field_value.lower().split('to')
+                    for range_date in range_dates:
+                        if validate_date(range_date.strip(' []')) is False:
+                            raise HTTPException(status_code=422, detail=range_date.strip(' []') + " in " + field_name + " is not not a valid date.")
+                else:
+                    # Not a range query.
+                    if validate_date(field_value) is False:
+                        raise HTTPException(status_code=422, detail=field_value.strip(' ') + " in " + field_name + " is not not a valid date.")
 
     idx = index.open_dir(config['whoose_index_dir_path'])
 
@@ -521,3 +523,17 @@ def normalize_ark_string(ark_string):
     reconstituted_ark_string = prefix + reconstituted_uuid
 
     return reconstituted_ark_string
+
+
+def validate_date(date_string):
+    """
+    Validates a yyyy-mm-dd date string.
+    - **date**: the date string to validate.
+    """
+    try:
+        time.strptime(date_string, '%Y-%m-%d')
+    except ValueError:
+        return False
+
+    # If there's no ValueError, date validates.
+    return True
