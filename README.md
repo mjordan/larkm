@@ -224,7 +224,7 @@ If the search was successful, larkm returns a 200 HTTP status code. A successful
   }
 ```
 
-If no results were found, larkm returns the same data, but with a `num_results` value of `0` and an empty `arks` key:
+If no results were found, larkm returns a 200 HTTP status code and the same JSON structure, but with a `num_results` value of `0` and an empty `arks` key:
 
 ```json
 {"num_results":0,"page":1,"page_size":"20","arks":[]}
@@ -243,8 +243,8 @@ The request parameters for the `/larkm/search` endpoint are:
    * `shoulder`: free text
    * `policy`: free text
    * `target`: free text
-   * `date_created`: single date in yyyy-mm-dd format, or a date range in the form `[yyyy-mm-dd TO yyyy-mm-dd ]`
-   * `date_modified`: single date in yyyy-mm-dd format, or a date range in the form `[yyyy-mm-dd TO yyyy-mm-dd ]`
+   * `date_created`: single date in `yyyy-mm-dd` format, or a date range in the form `[yyyy-mm-dd TO yyyy-mm-dd]`
+   * `date_modified`: single date in `yyyy-mm-dd` format, or a date range in the form `[yyyy-mm-dd TO yyyy-mm-dd]`
 * `page`: the page number. Optional; if omitted, the first page is returned.
 * `page_size`: the number of ARKs to include in the page of results. Optional; default is 20.
 
