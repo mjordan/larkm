@@ -4,10 +4,10 @@
 
 larkm is a simple [ARK](https://arks.org/) manager that can:
 
-* persist new ARKs to an sqlite database
-* mint ARKs using UUID (v4) strings
-* validate ARK shoulders
 * resolve ARKs to their target URLs
+* mint ARKs using UUID (v4) strings
+* persist new ARKs to an sqlite database
+* validate ARK shoulders
 * update the target URLs, ERC/Kernel metadata, and committment statements of existing ARKs
 * provide the target URLs of ARKs it manages, and provide the ARK associated with a URL
 * provide basic [committment statements](https://arks.org/about/best-practices/) that are specific to shoulders
@@ -44,7 +44,7 @@ If you want to create your own, run the following commands:
 
 larkm uses a JSON configuration file in the same directory as `larkm.py` named `larkm.json`. Copy the sample configuration file, `larkm.json.sample`, to `larkm.json`, make any changes you need, and you are good to go.
 
-Currently, there are four config settings:
+The config settings are:
 
 * "NAAN", which is your insitution's Name Assigning Authority Number.
 * "default_shoulder", the ARK shoulder applied to new ARKs if one is not provided).
