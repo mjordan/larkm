@@ -267,7 +267,7 @@ Updating the index is not done in realtime; instead, it is generated using the "
 * * * * * /usr/bin/python3 /path/to/larkm/extras/index_arks.py /path/to/larkm/larkm.json
 ```
 
-If you run the indexer via cron, make sure the paths to the sqlite3 database and the Whoosh index directory are absolute.
+If you run the indexer via cron, make sure the paths in `sqlite_db_path` and `whoosh_index_dir_path` configuration settings are absolute.
 
 ## Using the Names to Things global resolver
 
