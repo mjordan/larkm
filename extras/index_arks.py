@@ -8,9 +8,12 @@ import os
 import os.path
 import sqlite3
 import json
+import time
 from uuid import uuid4
 from whoosh.fields import Schema, TEXT, ID, DATETIME
 from whoosh import index
+
+timer_start = time.perf_counter()
 
 larkm_config_file = sys.argv[1]
 with open(larkm_config_file, "r") as config_file:
@@ -43,6 +46,8 @@ cursor = conn.cursor()
 cursor.execute("SELECT Count() FROM arks")
 num_rows = cursor.fetchone()[0]
 
+print(f"Indexing {num_rows} ARKs...")
+
 page_size = 100
 offset = 0
 while offset < num_rows:
@@ -66,3 +71,7 @@ while offset < num_rows:
 
 writer.commit()
 conn.close()
+
+timer_stop = time.perf_counter()
+
+print(f"Indexing completed in {timer_stop - timer_start:0.4f} seconds.")
