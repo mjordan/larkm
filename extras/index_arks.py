@@ -29,8 +29,8 @@ schema = Schema(identifier=ID(stored=True),
                 policy=TEXT
                 )
 
-if not os.path.exists(config['whoose_index_dir_path']):
-    os.mkdir(config['whoose_index_dir_path'])
+if not os.path.exists(config['whoosh_index_dir_path']):
+    os.mkdir(config['whoosh_index_dir_path'])
 
 idx = index.create_in(config['whoose_index_dir_path'], schema)
 

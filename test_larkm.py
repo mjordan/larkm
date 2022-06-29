@@ -14,30 +14,22 @@ def teardown_module(module):
 def test_resolve_ark():
     response = client.get("/ark:/12345/x9062cdde7-f9d6-48bb-be17-bd3b9f441ec4?info")
     assert response.status_code == 200
-    response_text = "erc:\nwho: :at\nwhat: :at\nwhen: :at\n"
-    response_text = response_text + "where: https://example.com/foo\npolicy: Default committment statement.\n\n"
-    assert response.text == response_text
+    assert response.text == "erc:\nwho: :at\nwhat: :at\nwhen: :at\nwhere: https://example.com/foo\npolicy: Default committment statement.\n\n"
 
     # Resolve same ARK but with random hypens in UUID.
     response = client.get("/ark:/12345/x9062-cdde7f9d64-8bbbe17-bd3b9f441ec4?info")
     assert response.status_code == 200
-    response_text = "erc:\nwho: :at\nwhat: :at\nwhen: :at\n"
-    response_text = response_text + "where: https://example.com/foo\npolicy: Default committment statement.\n\n"
-    assert response.text == response_text
+    assert response.text == "erc:\nwho: :at\nwhat: :at\nwhen: :at\nwhere: https://example.com/foo\npolicy: Default committment statement.\n\n"
 
     # Resolve same ARK but with different random hypens in UUID.
     response = client.get("/ark:/12345/x9--062cdde7f9d648bbbe17bd3b9f441ec4-?info")
     assert response.status_code == 200
-    response_text = "erc:\nwho: :at\nwhat: :at\nwhen: :at\n"
-    response_text = response_text + "where: https://example.com/foo\npolicy: Default committment statement.\n\n"
-    assert response.text == response_text
+    assert response.text == "erc:\nwho: :at\nwhat: :at\nwhen: :at\nwhere: https://example.com/foo\npolicy: Default committment statement.\n\n"
 
     # Resolve same ARK but with no hypens in UUID.
     response = client.get("/ark:/12345/x9062cdde7f9d648bbbe17bd3b9f441ec4?info")
     assert response.status_code == 200
-    response_text = "erc:\nwho: :at\nwhat: :at\nwhen: :at\n"
-    response_text = response_text + "where: https://example.com/foo\npolicy: Default committment statement.\n\n"
-    assert response.text == response_text
+    assert response.text == "erc:\nwho: :at\nwhat: :at\nwhen: :at\nwhere: https://example.com/foo\npolicy: Default committment statement.\n\n"
 
 
 def test_create_ark():
@@ -157,6 +149,36 @@ def test_create_ark():
     assert response.status_code == 409
 
 
+def test_search_arks():
+    # Do a search that returns no ARKs.
+    response = client.get("/larkm/search?q=policy%3Axxxxxxxx")
+    assert response.status_code == 200
+    assert response.json() == {"num_results":0,"page":1,"page_size":20,"arks":[]}
+
+    # Do a search using page size and page number parameters.
+    response = client.get("/larkm/search?q=policy%3Apolicy&page_size=2&page=2")
+    assert response.status_code == 200
+    assert response.json() == {"num_results":7,"page":"2","page_size":"2",
+                               "arks":[{"date_created":"2022-06-23 03:00:45","date_modified":"2022-06-23 03:00:45",
+                               "shoulder":"s1","identifier":"a0925880-1268-4059-980b-155f9d2ff02a",
+                               "ark_string":"ark:/99999/s1a0925880-1268-4059-980b-155f9d2ff02a",
+                               "target":"http://example.com/17","erc_who":"Avery Meyer",
+                               "erc_what":"5 Things That Happen When You Are in SPACE",
+                               "erc_when":":at","erc_where":"http://example.com/17",
+                               "policy":"I am fundamentally against your policy."},
+                               {"date_created":"2022-06-23 03:00:45","date_modified":"2022-06-23 03:00:45",
+                               "shoulder":"s1","identifier":"a09d74a2-3e06-4d5a-9282-fc82c43a984a",
+                               "ark_string":"ark:/99999/s1a09d74a2-3e06-4d5a-9282-fc82c43a984a",
+                               "target":"http://example.com/20","erc_who":"Arden Mclean",
+                               "erc_what":"What Everyone Ought to Know about GUM","erc_when":":at",
+                               "erc_where":"http://example.com/20","policy":"No policy on this."}]}
+
+    # Do a search with an invalid date in a range.
+    response = client.get("/larkm/search?q=date_created%3A%5B2022-02-20%20TO%202022-02-29%5D")
+    assert response.status_code == 422
+    assert response.json() == {"detail":"2022-02-29 in date_created is not not a valid date."}
+
+
 def test_update_ark():
     # Only provide the required body fields, see if larkm provides the correct default values for other fields.
     response = client.post(
@@ -216,7 +238,7 @@ def test_update_ark():
                                        "ark_string": "ark:/99999/s2aaed59b0-6ad6-4b69-8511-bcf781e386a0",
                                        "target": "https://example.com", "who": ":at", "what": "New ARK with its own policy",
                                        "when": ":at", "where": "https://example.com", "policy": "A test policy."},
-                                       "urls": {
+                                        "urls": {
                                            "local": "https://resolver.myorg.net/ark:/99999/s2aaed59b0-6ad6-4b69-8511-bcf781e386a0",
                                            "global": "https://n2t.net/ark:/99999/s2aaed59b0-6ad6-4b69-8511-bcf781e386a0"}
                                }

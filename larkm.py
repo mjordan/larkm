@@ -151,7 +151,7 @@ def search_arks(request: Request, q: Optional[str] = '', page=1, page_size=20):
     if len(config["trusted_ips"]) > 0 and request.client.host not in config["trusted_ips"]:
         raise HTTPException(status_code=403)
 
-    if not os.path.exists(config['whoose_index_dir_path']):
+    if not os.path.exists(config['whoosh_index_dir_path']):
         raise HTTPException(status_code=204)
 
     # Validate values provided in date_created and date_modified fields.
@@ -174,7 +174,7 @@ def search_arks(request: Request, q: Optional[str] = '', page=1, page_size=20):
                     if validate_date(field_value) is False:
                         raise HTTPException(status_code=422, detail=field_value.strip(' ') + " in " + field_name + " is not not a valid date.")
 
-    idx = index.open_dir(config['whoose_index_dir_path'])
+    idx = index.open_dir(config['whoosh_index_dir_path'])
 
     query_parser = QueryParser("identifier", schema=idx.schema)
     query = query_parser.parse(q)
@@ -471,6 +471,7 @@ def return_config():
     del subset['trusted_ips']
     del subset['sqlite_db_path']
     del subset['log_file_path']
+    del subset['whoosh_index_dir_path']
     return subset
 
 
