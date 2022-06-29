@@ -261,7 +261,13 @@ Searching uses the [default Whoosh query language](https://whoosh.readthedocs.io
 
 ### Building the search index
 
-Updating the index is not done in realtime; instead, it is generated using the "index_arks.py" script provided in the "extras" directory, which indexes every row in the larkm sqlite3 database. This script would typically scheduled using cron but can be run manually.
+Updating the index is not done in realtime; instead, it is generated using the "index_arks.py" script provided in the "extras" directory, which indexes every row in the larkm sqlite3 database. This script would typically scheduled using cron but can be run manually. A typical cron entry looks like this:
+
+```
+* * * * * /usr/bin/python3 /path/to/larkm/extras/index_arks.py /path/to/larkm/larkm.json
+```
+
+If you run the indexer via cron, make sure the paths to the sqlite3 database and the Whoosh index directory are absolute.
 
 ## Using the Names to Things global resolver
 
