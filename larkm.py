@@ -63,7 +63,7 @@ def resolve_ark(request: Request, naan: str, identifier: str, info: Optional[str
         if record is None:
             con.close()
             if config["log_file_path"]:
-                log_request(ark_string, request.client.host, request.headers, "ARK not found")
+                log_request('INFO', request.client.host, ark_string, request.headers, "ARK not found")
             raise HTTPException(status_code=404, detail="ARK not found")
         con.close()
     except sqlite3.DatabaseError as e:
@@ -72,7 +72,7 @@ def resolve_ark(request: Request, naan: str, identifier: str, info: Optional[str
 
     if info is None:
         if config["log_file_path"]:
-            log_request(ark_string, request.client.host, request.headers, record['target'])
+            log_request('INFO', request.client.host, ark_string, request.headers, record['target'])
         return RedirectResponse(record['target'])
     else:
         erc = f"erc:\nwho: {record['erc_who']}\nwhat: {record['erc_what']}\nwhen: {record['erc_when']}\nwhere: {record['erc_where']}\n"
@@ -86,7 +86,7 @@ def resolve_ark(request: Request, naan: str, identifier: str, info: Optional[str
                 else:
                     policy = "policy: " + config["committment_statements"]["default"]
         if config["log_file_path"]:
-            log_request(ark_string, request.client.host, request.headers, 'info')
+            log_request('INFO', request.client.host, ark_string, request.headers, '?info')
         return Response(content=erc + policy + "\n\n", media_type="text/plain")
 
 
@@ -108,6 +108,8 @@ def read_ark(request: Request, ark_string: Optional[str] = '', target: Optional[
       at the same time.
     """
     if len(config["trusted_ips"]) > 0 and request.client.host not in config["trusted_ips"]:
+        message = f"Request from untrusted IP address: read_ark()"
+        log_request('WARNING', request.client.host, ark_string, request.headers, message)
         raise HTTPException(status_code=403)
 
     try:
@@ -132,7 +134,7 @@ def read_ark(request: Request, ark_string: Optional[str] = '', target: Optional[
         else:
             raise HTTPException(status_code=404, detail="ARK not found")
     except sqlite3.DatabaseError as e:
-        # @todo: log (do not add to response!) str(e).
+        log_request('ERROR', request.client.host, ark_string, request.headers, str(e))
         raise HTTPException(status_code=500)
 
 
@@ -149,6 +151,8 @@ def search_arks(request: Request, q: Optional[str] = '', page=1, page_size=20):
     - **page_size**: the number of results to include in the page.
     """
     if len(config["trusted_ips"]) > 0 and request.client.host not in config["trusted_ips"]:
+        message = f"Request from untrusted IP address: search_arks()"
+        log_request('WARNING', request.client.host, ark_string, request.headers, message)
         raise HTTPException(status_code=403)
 
     if not os.path.exists(config['whoosh_index_dir_path']):
@@ -200,7 +204,7 @@ def search_arks(request: Request, q: Optional[str] = '', page=1, page_size=20):
             arks = cur.fetchmany(len(identifier_list))
             con.close()
         except sqlite3.DatabaseError as e:
-            # @todo: log (do not add to response!) str(e).
+            log_request('ERROR', request.client.host, ark_string, request.headers, str(e))
             raise HTTPException(status_code=500)
 
     if len(arks) == 0:
@@ -266,6 +270,8 @@ def create_ark(request: Request, ark: Ark):
     - **ark**: the ARK to create, consisting of an ARK and a target URL.
     """
     if len(config["trusted_ips"]) > 0 and request.client.host not in config["trusted_ips"]:
+        message = f"Request from untrusted IP address: create_ark()"
+        log_request('WARNING', request.client.host, ark_string, request.headers, message)
         raise HTTPException(status_code=403)
 
     if ark.target is None:
@@ -295,7 +301,7 @@ def create_ark(request: Request, ark: Ark):
                 raise HTTPException(status_code=409, detail="UUID already in use.")
             con.close()
         except sqlite3.DatabaseError as e:
-            # @todo: log (do not add to response!) str(e).
+            log_request('ERROR', request.client.host, ark_string, request.headers, str(e))
             raise HTTPException(status_code=500)
 
     # Assemble the ARK. Generate parts the client didn't provide.
@@ -328,8 +334,7 @@ def create_ark(request: Request, ark: Ark):
         con.commit()
         con.close()
     except sqlite3.DatabaseError as e:
-        # @todo: log (do not add to response!) str(e).
-        print(str(e))
+        log_request('ERROR', request.client.host, ark_string, request.headers, str(e))
         raise HTTPException(status_code=500)
 
     urls = dict()
@@ -356,6 +361,8 @@ def update_ark(request: Request, naan: str, identifier: str, ark: Ark):
     - **identifier**: the identifier portion of the ARK, which will include a shouder.
     """
     if len(config["trusted_ips"]) > 0 and request.client.host not in config["trusted_ips"]:
+        message = f"Request from untrusted IP address: update_ark()"
+        log_request('WARNING', request.client.host, ark_string, request.headers, message)
         raise HTTPException(status_code=403)
 
     ark_string = f'ark:/{naan}/{identifier}'.strip()
@@ -373,7 +380,7 @@ def update_ark(request: Request, naan: str, identifier: str, ark: Ark):
             raise HTTPException(status_code=404, detail="ARK not found")
         con.close()
     except sqlite3.DatabaseError as e:
-        # @todo: log (do not add to response!) str(e).
+        log_request('ERROR', request.client.host, ark_string, request.headers, str(e))
         raise HTTPException(status_code=500)
 
     old_ark = dict(zip(record.keys(), record))
@@ -404,8 +411,7 @@ def update_ark(request: Request, naan: str, identifier: str, ark: Ark):
         con.commit()
         con.close()
     except sqlite3.DatabaseError as e:
-        # @todo: log (do not add to response!) str(e).
-        print(str(e))
+        log_request('ERROR', request.client.host, ark_string, request.headers, str(e))
         raise HTTPException(status_code=500)
 
     urls = dict()
@@ -428,6 +434,8 @@ def delete_ark(request: Request, naan: str, identifier: str):
     - **identifier**: the identifier portion of the ARK.
     """
     if len(config["trusted_ips"]) > 0 and request.client.host not in config["trusted_ips"]:
+        message = f"Request from untrusted IP address: delete_ark()"
+        log_request('WARNING', request.client.host, ark_string, request.headers, message)
         raise HTTPException(status_code=403)
 
     ark_string = f'ark:/{naan}/{identifier}'
@@ -442,7 +450,7 @@ def delete_ark(request: Request, naan: str, identifier: str):
             raise HTTPException(status_code=404, detail="ARK not found")
         con.close()
     except sqlite3.DatabaseError as e:
-        # @todo: log (do not add to response!) str(e).
+        log_request('ERROR', request.client.host, ark_string, request.headers, str(e))
         raise HTTPException(status_code=500)
 
     # If ARK found, delete it.
@@ -454,16 +462,18 @@ def delete_ark(request: Request, naan: str, identifier: str):
             con.commit()
             con.close()
         except sqlite3.DatabaseError as e:
-            # @todo: log (do not add to response!) str(e).
+            log_request('ERROR', request.client.host, ark_string, request.headers, str(e))
             raise HTTPException(status_code=500)
 
 
 @app.get("/larkm/config")
-def return_config():
+def return_config(request: Request):
     """
     Returns a subset of larkm's configuration data to the client.
     """
     if len(config["trusted_ips"]) > 0 and request.client.host not in config["trusted_ips"]:
+        message = f"Request from untrusted IP address: return_config()"
+        log_request('WARNING', request.client.host, '', request.headers, message)
         raise HTTPException(status_code=403)
 
     # Remove configuration data the client doesn't need to know.
@@ -475,7 +485,16 @@ def return_config():
     return subset
 
 
-def log_request(ark_string, client_ip, request_headers, request_type):
+def log_request(level, client_ip, ark_string, request_headers, event_type):
+    """
+    Assembles a tab-delmited log entry and writes it to the log file.
+
+    - **level**: INFO, WARNING, or ERROR from the standard Python logging levels.
+    - **client_ip**: the IP address of the client triggering the event.
+    - **ark_string**: the ARK string from the event being logged.
+    - **request_headers**: the HTTP headers from the FastAPI Request object.
+    - **event_type**: a brief description of the event.
+    """
     if 'referer' in request_headers:
         referer = request_headers['referer']
     else:
@@ -484,9 +503,14 @@ def log_request(ark_string, client_ip, request_headers, request_type):
     now = datetime.now()
     date_format = "%Y-%m-%d %H:%M:%S"
 
-    entry = f"{now.strftime(date_format)}\t{client_ip}\t{ark_string}\t{request_type}\t{referer}"
+    entry = f"{now.strftime(date_format)}\t{client_ip}\t{referer}\t{ark_string}\t{event_type}"
     logging.basicConfig(level=logging.INFO, filename=config['log_file_path'], filemode='a', format='%(message)s')
-    logging.info(entry)
+    if level == 'ERROR':
+        logging.error(entry)
+    elif level == 'WARNING':
+        logging.warning(entry)
+    else:
+        logging.info(entry)
 
 
 def normalize_ark_string(ark_string):
@@ -500,11 +524,9 @@ def normalize_ark_string(ark_string):
 
     - **ark_string**: an ARK string in the form ark:/12345/y2ee65209e67fe-45fc-a9721da0b602c742
       where the UUID part of the string contains a 2-character shoulder and 0 or more hyphens (-).
-    - **identifier**: the identifier portion of the ARK.
 
     Returns the reconstituted ARK string or False if the UUID is not a valid UUID v4.
     """
-
     # Everthing up to and including the shoulder.
     prefix = ark_string[:13]
     # Everything after the shoulder; assumed to be a UUID with or without hyphens.
