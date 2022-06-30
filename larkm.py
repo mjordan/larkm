@@ -152,7 +152,7 @@ def search_arks(request: Request, q: Optional[str] = '', page=1, page_size=20):
     """
     if len(config["trusted_ips"]) > 0 and request.client.host not in config["trusted_ips"]:
         message = f"Request from untrusted IP address: search_arks()"
-        log_request('WARNING', request.client.host, ark_string, request.headers, message)
+        log_request('WARNING', request.client.host, '', request.headers, message)
         raise HTTPException(status_code=403)
 
     if not os.path.exists(config['whoosh_index_dir_path']):
@@ -271,7 +271,7 @@ def create_ark(request: Request, ark: Ark):
     """
     if len(config["trusted_ips"]) > 0 and request.client.host not in config["trusted_ips"]:
         message = f"Request from untrusted IP address: create_ark()"
-        log_request('WARNING', request.client.host, ark_string, request.headers, message)
+        log_request('WARNING', request.client.host, '', request.headers, message)
         raise HTTPException(status_code=403)
 
     if ark.target is None:
