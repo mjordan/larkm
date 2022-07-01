@@ -304,6 +304,21 @@ def create_ark(request: Request, ark: Ark):
             log_request('ERROR', request.client.host, ark_string, request.headers, str(e))
             raise HTTPException(status_code=500)
 
+        # See if provided target is already being used.
+        try:
+            con = sqlite3.connect(config["sqlite_db_path"])
+            con.row_factory = sqlite3.Row
+            cur = con.cursor()
+            cur.execute("select * from arks where target = :a_s", {"a_s": ark.target})
+            record = cur.fetchone()
+            if record is not None:
+                con.close()
+                raise HTTPException(status_code=409, detail="Target already in use.")
+            con.close()
+        except sqlite3.DatabaseError as e:
+            log_request('ERROR', request.client.host, ark_string, request.headers, str(e))
+            raise HTTPException(status_code=500)
+
     # Assemble the ARK. Generate parts the client didn't provide.
     if ark.shoulder is None:
         ark.shoulder = config["default_shoulder"]
@@ -358,12 +373,15 @@ def update_ark(request: Request, naan: str, identifier: str, ark: Ark):
         -d '{"ark_string": "ark:/12345/x931fd9bec-0bb6-4b6a-a08b-19554e6d711d", "target": "https://example.com/foo"}'
 
     - **naan**: the NAAN portion of the ARK.
-    - **identifier**: the identifier portion of the ARK, which will include a shouder.
+    - **identifier**: the identifier portion of the ARK, which will include a shoulder.
     """
     if len(config["trusted_ips"]) > 0 and request.client.host not in config["trusted_ips"]:
         message = f"Request from untrusted IP address: update_ark()"
         log_request('WARNING', request.client.host, ark_string, request.headers, message)
         raise HTTPException(status_code=403)
+
+    if ark.ark_string is None:
+        raise HTTPException(status_code=422, detail="When updatating ARKs, the ark_string must be provided in the request body.")
 
     ark_string = f'ark:/{naan}/{identifier}'.strip()
     if ark_string != ark.ark_string:
@@ -389,6 +407,22 @@ def update_ark(request: Request, naan: str, identifier: str, ark: Ark):
     ark.shoulder = old_ark['shoulder']
     ark.identifier = old_ark['identifier']
     ark.ark_string = old_ark['ark_string']
+
+    # See if provided target is already being used.
+    try:
+        target_con = sqlite3.connect(config["sqlite_db_path"])
+        target_con.row_factory = sqlite3.Row
+        target_cur = target_con.cursor()
+        target_cur.execute("select * from arks where target = :a_s", {"a_s": ark.target})
+        target_record = target_cur.fetchone()
+        if target_record is not None:
+            target_con.close()
+            raise HTTPException(status_code=409, detail="Target already in use.")
+        target_con.close()
+    except sqlite3.DatabaseError as e:
+        log_request('ERROR', request.client.host, ark_string, request.headers, str(e))
+        raise HTTPException(status_code=500)
+
     # Only update ark properties that are in the request body.
     if ark.target is None:
         ark.target = old_ark['target']

@@ -37,7 +37,7 @@ def test_create_ark():
     response = client.post(
         "/larkm",
         json={
-            "target": "https://example.com"
+            "target": "https://example.com/ppppp"
         },
     )
     assert response.status_code == 201
@@ -46,7 +46,7 @@ def test_create_ark():
     response = client.post(
         "/larkm",
         json={
-            "target": "https://example.com/test"
+            "target": "https://example.com/sssss"
         },
     )
     body = response.json()
@@ -58,14 +58,14 @@ def test_create_ark():
         json={
             "shoulder": "s1",
             "identifier": "14b7f127-b358-4994-8888-5b7392f588d7",
-            "target": "https://example.com"
+            "target": "https://example.com/wwwww"
         },
     )
     assert response.status_code == 201
     assert response.json() == {"ark": {"shoulder": "s1", "identifier": "14b7f127-b358-4994-8888-5b7392f588d7",
                                        "ark_string": "ark:/99999/s114b7f127-b358-4994-8888-5b7392f588d7",
-                                       "target": "https://example.com", "who": ":at", "what": ":at", "when": ":at",
-                                       "where": "https://example.com",
+                                       "target": "https://example.com/wwwww", "who": ":at", "what": ":at", "when": ":at",
+                                       "where": "https://example.com/wwwww",
                                        "policy": "ACME University commits to maintain ARKs that have 's1' as a shoulder for a long time."},
                                        "urls": {"local": "https://resolver.myorg.net/ark:/99999/s114b7f127-b358-4994-8888-5b7392f588d7",
                                        "global": "https://n2t.net/ark:/99999/s114b7f127-b358-4994-8888-5b7392f588d7"}}
@@ -76,15 +76,15 @@ def test_create_ark():
         json={
             "shoulder": "x9",
             "identifier": "20578b9e-ba6e-494b-b35d-1419e06f9ced",
-            "target": "https://example.com/bar",
+            "target": "https://example.com/kkkkk",
             "what": "A new ARK"
         },
     )
     assert response.status_code == 201
     assert response.json() == {"ark": {"shoulder": "x9", "identifier": "20578b9e-ba6e-494b-b35d-1419e06f9ced",
                                        "ark_string": "ark:/99999/x920578b9e-ba6e-494b-b35d-1419e06f9ced",
-                                       "target": "https://example.com/bar", "who": ":at", "what": "A new ARK", "when": ":at",
-                                       "where": "https://example.com/bar", "policy": "Default committment statement."},
+                                       "target": "https://example.com/kkkkk", "who": ":at", "what": "A new ARK", "when": ":at",
+                                       "where": "https://example.com/kkkkk", "policy": "Default committment statement."},
                                        "urls": {"local": "https://resolver.myorg.net/ark:/99999/x920578b9e-ba6e-494b-b35d-1419e06f9ced",
                                        "global": "https://n2t.net/ark:/99999/x920578b9e-ba6e-494b-b35d-1419e06f9ced"}}
 
@@ -92,7 +92,7 @@ def test_create_ark():
     response = client.get("/ark:/99999/x920578b9e-ba6e-494b-b35d-1419e06f9ced?info")
     assert response.status_code == 200
     response_text = "erc:\nwho: :at\nwhat: A new ARK\nwhen: :at\n"
-    response_text = response_text + "where: https://example.com/bar\npolicy: Default committment statement.\n\n"
+    response_text = response_text + "where: https://example.com/kkkkk\npolicy: Default committment statement.\n\n"
     assert response.text == response_text
 
     # ARK with some special characters in its metadata.
@@ -101,16 +101,16 @@ def test_create_ark():
         json={
             "shoulder": "x9",
             "identifier": "47321e02-7df6-4dfc-aad2-bdb75ab6b92b",
-            "target": "https://example.com/bar",
+            "target": "https://example.com/fffff",
             "what": "A test ARK with some 'special' characters (`%&) in its metadata"
         },
     )
     assert response.status_code == 201
     assert response.json() == {"ark": {"shoulder": "x9", "identifier": "47321e02-7df6-4dfc-aad2-bdb75ab6b92b",
                                        "ark_string": "ark:/99999/x947321e02-7df6-4dfc-aad2-bdb75ab6b92b",
-                                       "target": "https://example.com/bar", "who": ":at", "when": ":at",
+                                       "target": "https://example.com/fffff", "who": ":at", "when": ":at",
                                        "what": "A test ARK with some 'special' characters (`%&) in its metadata",
-                                       "where": "https://example.com/bar", "policy": "Default committment statement."},
+                                       "where": "https://example.com/fffff", "policy": "Default committment statement."},
                                        "urls": {"local": "https://resolver.myorg.net/ark:/99999/x947321e02-7df6-4dfc-aad2-bdb75ab6b92b",
                                        "global": "https://n2t.net/ark:/99999/x947321e02-7df6-4dfc-aad2-bdb75ab6b92b"}}
 
@@ -120,7 +120,7 @@ def test_create_ark():
         json={
             "shoulder": "s2",
             "identifier": "cda60df9-b468-4520-8e97-fc12deb5e324x",
-            "target": "https://example.com"
+            "target": "https://example.com/ddddd"
 
         },
     )
@@ -133,7 +133,7 @@ def test_create_ark():
         json={
             "shoulder": "s1",
             "identifier": "2d24d07f-ed23-4613-a7a3-0c46155c191f",
-            "target": "https://example.com"
+            "target": "https://example.com/ggggg"
         },
     )
     assert response.status_code == 201
@@ -143,7 +143,18 @@ def test_create_ark():
         json={
             "shoulder": "s1",
             "identifier": "2d24d07f-ed23-4613-a7a3-0c46155c191f",
-            "target": "https://example.com/foo"
+            "target": "https://example.com/hhhhh"
+        },
+    )
+    assert response.status_code == 409
+
+    # Create an ARK that uses a target already in the database.
+    response = client.post(
+        "/larkm",
+        json={
+            "shoulder": "s1",
+            "identifier": "3dd364bd-ea7a-43d3-a6be-e7b52242c2c6",
+            "target": "https://example.com/ggggg"
         },
     )
     assert response.status_code == 409
@@ -186,15 +197,15 @@ def test_update_ark():
         json={
             "shoulder": "s2",
             "identifier": "cda60df9-b468-4520-8e97-fc12deb5e324",
-            "target": "https://example.com"
+            "target": "https://example.com/nnnnn"
 
         },
     )
     assert response.status_code == 201
     assert response.json() == {"ark": {"shoulder": "s2", "identifier": "cda60df9-b468-4520-8e97-fc12deb5e324",
                                        "ark_string": "ark:/99999/s2cda60df9-b468-4520-8e97-fc12deb5e324",
-                                       "target": "https://example.com", "who": ":at", "what": ":at", "when": ":at",
-                                       "where": "https://example.com", "policy": "Default committment statement."},
+                                       "target": "https://example.com/nnnnn", "who": ":at", "what": ":at", "when": ":at",
+                                       "where": "https://example.com/nnnnn", "policy": "Default committment statement."},
                                        "urls": {"local": "https://resolver.myorg.net/ark:/99999/s2cda60df9-b468-4520-8e97-fc12deb5e324",
                                        "global": "https://n2t.net/ark:/99999/s2cda60df9-b468-4520-8e97-fc12deb5e324"}}
 
@@ -210,8 +221,8 @@ def test_update_ark():
     assert response.status_code == 200
     assert response.json() == {"ark": {"shoulder": "s2", "identifier": "cda60df9-b468-4520-8e97-fc12deb5e324",
                                        "ark_string": "ark:/99999/s2cda60df9-b468-4520-8e97-fc12deb5e324",
-                                       "target": "https://example.com", "who": ":at", "what": "A test", "when": "2020",
-                                       "where": "https://example.com", "policy": "Default committment statement."},
+                                       "target": "https://example.com/nnnnn", "who": ":at", "what": "A test", "when": "2020",
+                                       "where": "https://example.com/nnnnn", "policy": "Default committment statement."},
                                        "urls": {"local": "https://resolver.myorg.net/ark:/99999/s2cda60df9-b468-4520-8e97-fc12deb5e324",
                                        "global": "https://n2t.net/ark:/99999/s2cda60df9-b468-4520-8e97-fc12deb5e324"}}
 
@@ -222,7 +233,7 @@ def test_update_ark():
             "shoulder": "s2",
             "identifier": "aaed59b0-6ad6-4b69-8511-bcf781e386a0",
             "what": "New ARK with its own policy",
-            "target": "https://example.com"
+            "target": "https://example.com/jjjjj"
         },
     )
 
@@ -236,8 +247,8 @@ def test_update_ark():
     assert response.status_code == 200
     assert response.json() == {"ark": {"shoulder": "s2", "identifier": "aaed59b0-6ad6-4b69-8511-bcf781e386a0",
                                        "ark_string": "ark:/99999/s2aaed59b0-6ad6-4b69-8511-bcf781e386a0",
-                                       "target": "https://example.com", "who": ":at", "what": "New ARK with its own policy",
-                                       "when": ":at", "where": "https://example.com", "policy": "A test policy."},
+                                       "target": "https://example.com/jjjjj", "who": ":at", "what": "New ARK with its own policy",
+                                       "when": ":at", "where": "https://example.com/jjjjj", "policy": "A test policy."},
                                         "urls": {
                                            "local": "https://resolver.myorg.net/ark:/99999/s2aaed59b0-6ad6-4b69-8511-bcf781e386a0",
                                            "global": "https://n2t.net/ark:/99999/s2aaed59b0-6ad6-4b69-8511-bcf781e386a0"}
@@ -249,9 +260,10 @@ def test_update_ark():
         json={
             "shoulder": "s2",
             "identifier": "3a8a9396-baa8-46be-ba22-b08b0de2db5b",
-            "target": "https://foo.example.com"
+            "target": "https://foo.example.com/ttttt"
         },
     )
+    assert response.status_code == 201
 
     response = client.put(
         "/larkm/ark:/99999/s23a8a9396-baa8-46be-ba22-b08b0de2db5b",
@@ -260,6 +272,38 @@ def test_update_ark():
         },
     )
     assert response.status_code == 409
+    assert response.json() == {'detail': 'NAAN/identifier combination and ark_string do not match.'}
+
+    # Intentionally trigger a 409 by trying to update the target with a target that already exists.
+    response = client.post(
+        "/larkm",
+        json={
+            "shoulder": "s2",
+            "identifier": "292c0745-7b79-4f05-b0bf-3329267a8655",
+            "target": "https://foo.example.com/targettest"
+        },
+    )
+    assert response.status_code == 201
+
+    response = client.put(
+        "/larkm/ark:/99999/s2292c0745-7b79-4f05-b0bf-3329267a8655",
+        json={
+            "ark_string": "ark:/99999/s2292c0745-7b79-4f05-b0bf-3329267a8655",
+            "target": "http://example.com/15"
+        },
+    )
+    assert response.status_code == 409
+    assert response.json() == {'detail': 'Target already in use.'}
+
+    # Intentionally trigger a 422 by not providing an ark_string in the body.
+    response = client.put(
+        "/larkm/ark:/99999/s2292c0745-7b79-4f05-b0bf-3329267a8655",
+        json={
+            "erc_when": "2022"
+        },
+    )
+    assert response.status_code == 422
+    assert response.json() == {'detail': 'When updatating ARKs, the ark_string must be provided in the request body.'}
 
 
 def test_delete_ark():
