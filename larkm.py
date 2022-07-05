@@ -17,6 +17,7 @@ from whoosh.qparser import QueryParser
 
 with open("larkm.json", "r") as config_file:
     config = json.load(config_file)
+    config["allowed_shoulders"].insert(0, config["default_shoulder"])
 
 app = FastAPI()
 
@@ -76,7 +77,6 @@ def resolve_ark(request: Request, naan: str, identifier: str, info: Optional[str
         return RedirectResponse(record['target'])
     else:
         erc = f"erc:\nwho: {record['erc_who']}\nwhat: {record['erc_what']}\nwhen: {record['erc_when']}\nwhere: {record['erc_where']}\n"
-        config["allowed_shoulders"].insert(0, config["default_shoulder"])
         if len(record['policy']) > 0:
             policy = "policy: " + record['policy']
         else:
@@ -278,7 +278,6 @@ def create_ark(request: Request, ark: Ark):
         raise HTTPException(status_code=422, detail="Missing target.")
 
     # Validate shoulder if provided.
-    config["allowed_shoulders"].insert(0, config["default_shoulder"])
     if ark.shoulder is not None:
         for sh in config["allowed_shoulders"]:
             if ark.shoulder not in config["allowed_shoulders"]:
