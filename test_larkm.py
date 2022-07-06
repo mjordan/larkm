@@ -6,6 +6,10 @@ import re
 
 client = TestClient(app)
 
+def setup_module(module):
+    shutil.copyfile('testdb/index_dir/_MAIN_1.toc.bak', 'testdb/index_dir/_MAIN_1.toc')
+    shutil.copyfile('testdb/index_dir/MAIN_yoaos02ixo231jgh.seg.bak', 'testdb/index_dir/MAIN_yoaos02ixo231jgh.seg')
+
 
 def teardown_module(module):
     shutil.copyfile('testdb/larkmtest.db.bak', 'testdb/larkmtest.db')
@@ -188,6 +192,19 @@ def test_search_arks():
     response = client.get("/larkm/search?q=date_created%3A%5B2022-02-20%20TO%202022-02-29%5D")
     assert response.status_code == 422
     assert response.json() == {"detail":"2022-02-29 in date_created is not not a valid date."}
+
+
+def test_get_config():
+    response = client.get("/larkm/config")
+    assert response.status_code == 200
+    assert response.json() == {"NAAN":"99999","default_shoulder":"s1",
+                               "allowed_shoulders":["s1","s2","s3","x9"],
+                               "committment_statements":
+                               {"s1":"ACME University commits to maintain ARKs that have 's1' as a shoulder for a long time.",
+                               "s3":"ACME University commits to maintain ARKs that have 's3' as a shoulder until the end of 2025.",
+                               "default":"Default committment statement."},
+                               "erc_metadata_defaults":{"who":":at","what":":at","when":":at","where":""},
+                               "resolver_hosts":{"global":"https://n2t.net/","local":"https://resolver.myorg.net"}}
 
 
 def test_update_ark():
