@@ -41,7 +41,7 @@ def test_create_ark():
     response = client.post(
         "/larkm",
         json={
-            "target": "https://example.com/ppppp"
+            "where": "https://example.com/ppppp"
         },
     )
     assert response.status_code == 201
@@ -50,7 +50,7 @@ def test_create_ark():
     response = client.post(
         "/larkm",
         json={
-            "target": "https://example.com/sssss"
+            "where": "https://example.com/sssss"
         },
     )
     body = response.json()
@@ -62,7 +62,7 @@ def test_create_ark():
         json={
             "shoulder": "s1",
             "identifier": "14b7f127-b358-4994-8888-5b7392f588d7",
-            "target": "https://example.com/wwwww"
+            "where": "https://example.com/wwwww"
         },
     )
     assert response.status_code == 201
@@ -80,7 +80,7 @@ def test_create_ark():
         json={
             "shoulder": "x9",
             "identifier": "20578b9e-ba6e-494b-b35d-1419e06f9ced",
-            "target": "https://example.com/kkkkk",
+            "where": "https://example.com/kkkkk",
             "what": "A new ARK"
         },
     )
@@ -105,7 +105,7 @@ def test_create_ark():
         json={
             "shoulder": "x9",
             "identifier": "47321e02-7df6-4dfc-aad2-bdb75ab6b92b",
-            "target": "https://example.com/fffff",
+            "where": "https://example.com/fffff",
             "what": "A test ARK with some 'special' characters (`%&) in its metadata"
         },
     )
@@ -124,12 +124,12 @@ def test_create_ark():
         json={
             "shoulder": "s2",
             "identifier": "cda60df9-b468-4520-8e97-fc12deb5e324x",
-            "target": "https://example.com/ddddd"
+            "where": "https://example.com/ddddd"
 
         },
     )
     assert response.status_code == 422
-    assert response.text == '{"detail":"Provided UUID is invalid."}'
+    assert response.text == '{"detail":"Provided UUID cda60df9-b468-4520-8e97-fc12deb5e324x is invalid."}'
 
     # Create an ARK that uses a UUID already in the database.
     response = client.post(
@@ -137,7 +137,7 @@ def test_create_ark():
         json={
             "shoulder": "s1",
             "identifier": "2d24d07f-ed23-4613-a7a3-0c46155c191f",
-            "target": "https://example.com/ggggg"
+            "where": "https://example.com/ggggg"
         },
     )
     assert response.status_code == 201
@@ -147,18 +147,19 @@ def test_create_ark():
         json={
             "shoulder": "s1",
             "identifier": "2d24d07f-ed23-4613-a7a3-0c46155c191f",
-            "target": "https://example.com/hhhhh"
+            "where": "https://example.com/hhhhh"
         },
     )
     assert response.status_code == 409
+    assert response.json() == {"detail":"UUID 2d24d07f-ed23-4613-a7a3-0c46155c191f already in use."}
 
-    # Create an ARK that uses a target already in the database.
+    # Create an ARK that uses a erc_where value already in the database.
     response = client.post(
         "/larkm",
         json={
             "shoulder": "s1",
             "identifier": "3dd364bd-ea7a-43d3-a6be-e7b52242c2c6",
-            "target": "https://example.com/ggggg"
+            "where": "https://example.com/ggggg"
         },
     )
     assert response.status_code == 409
@@ -214,7 +215,7 @@ def test_update_ark():
         json={
             "shoulder": "s2",
             "identifier": "cda60df9-b468-4520-8e97-fc12deb5e324",
-            "target": "https://example.com/nnnnn"
+            "where": "https://example.com/nnnnn"
 
         },
     )
@@ -250,7 +251,7 @@ def test_update_ark():
             "shoulder": "s2",
             "identifier": "aaed59b0-6ad6-4b69-8511-bcf781e386a0",
             "what": "New ARK with its own policy",
-            "target": "https://example.com/jjjjj"
+            "where": "https://example.com/jjjjj"
         },
     )
 
@@ -277,7 +278,7 @@ def test_update_ark():
         json={
             "shoulder": "s2",
             "identifier": "3a8a9396-baa8-46be-ba22-b08b0de2db5b",
-            "target": "https://foo.example.com/ttttt"
+            "where": "https://foo.example.com/ttttt"
         },
     )
     assert response.status_code == 201
@@ -291,13 +292,13 @@ def test_update_ark():
     assert response.status_code == 409
     assert response.json() == {'detail': 'NAAN/identifier combination and ark_string do not match.'}
 
-    # Intentionally trigger a 409 by trying to update the target with a target that already exists.
+    # Intentionally trigger a 409 by trying to update the erc_where with a value already in use.
     response = client.post(
         "/larkm",
         json={
             "shoulder": "s2",
             "identifier": "292c0745-7b79-4f05-b0bf-3329267a8655",
-            "target": "https://foo.example.com/targettest"
+            "where": "https://foo.example.com/wheretest"
         },
     )
     assert response.status_code == 201
@@ -306,11 +307,11 @@ def test_update_ark():
         "/larkm/ark:99999/s2292c0745-7b79-4f05-b0bf-3329267a8655",
         json={
             "ark_string": "ark:99999/s2292c0745-7b79-4f05-b0bf-3329267a8655",
-            "target": "http://example.com/15"
+            "where": "http://example.com/15"
         },
     )
     assert response.status_code == 409
-    assert response.json() == {'detail': 'Target already in use.'}
+    assert response.json() == {'detail': '\'where\' value already in use.'}
 
     # Intentionally trigger a 422 by not providing an ark_string in the body.
     response = client.put(
@@ -329,7 +330,7 @@ def test_delete_ark():
         json={
             "shoulder": "x9",
             "identifier": "15a1a0a1-20a3-4ef9-a0b5-91a6115bb538",
-            "target": "https://example.com"
+            "where": "https://example.com"
         },
     )
     assert create_response.status_code == 201
