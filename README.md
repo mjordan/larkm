@@ -235,6 +235,8 @@ Searching uses the [default Whoosh query language](https://whoosh.readthedocs.io
 * q=`target:"https://example.com*"`
 * q=`date_modified:2022-02-23`
 * q=`date_created:[2022-02-20 TO 2022-02-28]`
+* q=`ark_string:ark:99999/s1cea8e7f3-1c84-4919-a694-65bc9997d9fe`
+* q=`erc_where:http://example.com`
 
 ### Building the search index
 
