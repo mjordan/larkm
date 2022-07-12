@@ -72,7 +72,7 @@ The config settings are:
        "when": ":at",
        "where": ""
   },
-  "sqlite_db_path": "testdb/larkmtest.db",
+  "sqlite_db_path": "fixtures/larkmtest.db",
   "log_file_path": "/tmp/larkm.log",
   "resolver_hosts": {
      "global": "https://n2t.net/",
