@@ -100,11 +100,11 @@ To see the configured metadata and committment statement for the ARK instead of 
 REST clients can provide a `shoulder` and/or an `identifer` value in the requst body.
 
 * Clients cannot provide a NAAN.
-* Clients must always provide a `target`.
+* Clients must always provide a `where` value.
 * If a should is not provided, larkm will use its default shoulder.
 * If an identifier is not provided, larkm will generate a v4 UUID as the identifier.
 * If an identifier is provided, it must not contain a shoulder.
-* If the identifier that is provided is already in use, larkm will respond to the `POST` request with an `409` status code acommpanied by the body `{"detail":"UUID already in use."}`.
+* If the identifier that is provided is already in use, larkm will respond to the `POST` request with an `409` status code acommpanied by the body `{"detail":"UUID <uuid> already in use."}`.
 
 To add a new ARK (for example, to resolve to https://digital.lib.sfu.ca), issue the following request using curl:
 
@@ -114,19 +114,11 @@ If you now visit `http://127.0.0.1:8000/ark:12345/s1fde97fb3-634b-4232-b63e-e512
 
 If you omit the `shoulder`, the configured default shoulder will be used. If you omit the `identifier`, larkm will mint one using a v4 UUID.
 
-All responses to a POST will include in their body `shoulder`, `identifier`, `target`, metadata and `policy` values provided in the POST request. The `where` value will be identical to the provided`target` value. Metadata values not provided will get the ERC ":at" ("the real value is at the given URL or identifier") value:
+All responses to a POST will include in their body the values values provided in the POST request, plus any default values for missing body fields. The `target` value will be identical to the provided `where` value. Metadata values not provided will get the ERC ":at" ("the real value is at the given URL or identifier") value:
 
 `{"ark":{"shoulder": "s1", "identifier": "fde97fb3-634b-4232-b63e-e5128647efe7", "ark_string":"ark:12345/s1fde97fb3-634b-4232-b63e-e5128647efe7","target":"https://digital.lib.sfu.ca", "who":":at", "when":":at", "where":"https://digital.lib.sfu.ca", "what":":at"}, "urls":{"local":"https://resolver.myorg.net/ark:12345/s1fde97fb3-634b-4232-b63e-e5128647efe7","global":"https://n2t.net/ark:99999/s1fde97fb3-634b-4232-b63e-e5128647efe7"}}`
 
 Also included in the response are values for global and local `urls`.
-
-Values provided in the request body for `what`, `who`, `when`, and `policy` will be returned in the response:
-
-`curl -v -X POST "http://127.0.0.1:8000/larkm" -H 'Content-Type: application/json' -d '{"shoulder": "s1", "target": "https://digital.lib.sfu.ca", "who": "Jordan, Mark", "when": "2020", "policy": "We commit to maintaining this ARK for a long time."}'`
-
-will return
-
-`{"ark":{"shoulder": "s1", "identifier": "fde97fb3-634b-4232-b63e-e5128647efe7", "ark_string":"ark:12345/s1fde97fb3-634b-4232-b63e-e5128647efe7","target":"https://digital.lib.sfu.ca", "who":"Jordan, Mark", "when":"2020", "where":"https://digital.lib.sfu.ca", "policy":"We commit to maintaining this ARK for a long time."}, "urls":{"local":"https://resolver.myorg.net/ark:12345/s1fde97fb3-634b-4232-b63e-e5128647efe7","global":"https://n2t.net/ark:12345/s1fde97fb3-634b-4232-b63e-e5128647efe7"}}`
 
 ### Updating an ARK's target URL and metadata
 
@@ -138,21 +130,6 @@ Some sample queries:
 
 `curl -v -X PUT "http://127.0.0.1:8000/larkm/ark:12345/s1fde97fb3-634b-4232-b63e-e5128647efe7" -H 'Content-Type: application/json' -d '{"ark_string": "ark:12345/s1fde97fb3-634b-4232-b63e-e5128647efe7", "who": "Jordan, Mark", "when": "2020", "policy": "We will maintain this ARK for a long time."}'`
 
-### Getting the target URL for an ARK, or an ARK of a URL
-
-If you want to know the target URL associated with an ARK without resolving to that URL, do this:
-
-`curl "http://127.0.0.1:8000/larkm?ark_string=ark:12345/s1fde97fb3-634b-4232-b63e-e5128647efe7"`
-
-If you want the ARK for a URL, do this:
-
-`curl "http://127.0.0.1:8000/larkm?target=https://summit.sfu.ca"`
-
-In both cases, larkm will return a JSON response body that looks like this:
-
-`{"ark_string": "ark:12345/s1fde97fb3-634b-4232-b63e-e5128647efe7", "target": "https://summit.sfu.ca", "urls":{"local":"https://resolver.myorg.net/ark:12345/s1fde97fb3-634b-4232-b63e-e5128647efe7","global":"https://n2t.net/ark:12345/s1fde97fb3-634b-4232-b63e-e5128647efe7"}}`
-
-or a 404 if the ARK or URL you used in your request wasn't found.
 
 ### Deleting an ARK
 

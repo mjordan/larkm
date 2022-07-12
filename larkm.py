@@ -40,7 +40,7 @@ def resolve_ark(request: Request, naan: str, identifier: str, info: Optional[str
     The ARK resolver. Redirects the client to the target URL associated with the ARK.
     Sample request:
 
-    curl -L "http://127.0.0.1:8000/ark:/12345/x9062cdde7-f9d6-48bb-be17-bd3b9f441ec4"
+    curl -L "http://127.0.0.1:8000/ark:12345/x9062cdde7-f9d6-48bb-be17-bd3b9f441ec4"
 
     - **naan**: the NAAN portion of the ARK.
     - **identifier**: the identifier portion of the ARK. A v4 UUID prepended
@@ -88,54 +88,6 @@ def resolve_ark(request: Request, naan: str, identifier: str, info: Optional[str
         if config["log_file_path"]:
             log_request('INFO', request.client.host, ark_string, request.headers, '?info')
         return Response(content=erc + policy + "\n\n", media_type="text/plain")
-
-
-@app.get("/larkm")
-def read_ark(request: Request, ark_string: Optional[str] = '', target: Optional[str] = ''):
-    """
-    Get the target URL associated with an ARK, or the ARK assoicated with a target URL.
-    Sample request:
-
-    curl "http://127.0.0.1:8000/larkm?ark_string=ark:12345/x931fd9bec-0bb6-4b6a-a08b-19554e6d711d" or
-    curl "http://127.0.0.1:8000/larkm?target=https://example.com/foo"
-
-    - **ark_string**: the ARK the client wants to get the target for, in the
-      form 'ark:naan/id_string'.
-    - **target**: the target the client wants to get the ark for, in
-      the form of a fully qualified URL.
-
-      Include either the "ark_string" or the "target" in requests, not both
-      at the same time.
-    """
-    if len(config["trusted_ips"]) > 0 and request.client.host not in config["trusted_ips"]:
-        message = f"Request from untrusted IP address: read_ark()"
-        log_request('WARNING', request.client.host, ark_string, request.headers, message)
-        raise HTTPException(status_code=403)
-
-    try:
-        con = sqlite3.connect(config["sqlite_db_path"])
-        con.row_factory = sqlite3.Row
-        cur = con.cursor()
-        if ark_string:
-            cur.execute("select * from arks where ark_string=:a_s", {"a_s": ark_string})
-        if target:
-            cur.execute("select * from arks where target=:t", {"t": target})
-        record = cur.fetchone()
-        con.close()
-
-        urls = dict()
-        if len(config["resolver_hosts"]["local"]) > 0:
-            urls['local'] = f'{config["resolver_hosts"]["local"].rstrip("/")}/{record["ark_string"]}'
-        if len(config["resolver_hosts"]["global"]) > 0:
-            urls['global'] = f'{config["resolver_hosts"]["global"].rstrip("/")}/{record["ark_string"]}'
-
-        if record is not None:
-            return {"ark_string": record['ark_string'], "target": record['target'], "urls": urls}
-        else:
-            raise HTTPException(status_code=404, detail="ARK not found")
-    except sqlite3.DatabaseError as e:
-        log_request('ERROR', request.client.host, ark_string, request.headers, str(e))
-        raise HTTPException(status_code=500)
 
 
 @app.get("/larkm/search")
@@ -234,7 +186,7 @@ def create_ark(request: Request, ark: Ark):
         -H 'Content-Type: application/json' \
         -d '{"shoulder": "x1", "identifier": "fde97fb3-634b-4232-b63e-e5128647efe7", "where": "https://digital.lib.sfu.ca"}'
 
-    Sample request with only a target and an identifier and a name, which asks larkm to
+    Sample request with only a 'where', an identifier and a name, which asks larkm to
     generate an ARK string based on the NAAN specified in configuration settings, the
     default shoulder, and the provided ID/name:
 
@@ -242,7 +194,7 @@ def create_ark(request: Request, ark: Ark):
         -H 'Content-Type: application/json' \
         -d '{"identifier": "fde97fb3-634b-4232-b63e-e5128647efe7", "where": "https://digital.lib.sfu.ca"}'
 
-    Sample request with only a target and a shoulder, which asks larkm to generate
+    Sample request with only a 'where' and a shoulder, which asks larkm to generate
     an ARK string based on the NAAN specified in configuration settings and the supplied
     shoulder. If the ID/name is not provided, larkm will provide one in the form of a
     v4 UUID:
@@ -251,23 +203,22 @@ def create_ark(request: Request, ark: Ark):
         -H 'Content-Type: application/json' \
         -d '{"shoulder": "x1", "where": "https://digital.lib.sfu.ca"}'
 
-    Sample request with no target or shoulder. larkm will generate an ARK using
+    Sample request with no 'where' or shoulder. larkm will generate an ARK using
     the configured NAAN, the default shoulder, and a v4 UUID.
 
     curl -v -X POST "http://127.0.0.1:8000/larkm" \
         -H 'Content-Type: application/json' \
         -d '{"where": "https://digital.lib.sfu.ca"}'
 
-    Sample request with ERC metadata values. ERC elements ("who", "what", "when",
-    "where") not included in the request body, they are given defaults from config,
-    except for "where", which is given the value of the ARK's target URL.
+    Sample request with ERC metadata values. ERC elements ("who", "what", "when")
+    not included in the request body are given defaults from config. The ARK's 'target'
+    is given the value of the ARK's required 'where' value.
 
     curl -v -X POST "http://127.0.0.1:8000/larkm" \
         -H 'Content-Type: application/json' \
-        -d '{"who": "Jordan, Mark", "what": "GitBags", "when": "2014", \
-        "where": "https://github.com/mjordan/GitBags"}'
+        -d '{"who": "Jordan, Mark", "what": "GitBags", "when": "2014", "where": "https://github.com/mjordan/GitBags"}'
 
-    - **ark**: the ARK to create, consisting of an ARK and a target URL.
+    - **ark**: the ARK to create.
     """
     if len(config["trusted_ips"]) > 0 and request.client.host not in config["trusted_ips"]:
         message = f"Request from untrusted IP address: create_ark()"
@@ -275,7 +226,7 @@ def create_ark(request: Request, ark: Ark):
         raise HTTPException(status_code=403)
 
     if ark.where is None:
-        raise HTTPException(status_code=422, detail="Missing 'where' value.")
+        raise HTTPException(status_code=422, detail="A 'where' value is required.")
 
     # Validate shoulder if provided.
     if ark.shoulder is not None:
@@ -303,7 +254,7 @@ def create_ark(request: Request, ark: Ark):
             log_request('ERROR', request.client.host, ark_string, request.headers, str(e))
             raise HTTPException(status_code=500)
 
-        # See if provided target is already being used.
+        # See if provided 'where' value is already being used.
         try:
             con = sqlite3.connect(config["sqlite_db_path"])
             con.row_factory = sqlite3.Row
@@ -312,7 +263,7 @@ def create_ark(request: Request, ark: Ark):
             record = cur.fetchone()
             if record is not None:
                 con.close()
-                raise HTTPException(status_code=409, detail="Target already in use.")
+                raise HTTPException(status_code=409, detail="'where' value already in use.")
             con.close()
         except sqlite3.DatabaseError as e:
             log_request('ERROR', request.client.host, ark_string, request.headers, str(e))
@@ -326,20 +277,21 @@ def create_ark(request: Request, ark: Ark):
 
     ark.ark_string = f'ark:{config["NAAN"]}/{ark.shoulder}{ark.identifier}'
 
-
     if ark.who is None:
         ark.who = config["erc_metadata_defaults"]["who"]
     if ark.what is None:
         ark.what = config["erc_metadata_defaults"]["what"]
     if ark.when is None:
         ark.when = config["erc_metadata_defaults"]["when"]
-    if ark.target is None or len(ark.target) == 0:
-        ark.target = ark.where
+    # if ark.target is None or len(ark.target) == 0:
+        # ark.target = ark.where
     if ark.policy is None:
         if ark.shoulder in config["committment_statements"].keys():
             ark.policy = config["committment_statements"][ark.shoulder]
         else:
             ark.policy = config["committment_statements"]['default']
+
+    ark.target = ark.where
 
     try:
         ark_data = (ark.shoulder, ark.identifier, ark.ark_string, ark.target, ark.who, ark.what, ark.when, ark.where, ark.policy)
@@ -413,7 +365,7 @@ def update_ark(request: Request, naan: str, identifier: str, ark: Ark):
         erc_where_con = sqlite3.connect(config["sqlite_db_path"])
         erc_where_con.row_factory = sqlite3.Row
         erc_where_cur = erc_where_con.cursor()
-        erc_where_cur.execute("select * from arks where target = :a_s", {"a_s": ark.where})
+        erc_where_cur.execute("select * from arks where erc_where = :a_s", {"a_s": ark.where})
         erc_where_record = erc_where_cur.fetchone()
         if erc_where_record is not None:
             erc_where_con.close()
