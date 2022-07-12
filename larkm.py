@@ -34,7 +34,7 @@ class Ark(BaseModel):
     policy: Optional[str] = None
 
 
-@app.get("/ark:/{naan}/{identifier}")
+@app.get("/ark:{naan}/{identifier}")
 def resolve_ark(request: Request, naan: str, identifier: str, info: Optional[str] = None):
     """
     The ARK resolver. Redirects the client to the target URL associated with the ARK.
@@ -49,7 +49,7 @@ def resolve_ark(request: Request, naan: str, identifier: str, info: Optional[str
       to the ARK string should return a committment statement and resource
       metadata. For now, return the configured committment statement only.
     """
-    ark_string = f'ark:/{naan}/{identifier}'
+    ark_string = f'ark:{naan}/{identifier}'
 
     ark_string = normalize_ark_string(ark_string)
     if not ark_string:
@@ -96,11 +96,11 @@ def read_ark(request: Request, ark_string: Optional[str] = '', target: Optional[
     Get the target URL associated with an ARK, or the ARK assoicated with a target URL.
     Sample request:
 
-    curl "http://127.0.0.1:8000/larkm?ark_string=ark:/12345/x931fd9bec-0bb6-4b6a-a08b-19554e6d711d" or
+    curl "http://127.0.0.1:8000/larkm?ark_string=ark:12345/x931fd9bec-0bb6-4b6a-a08b-19554e6d711d" or
     curl "http://127.0.0.1:8000/larkm?target=https://example.com/foo"
 
     - **ark_string**: the ARK the client wants to get the target for, in the
-      form 'ark:/naan/id_string'.
+      form 'ark:naan/id_string'.
     - **target**: the target the client wants to get the ark for, in
       the form of a fully qualified URL.
 
@@ -324,7 +324,7 @@ def create_ark(request: Request, ark: Ark):
     if ark.identifier is None:
         ark.identifier = str(uuid4())
 
-    ark.ark_string = f'ark:/{config["NAAN"]}/{ark.shoulder}{ark.identifier}'
+    ark.ark_string = f'ark:{config["NAAN"]}/{ark.shoulder}{ark.identifier}'
 
     if ark.who is None:
         ark.who = config["erc_metadata_defaults"]["who"]
@@ -360,16 +360,16 @@ def create_ark(request: Request, ark: Ark):
     return {"ark": ark, "urls": urls}
 
 
-@app.put("/larkm/ark:/{naan}/{identifier}")
+@app.put("/larkm/ark:{naan}/{identifier}")
 def update_ark(request: Request, naan: str, identifier: str, ark: Ark):
     """
     Update an ARK with a new target, metadata, or policy statement. Shoulders,
     identifiers, and ark_strings cannot be updated. ark_string is a required
     body field. Sample query:
 
-    curl -v -X PUT "http://127.0.0.1:8000/larkm/ark:/12345/x931fd9bec-0bb6-4b6a-a08b-19554e6d711d" \
+    curl -v -X PUT "http://127.0.0.1:8000/larkm/ark:12345/x931fd9bec-0bb6-4b6a-a08b-19554e6d711d" \
         -H 'Content-Type: application/json' \
-        -d '{"ark_string": "ark:/12345/x931fd9bec-0bb6-4b6a-a08b-19554e6d711d", "target": "https://example.com/foo"}'
+        -d '{"ark_string": "ark:12345/x931fd9bec-0bb6-4b6a-a08b-19554e6d711d", "target": "https://example.com/foo"}'
 
     - **naan**: the NAAN portion of the ARK.
     - **identifier**: the identifier portion of the ARK, which will include a shoulder.
@@ -382,7 +382,7 @@ def update_ark(request: Request, naan: str, identifier: str, ark: Ark):
     if ark.ark_string is None:
         raise HTTPException(status_code=422, detail="When updatating ARKs, the ark_string must be provided in the request body.")
 
-    ark_string = f'ark:/{naan}/{identifier}'.strip()
+    ark_string = f'ark:{naan}/{identifier}'.strip()
     if ark_string != ark.ark_string:
         raise HTTPException(status_code=409, detail="NAAN/identifier combination and ark_string do not match.")
 
@@ -456,12 +456,12 @@ def update_ark(request: Request, naan: str, identifier: str, ark: Ark):
     return {"ark": ark, "urls": urls}
 
 
-@app.delete("/larkm/ark:/{naan}/{identifier}", status_code=204)
+@app.delete("/larkm/ark:{naan}/{identifier}", status_code=204)
 def delete_ark(request: Request, naan: str, identifier: str):
     """
     Given an ARK string, delete the ARK. Sample query:
 
-    curl -v -X DELETE "http://127.0.0.1:8000/larkm/ark:/12345/x931fd9bec-0bb6-4b6a-a08b-19554e6d711d"
+    curl -v -X DELETE "http://127.0.0.1:8000/larkm/ark:12345/x931fd9bec-0bb6-4b6a-a08b-19554e6d711d"
 
     - **naan**: the NAAN portion of the ARK.
     - **identifier**: the identifier portion of the ARK.
@@ -471,7 +471,7 @@ def delete_ark(request: Request, naan: str, identifier: str):
         log_request('WARNING', request.client.host, ark_string, request.headers, message)
         raise HTTPException(status_code=403)
 
-    ark_string = f'ark:/{naan}/{identifier}'
+    ark_string = f'ark:{naan}/{identifier}'
 
     try:
         con = sqlite3.connect(config["sqlite_db_path"])
@@ -551,7 +551,7 @@ def normalize_ark_string(ark_string):
     Reconsitutues the hypens in the UUID portion of the ARK string. The ARK
     spec requires hyphens to be insignificant.
 
-    Assumes that the ARK string contains the optional / after 'ark:', that
+    Assumes that the ARK string does not contain the / after 'ark:', that
     the NAAN is 5 characters long, and that the shoulder is present and is two
     characters long.
 
@@ -561,9 +561,9 @@ def normalize_ark_string(ark_string):
     Returns the reconstituted ARK string or False if the UUID is not a valid UUID v4.
     """
     # Everthing up to and including the shoulder.
-    prefix = ark_string[:13]
+    prefix = ark_string[:12]
     # Everything after the shoulder; assumed to be a UUID with or without hyphens.
-    suffix = ark_string[13:]
+    suffix = ark_string[12:]
 
     uuid_sans_hyphens = suffix.replace('-', '')
     group5 = uuid_sans_hyphens[20:]

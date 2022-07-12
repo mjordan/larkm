@@ -15,7 +15,7 @@ larkm is a simple [ARK](https://arks.org/) manager that can:
 * delete ARKs
 * log requests for ARK resolution
 
-ARK resolution is provided via requests to larkm's host followed by an ARK (e.g. `https://myhost.net/ark:/12345/876543`) and the other operations are provided through standard REST requests to larkm's management endpoint (`/larkm`). This REST interface allows creating, persisting, updating, and deleting ARKs, and can expose a subset of larkm's configuration data to clients. Access to the REST endpoints can be controlled by registering the IP addresses of trused clients, as explained in the "Configuration" section below.
+ARK resolution is provided via requests to larkm's host followed by an ARK (e.g. `https://myhost.net/ark:12345/876543`) and the other operations are provided through standard REST requests to larkm's management endpoint (`/larkm`). This REST interface allows creating, persisting, updating, and deleting ARKs, and can expose a subset of larkm's configuration data to clients. Access to the REST endpoints can be controlled by registering the IP addresses of trused clients, as explained in the "Configuration" section below.
 
 larkm is currently a proof of concept as we learn about locally mananging ARKs. It is considered "lightweight" because it supports only a subset of ARK functionality, focusing on providing ways to manage ARKs locally and on using ARKs as persistent, resolvable identifiers. ARK features such as suffix passthrough and ARK qualifiers are currently out of scope.
 
@@ -89,11 +89,11 @@ To start the larkm app with the local Uvicorn web server, in a terminal run `pyt
 
 ### Resolving an ARK
 
-Visit `http://127.0.0.1:8000/ark:/12345/x9062cdde7-f9d6-48bb-be17-bd3b9f441ec4` using `curl -Lv`. You will see a redirect to `https://example.com/foo`.
+Visit `http://127.0.0.1:8000/ark:12345/x9062cdde7-f9d6-48bb-be17-bd3b9f441ec4` using `curl -Lv`. You will see a redirect to `https://example.com/foo`.
 
-To see the configured metadata and committment statement for the ARK instead of resolving to its target, append `?info` to the end of the ARK, e.g., `http://127.0.0.1:8000/ark:/12345/x9062cdde7-f9d6-48bb-be17-bd3b9f441ec4?info`.
+To see the configured metadata and committment statement for the ARK instead of resolving to its target, append `?info` to the end of the ARK, e.g., `http://127.0.0.1:8000/ark:12345/x9062cdde7-f9d6-48bb-be17-bd3b9f441ec4?info`.
 
-> To comply with the ARK specification, the hyphens in the identifier are optional. Therefore, `http://127.0.0.1:8000/ark:/12345/x9062cdde7-f9d648bbbe17bd3--b9f441ec4` is equivalent to `http://127.0.0.1:8000/ark:/12345/x9062cdde7-f9d6-48bb-be17-bd3b9f441ec4`.  Since hyphens are integral parts of UUIDs, larkm restores the hyphens to their expected location within the UUID to perform its lookups during resolution. Hyphens in UUIDs are optional/ignored only when resolving an ARK. They are required for all other operations described below.
+> To comply with the ARK specification, the hyphens in the identifier are optional. Therefore, `http://127.0.0.1:8000/ark:12345/x9062cdde7-f9d648bbbe17bd3--b9f441ec4` is equivalent to `http://127.0.0.1:8000/ark:12345/x9062cdde7-f9d6-48bb-be17-bd3b9f441ec4`.  Since hyphens are integral parts of UUIDs, larkm restores the hyphens to their expected location within the UUID to perform its lookups during resolution. Hyphens in UUIDs are optional/ignored only when resolving an ARK. They are required for all other operations described below.
 
 ### Creating a new ARK
 
@@ -110,13 +110,13 @@ To add a new ARK (for example, to resolve to https://digital.lib.sfu.ca), issue 
 
 `curl -v -X POST "http://127.0.0.1:8000/larkm" -H 'Content-Type: application/json' -d '{"shoulder": "s1", "identifier": "fde97fb3-634b-4232-b63e-e5128647efe7", "target": "https://digital.lib.sfu.ca"}'`
 
-If you now visit `http://127.0.0.1:8000/ark:/12345/s1fde97fb3-634b-4232-b63e-e5128647efe7`, you will be redirected to https://digital.lib.sfu.ca.
+If you now visit `http://127.0.0.1:8000/ark:12345/s1fde97fb3-634b-4232-b63e-e5128647efe7`, you will be redirected to https://digital.lib.sfu.ca.
 
 If you omit the `shoulder`, the configured default shoulder will be used. If you omit the `identifier`, larkm will mint one using a v4 UUID.
 
 All responses to a POST will include in their body `shoulder`, `identifier`, `target`, metadata and `policy` values provided in the POST request. The `where` value will be identical to the provided`target` value. Metadata values not provided will get the ERC ":at" ("the real value is at the given URL or identifier") value:
 
-`{"ark":{"shoulder": "s1", "identifier": "fde97fb3-634b-4232-b63e-e5128647efe7", "ark_string":"ark:/12345/s1fde97fb3-634b-4232-b63e-e5128647efe7","target":"https://digital.lib.sfu.ca", "who":":at", "when":":at", "where":"https://digital.lib.sfu.ca", "what":":at"}, "urls":{"local":"https://resolver.myorg.net/ark:/12345/s1fde97fb3-634b-4232-b63e-e5128647efe7","global":"https://n2t.net/ark:/99999/s1fde97fb3-634b-4232-b63e-e5128647efe7"}}`
+`{"ark":{"shoulder": "s1", "identifier": "fde97fb3-634b-4232-b63e-e5128647efe7", "ark_string":"ark:12345/s1fde97fb3-634b-4232-b63e-e5128647efe7","target":"https://digital.lib.sfu.ca", "who":":at", "when":":at", "where":"https://digital.lib.sfu.ca", "what":":at"}, "urls":{"local":"https://resolver.myorg.net/ark:12345/s1fde97fb3-634b-4232-b63e-e5128647efe7","global":"https://n2t.net/ark:99999/s1fde97fb3-634b-4232-b63e-e5128647efe7"}}`
 
 Also included in the response are values for global and local `urls`.
 
@@ -126,7 +126,7 @@ Values provided in the request body for `what`, `who`, `when`, and `policy` will
 
 will return
 
-`{"ark":{"shoulder": "s1", "identifier": "fde97fb3-634b-4232-b63e-e5128647efe7", "ark_string":"ark:/12345/s1fde97fb3-634b-4232-b63e-e5128647efe7","target":"https://digital.lib.sfu.ca", "who":"Jordan, Mark", "when":"2020", "where":"https://digital.lib.sfu.ca", "policy":"We commit to maintaining this ARK for a long time."}, "urls":{"local":"https://resolver.myorg.net/ark:/12345/s1fde97fb3-634b-4232-b63e-e5128647efe7","global":"https://n2t.net/ark:/12345/s1fde97fb3-634b-4232-b63e-e5128647efe7"}}`
+`{"ark":{"shoulder": "s1", "identifier": "fde97fb3-634b-4232-b63e-e5128647efe7", "ark_string":"ark:12345/s1fde97fb3-634b-4232-b63e-e5128647efe7","target":"https://digital.lib.sfu.ca", "who":"Jordan, Mark", "when":"2020", "where":"https://digital.lib.sfu.ca", "policy":"We commit to maintaining this ARK for a long time."}, "urls":{"local":"https://resolver.myorg.net/ark:12345/s1fde97fb3-634b-4232-b63e-e5128647efe7","global":"https://n2t.net/ark:12345/s1fde97fb3-634b-4232-b63e-e5128647efe7"}}`
 
 ### Updating an ARK's target URL and metadata
 
@@ -134,15 +134,15 @@ You can update an existing ARK's target, metadata, or policy statement. However,
 
 Some sample queries:
 
-`curl -v -X PUT "http://127.0.0.1:8000/larkm/ark:/12345/s1fde97fb3-634b-4232-b63e-e5128647efe7" -H 'Content-Type: application/json' -d '{"ark_string": "ark:/12345/s1fde97fb3-634b-4232-b63e-e5128647efe7", "target": "https://summit.sfu.ca"}'`
+`curl -v -X PUT "http://127.0.0.1:8000/larkm/ark:12345/s1fde97fb3-634b-4232-b63e-e5128647efe7" -H 'Content-Type: application/json' -d '{"ark_string": "ark:12345/s1fde97fb3-634b-4232-b63e-e5128647efe7", "target": "https://summit.sfu.ca"}'`
 
-`curl -v -X PUT "http://127.0.0.1:8000/larkm/ark:/12345/s1fde97fb3-634b-4232-b63e-e5128647efe7" -H 'Content-Type: application/json' -d '{"ark_string": "ark:/12345/s1fde97fb3-634b-4232-b63e-e5128647efe7", "who": "Jordan, Mark", "when": "2020", "policy": "We will maintain this ARK for a long time."}'`
+`curl -v -X PUT "http://127.0.0.1:8000/larkm/ark:12345/s1fde97fb3-634b-4232-b63e-e5128647efe7" -H 'Content-Type: application/json' -d '{"ark_string": "ark:12345/s1fde97fb3-634b-4232-b63e-e5128647efe7", "who": "Jordan, Mark", "when": "2020", "policy": "We will maintain this ARK for a long time."}'`
 
 ### Getting the target URL for an ARK, or an ARK of a URL
 
 If you want to know the target URL associated with an ARK without resolving to that URL, do this:
 
-`curl "http://127.0.0.1:8000/larkm?ark_string=ark:/12345/s1fde97fb3-634b-4232-b63e-e5128647efe7"`
+`curl "http://127.0.0.1:8000/larkm?ark_string=ark:12345/s1fde97fb3-634b-4232-b63e-e5128647efe7"`
 
 If you want the ARK for a URL, do this:
 
@@ -150,7 +150,7 @@ If you want the ARK for a URL, do this:
 
 In both cases, larkm will return a JSON response body that looks like this:
 
-`{"ark_string": "ark:/12345/s1fde97fb3-634b-4232-b63e-e5128647efe7", "target": "https://summit.sfu.ca", "urls":{"local":"https://resolver.myorg.net/ark:/12345/s1fde97fb3-634b-4232-b63e-e5128647efe7","global":"https://n2t.net/ark:/12345/s1fde97fb3-634b-4232-b63e-e5128647efe7"}}`
+`{"ark_string": "ark:12345/s1fde97fb3-634b-4232-b63e-e5128647efe7", "target": "https://summit.sfu.ca", "urls":{"local":"https://resolver.myorg.net/ark:12345/s1fde97fb3-634b-4232-b63e-e5128647efe7","global":"https://n2t.net/ark:12345/s1fde97fb3-634b-4232-b63e-e5128647efe7"}}`
 
 or a 404 if the ARK or URL you used in your request wasn't found.
 
@@ -158,7 +158,7 @@ or a 404 if the ARK or URL you used in your request wasn't found.
 
 Delete an ARK using a request like:
 
-`curl -v -X DELETE "http://127.0.0.1:8000/larkm/ark:/12345/s1fde97fb3-634b-4232-b63e-e5128647efe7"`
+`curl -v -X DELETE "http://127.0.0.1:8000/larkm/ark:12345/s1fde97fb3-634b-4232-b63e-e5128647efe7"`
 
 If the ARK was deleted, larkm returns a `204 No Content` response with no body. If the ARK was not found, larkm returns a `404` response with the body `{"detail":"ARK not found"}`.
 
@@ -199,7 +199,7 @@ If the search was successful, larkm returns a 200 HTTP status code. A successful
         "date_modified": "2022-06-23 03:00:45",
         "shoulder": "s1",
         "identifier": "cea8e7f3-1c84-4919-a694-65bc9997d9fe",
-        "ark_string": "ark:/99999/s1cea8e7f3-1c84-4919-a694-65bc9997d9fe",
+        "ark_string": "ark:99999/s1cea8e7f3-1c84-4919-a694-65bc9997d9fe",
         "target": "http://example.com/15",
         "erc_who": "Derex Godfry",
         "erc_what": "5 Ways to Immediately Start Selling Water",
@@ -212,7 +212,7 @@ If the search was successful, larkm returns a 200 HTTP status code. A successful
         "date_modified": "2022-06-23 03:00:45",
         "shoulder": "s1",
         "identifier": "714b3160-e138-49ed-969a-a514f034274f",
-        "ark_string": "ark:/99999/s1714b3160-e138-49ed-969a-a514f034274f",
+        "ark_string": "ark:99999/s1714b3160-e138-49ed-969a-a514f034274f",
         "target": "http://example.com/16",
         "erc_who": "Toriana Kondo",
         "erc_what": "Water in Crisis: The Coming Shortages",
@@ -271,9 +271,9 @@ If you run the indexer via cron, make sure the paths in `sqlite_db_path` and `wh
 
 ## Using the Names to Things global resolver
 
-If you have a registered NAAN that points to the server running larkm, you can use the Names to Things global ARK resolver's domain redirection feature by replacing the hostname of the server larkm is running on with `https://n2t.net/`. For example, if the local server larkm is running on is `https://ids.myorg.ca`, and your insitution's NAAN is registered to use that hostname, you can use a local instance of larkm to manage ARKs like `https://n2t.net/ark:/12345/s1fde97fb3-634b-4232-b63e-e5128647efe7` (using your NAAN instead of `12345`) and they will resolve through your local larkm running on `https://ids.myorg.ca` to their target URLs.
+If you have a registered NAAN that points to the server running larkm, you can use the Names to Things global ARK resolver's domain redirection feature by replacing the hostname of the server larkm is running on with `https://n2t.net/`. For example, if the local server larkm is running on is `https://ids.myorg.ca`, and your insitution's NAAN is registered to use that hostname, you can use a local instance of larkm to manage ARKs like `https://n2t.net/ark:12345/s1fde97fb3-634b-4232-b63e-e5128647efe7` (using your NAAN instead of `12345`) and they will resolve through your local larkm running on `https://ids.myorg.ca` to their target URLs.
 
-An advantage of doing this is that if your local resolver needs to be changed from `https://ids.myorg.ca/` to another host, assuming you update your NAAN record to use the new host, requests to `https://n2t.net/ark:/12345/s1fde97fb3-634b-4232-b63e-e5128647efe7` will continue to resolve to their targets.
+An advantage of doing this is that if your local resolver needs to be changed from `https://ids.myorg.ca/` to another host, assuming you update your NAAN record to use the new host, requests to `https://n2t.net/ark:12345/s1fde97fb3-634b-4232-b63e-e5128647efe7` will continue to resolve to their targets.
 
 ## API docs
 
@@ -281,7 +281,7 @@ Thanks to [OpenAPI](https://github.com/OAI/OpenAPI-Specification), you can see l
 
 ## Logging
 
-larkm provides basic logging of requests to its resolver endpoint (i.e., `/ark:/foo/bar`). The path to the log is set in the "log_file_path" configuration option. To disable logging, use `false` as the value of this option. The log is a tab-delimited file containing a datestamp, the client's IP address, the requested ARK string, the corresponding target URL (or "ARK not found" if the requested ARK was not found, or "info" if the request was for the ARK's metadata), and the HTTP referer. If the referer is not available, the value in the TSV entry is "null". Errors and warnings are also logged.
+larkm provides basic logging of requests to its resolver endpoint (i.e., `/ark:foo/bar`). The path to the log is set in the "log_file_path" configuration option. To disable logging, use `false` as the value of this option. The log is a tab-delimited file containing a datestamp, the client's IP address, the requested ARK string, the corresponding target URL (or "ARK not found" if the requested ARK was not found, or "info" if the request was for the ARK's metadata), and the HTTP referer. If the referer is not available, the value in the TSV entry is "null". Errors and warnings are also logged.
 
 ## Scripts
 
