@@ -13,12 +13,12 @@
        "when": ":at",
        "where": ""
   },
-  "sqlite_db_path": "testdb/larkmtest.db",
+  "sqlite_db_path": "fixtures/larkmtest.db",
   "log_file_path": "/tmp/larkm.log",
   "resolver_hosts": {
      "global": "https://n2t.net/",
      "local": "https://resolver.myorg.net"
   },
-  "whoosh_index_dir_path": "testdb/index_dir",
+  "whoosh_index_dir_path": "fixtures/index_dir",
   "trusted_ips": []
 }
