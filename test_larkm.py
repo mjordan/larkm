@@ -8,7 +8,7 @@ client = TestClient(app)
 
 def setup_module(module):
     shutil.copyfile('fixtures/index_dir/_MAIN_1.toc.bak', 'fixtures/index_dir/_MAIN_1.toc')
-    shutil.copyfile('fixtures/index_dir/MAIN_k2sw0nd7rs9wt80x.seg.bak', 'fixtures/index_dir/MAIN_k2sw0nd7rs9wt80x.seg')
+    shutil.copyfile('fixtures/index_dir/MAIN_07coyfplodwu99kw.seg.bak', 'fixtures/index_dir/MAIN_07coyfplodwu99kw.seg')
 
 
 def teardown_module(module):
