@@ -8,8 +8,7 @@ larkm is a simple [ARK](https://arks.org/) manager that can:
 * mint ARKs using UUID (v4) strings
 * persist new ARKs to an sqlite database
 * validate ARK shoulders
-* update the target URLs, ERC/Kernel metadata, and committment statements of existing ARKs
-* provide the target URLs of ARKs it manages, and provide the ARK associated with a URL
+* update the ERC/Kernel metadata, committment statements, and target URLs of existing ARKs
 * provide basic [committment statements](https://arks.org/about/best-practices/) that are specific to shoulders
 * proivdes fulltext indexing of ERC metadata
 * delete ARKs
@@ -108,21 +107,21 @@ REST clients can provide a `shoulder` and/or an `identifer` value in the requst 
 
 To add a new ARK (for example, to resolve to https://digital.lib.sfu.ca), issue the following request using curl:
 
-`curl -v -X POST "http://127.0.0.1:8000/larkm" -H 'Content-Type: application/json' -d '{"shoulder": "s1", "identifier": "fde97fb3-634b-4232-b63e-e5128647efe7", "target": "https://digital.lib.sfu.ca"}'`
+`curl -v -X POST "http://127.0.0.1:8000/larkm" -H 'Content-Type: application/json' -d '{"shoulder": "s1", "identifier": "fde97fb3-634b-4232-b63e-e5128647efe7", "where": "https://digital.lib.sfu.ca"}'`
 
 If you now visit `http://127.0.0.1:8000/ark:12345/s1fde97fb3-634b-4232-b63e-e5128647efe7`, you will be redirected to https://digital.lib.sfu.ca.
 
 If you omit the `shoulder`, the configured default shoulder will be used. If you omit the `identifier`, larkm will mint one using a v4 UUID.
 
-All responses to a POST will include in their body the values values provided in the POST request, plus any default values for missing body fields. The `target` value will be identical to the provided `where` value. Metadata values not provided will get the ERC ":at" ("the real value is at the given URL or identifier") value:
+All responses to a POST will include in their body the values values provided in the POST request, plus any default values for missing body fields. The `target` value will be identical to the provided `where` value unless you give it a different value. Metadata values not provided will get the ERC ":at" ("the real value is at the given URL or identifier") value:
 
 `{"ark":{"shoulder": "s1", "identifier": "fde97fb3-634b-4232-b63e-e5128647efe7", "ark_string":"ark:12345/s1fde97fb3-634b-4232-b63e-e5128647efe7","target":"https://digital.lib.sfu.ca", "who":":at", "when":":at", "where":"https://digital.lib.sfu.ca", "what":":at"}, "urls":{"local":"https://resolver.myorg.net/ark:12345/s1fde97fb3-634b-4232-b63e-e5128647efe7","global":"https://n2t.net/ark:99999/s1fde97fb3-634b-4232-b63e-e5128647efe7"}}`
 
 Also included in the response are values for global and local `urls`.
 
-### Updating an ARK's target URL and metadata
+### Updating an ARK's properties
 
-You can update an existing ARK's target, metadata, or policy statement. However, an ARK's `shoulder`, `identifier`, and `ark_string` cannot be updated. `ark_string` is a required body field, and the ARK NAAN, shoulder, and identifier provided in the PUT request URL must match those in the "ark_string" body field.
+You can update an existing ARK's ERC metadata, policy statement, or target. However, an ARK's `shoulder`, `identifier`, and `ark_string` are immutable and cannot be updated. `ark_string` is a required body field, and the ARK NAAN, shoulder, and identifier provided in the PUT request URL must match those in the "ark_string" body field.
 
 Some sample queries:
 
@@ -153,7 +152,7 @@ Following ARK best practice, larkm requires the use of [shoulders](https://wiki.
 
 larkm supports the [Electronic Resource Citation](https://www.dublincore.org/groups/kernel/spec/) (ERC) metadata format expressed in ANVL syntax. Note that larkm accepts the raw values provided by the client and does not validate or format the values against any schema.
 
-If the default "where" ERC metadata is an empty string (as illustrated in the configuration data above), larkm assigns the ARK's target value to it.
+`target` is not an ERC property. It is used internally by larkm to simplify resolution to an HTTP[S] URL. Generally speaking, larkm assigns the value of the `erc_where` property to it.
 
 ### Searching metadata
 
@@ -232,11 +231,13 @@ Searching uses the [default Whoosh query language](https://whoosh.readthedocs.io
 * q=`shoulder:s1 OR shoulder:n3`
 * q=`policy:"commits only to ensuring"`
 * q=`policy:"commits only to ensuring" AND erc_what:vancouver`
-* q=`target:"https://example.com*"`
 * q=`date_modified:2022-02-23`
 * q=`date_created:[2022-02-20 TO 2022-02-28]`
 * q=`ark_string:ark:99999/s1cea8e7f3-1c84-4919-a694-65bc9997d9fe`
 * q=`erc_where:http://example.com`
+* q=`erc_where:"https://example.com*"`
+* q=`target:http://example.com`
+* q=`target:"https://example.com*"`
 
 ### Building the search index
 
