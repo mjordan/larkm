@@ -53,13 +53,14 @@ The config settings are:
 * "log_file_path": absolute or relative (to larkm.py) path to the log file. Directory must exist and be writable by the process running larkm.
 * "resolver_hosts": definition of the resolvers to include in the `urls` list returned to clients.
 * "whoosh_index_dir_path": absolute or relative (to larkm.py) path to the Whoosh index data directory. Leave empty if you are not indexing ARK data.
-* "trusted_ips": list of client IP addresses that can create, update, delete, and search ARKs; leave empty to no restrict access to these functions (e.g. during testing).
+* "trusted_ips": list of client IP addresses that can create, update, delete, and search ARKs; leave empty to no restrict access to these functions (e.g. during testing.
+* "private_shoulders": list of shouder-to-IP list mappings that defines which client IP addresses requests for ARKs with those shoulders may come from.
 
 ```json
 {
   "NAAN": "12345",
   "default_shoulder": "s1",
-  "allowed_shoulders": ["s8", "s9", "x9"],
+  "allowed_shoulders": ["s8", "s9", "x9", "z1"],
   "committment_statement": {
        "s1": "ACME University commits to maintain ARKs that have 's1' as a shoulder for a long time.",
        "s8": "ACME University commits to maintain ARKs that have 's8' as a shoulder until the end of 2025.",
@@ -78,7 +79,11 @@ The config settings are:
      "local": "https://resolver.myorg.net"
   },
   "whoosh_index_dir_path": "index_dir",
-  "trusted_ips": []
+  "trusted_ips": ["142.58.23.213", "142.59.78.175"],
+  "private_shoulders":  {
+     "x9": ["123.456.789.123"],
+     "z1": ["142.158.36.213", "142.58.123.45"]
+  }
 }
 ```
 
@@ -147,6 +152,10 @@ Note that larkm returns only the subset of configuration data that clients need 
 ## Shoulders
 
 Following ARK best practice, larkm requires the use of [shoulders](https://wiki.lyrasis.org/display/ARKs/ARK+Identifiers+FAQ#ARKIdentifiersFAQ-shouldersWhatisashoulder?) in newly added ARKs. Shoulders allowed within your NAAN are defined in the "default_shoulder" and "allowed_shoulders" configuration settings. When a new ARK is added, larkm will validate that the ARK string starts with either the default shoulder or one of the allowed shoulders. Note however that larkm does not validate the [format of shoulders](https://wiki.lyrasis.org/display/ARKs/ARK+Shoulders+FAQ#ARKShouldersFAQ-HowdoIformatashoulder?).
+
+### Private shoulders
+
+You can define which IP addresses requests for ARKs with specific shoulders can come from. This feature is useful for ARKs for non-public Web resources, or where you are using larkm to manage ARKs for resources that do not resolve to a public location, e.g. on a private fileshare or in a physical location. Requests from unregistered IP addresses will get a `403` HTTP response.
 
 ## Metadata support
 

@@ -20,5 +20,6 @@
      "local": "https://resolver.myorg.net"
   },
   "whoosh_index_dir_path": "fixtures/index_dir",
-  "trusted_ips": []
+  "trusted_ips": [],
+  "private_shoulders": {}
 }
