@@ -54,7 +54,7 @@ The config settings are:
 * "resolver_hosts": definition of the resolvers to include in the `urls` list returned to clients.
 * "whoosh_index_dir_path": absolute or relative (to larkm.py) path to the Whoosh index data directory. Leave empty if you are not indexing ARK data.
 * "trusted_ips": list of client IP addresses that can create, update, delete, and search ARKs; leave empty to no restrict access to these functions (e.g. during testing.
-* "private_shoulders": list of shouder-to-IP list mappings that defines which client IP addresses requests for ARKs with those shoulders may come from.
+* "private_shoulders": list of shouder-to-IP list mappings that defines which client IP addresses resolution requests for ARKs with those shoulders may come from.
 
 ```json
 {
@@ -155,7 +155,7 @@ Following ARK best practice, larkm requires the use of [shoulders](https://wiki.
 
 ### Private shoulders
 
-You can define which IP addresses requests for ARKs with specific shoulders can come from. This feature is useful for ARKs for non-public Web resources, or where you are using larkm to manage ARKs for resources that do not resolve to a public location, e.g. on a private fileshare or in a physical location. Requests from unregistered IP addresses will get a `403` HTTP response.
+In the `private_shoulders` configuration setting, you can define which IP addresses resolution requests for ARKs with specific shoulders can come from. This feature is useful for ARKs for non-public Web resources, or where you are using larkm to manage ARKs for resources that do not resolve to a public location, e.g. on a private fileshare or in a physical location. Requests from unregistered IP addresses will get a `403` HTTP response.
 
 ## Metadata support
 
