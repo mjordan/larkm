@@ -169,7 +169,7 @@ larkm supports fulltext indexing of ERC metadata and other ARK properties via th
 
 A simple example search is:
 
-`http://127.0.0.1:8000/larkm/search?q=erc_what:water"`
+`http://127.0.0.1:8000/larkm/search?q=erc_what:water`
 
 If the search was successful, larkm returns a 200 HTTP status code. A successful result contains a JSON string with keys "num_results", "page", "page_size", and "arks".
 
