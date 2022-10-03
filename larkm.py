@@ -180,11 +180,11 @@ def search_arks(request: Request, q: Optional[str] = '', page=1, page_size=20):
 @app.post("/larkm", status_code=201)
 def create_ark(request: Request, ark: Ark):
     """
-    Create a new ARK, optionally minting a new ARK. Clients can provide
-    an identifier string and/or a shoulder. If either of these is not provided,
-    larkm will provide one. If a UUID v4 identifier is provided, it should not
-    contain a shoulder, since larkm will always add a shoulder to new ARKs. Clients
-    cannot provide a NAAN. Clients must always provide a "where" value.
+    Create/mint a new ARK. Clients can provide an identifier string and/or
+    a shoulder. If either of these is not provided, larkm will provide one.
+    If a UUID v4 identifier is provided, it should not contain a shoulder,
+    since larkm will always add a shoulder to new ARKs. Clients cannot
+    provide a NAAN. Clients must always provide a "where" value.
 
     If the UUID that is provided is already in use, larkm will responde to the POST
     request with an HTTP `409` with the body `{"detail":"UUID already in use."}`.
@@ -263,20 +263,20 @@ def create_ark(request: Request, ark: Ark):
             log_request('ERROR', request.client.host, ark_string, request.headers, str(e))
             raise HTTPException(status_code=500)
 
-        # See if provided 'where' value is already being used.
-        try:
-            con = sqlite3.connect(config["sqlite_db_path"])
-            con.row_factory = sqlite3.Row
-            cur = con.cursor()
-            cur.execute("select * from arks where erc_where = :a_s", {"a_s": ark.where})
-            record = cur.fetchone()
-            if record is not None:
-                con.close()
-                raise HTTPException(status_code=409, detail="'where' value already in use.")
+    # See if provided 'where' value is already being used.
+    try:
+        con = sqlite3.connect(config["sqlite_db_path"])
+        con.row_factory = sqlite3.Row
+        cur = con.cursor()
+        cur.execute("select * from arks where erc_where = :a_s", {"a_s": ark.where})
+        record = cur.fetchone()
+        if record is not None:
             con.close()
-        except sqlite3.DatabaseError as e:
-            log_request('ERROR', request.client.host, ark_string, request.headers, str(e))
-            raise HTTPException(status_code=500)
+            raise HTTPException(status_code=409, detail=f"'where' value {ark.where} already in use.")
+        con.close()
+    except sqlite3.DatabaseError as e:
+        log_request('ERROR', request.client.host, ark_string, request.headers, str(e))
+        raise HTTPException(status_code=500)
 
     # Assemble the ARK. Generate parts the client didn't provide.
     if ark.shoulder is None:
