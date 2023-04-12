@@ -105,7 +105,7 @@ REST clients can provide a `shoulder` and/or an `identifer` value in the requst 
 
 * Clients cannot provide a NAAN.
 * Clients must always provide a `where` value.
-* If a should is not provided, larkm will use its default shoulder.
+* If a shoulder is not provided, larkm will use its default shoulder.
 * If an identifier is not provided, larkm will generate a v4 UUID as the identifier.
 * If an identifier is provided, it must not contain a shoulder.
 * If the identifier that is provided is already in use, larkm will respond to the `POST` request with an `409` status code acommpanied by the body `{"detail":"UUID <uuid> already in use."}`.
