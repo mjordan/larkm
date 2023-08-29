@@ -5,6 +5,7 @@
 larkm is a simple [ARK](https://arks.org/) manager that can:
 
 * resolve ARKs to their target URLs
+* supports ARKs with the optional trailing `/` (e.g. `ark:` and `ark:/`)
 * mint ARKs using UUID (v4) strings
 * persist new ARKs to an sqlite database
 * validate ARK shoulders

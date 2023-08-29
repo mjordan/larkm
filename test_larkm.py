@@ -20,7 +20,17 @@ def test_resolve_ark():
     assert response.status_code == 200
     assert response.text == "erc:\nwho: :at\nwhat: :at\nwhen: :at\nwhere: https://example.com/foo\npolicy: Default committment statement.\n\n"
 
+    # Same ARK but with optional /.
+    response = client.get("/ark:/12345/x9062cdde7-f9d6-48bb-be17-bd3b9f441ec4?info")
+    assert response.status_code == 200
+    assert response.text == "erc:\nwho: :at\nwhat: :at\nwhen: :at\nwhere: https://example.com/foo\npolicy: Default committment statement.\n\n"
+
     # Resolve same ARK but with random hypens in UUID.
+    response = client.get("/ark:/12345/x9062-cdde7f9d64-8bbbe17-bd3b9f441ec4?info")
+    assert response.status_code == 200
+    assert response.text == "erc:\nwho: :at\nwhat: :at\nwhen: :at\nwhere: https://example.com/foo\npolicy: Default committment statement.\n\n"
+
+    # Same ARK but with optional /.
     response = client.get("/ark:12345/x9062-cdde7f9d64-8bbbe17-bd3b9f441ec4?info")
     assert response.status_code == 200
     assert response.text == "erc:\nwho: :at\nwhat: :at\nwhen: :at\nwhere: https://example.com/foo\npolicy: Default committment statement.\n\n"
@@ -30,7 +40,17 @@ def test_resolve_ark():
     assert response.status_code == 200
     assert response.text == "erc:\nwho: :at\nwhat: :at\nwhen: :at\nwhere: https://example.com/foo\npolicy: Default committment statement.\n\n"
 
+    # Same ARK but with optional /.
+    response = client.get("/ark:/12345/x9--062cdde7f9d648bbbe17bd3b9f441ec4-?info")
+    assert response.status_code == 200
+    assert response.text == "erc:\nwho: :at\nwhat: :at\nwhen: :at\nwhere: https://example.com/foo\npolicy: Default committment statement.\n\n"
+
     # Resolve same ARK but with no hypens in UUID.
+    response = client.get("/ark:12345/x9062cdde7f9d648bbbe17bd3b9f441ec4?info")
+    assert response.status_code == 200
+    assert response.text == "erc:\nwho: :at\nwhat: :at\nwhen: :at\nwhere: https://example.com/foo\npolicy: Default committment statement.\n\n"
+
+    # Same ARK but with optional /.
     response = client.get("/ark:12345/x9062cdde7f9d648bbbe17bd3b9f441ec4?info")
     assert response.status_code == 200
     assert response.text == "erc:\nwho: :at\nwhat: :at\nwhen: :at\nwhere: https://example.com/foo\npolicy: Default committment statement.\n\n"

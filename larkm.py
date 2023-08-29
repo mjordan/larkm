@@ -35,6 +35,7 @@ class Ark(BaseModel):
 
 
 @app.get("/ark:{naan}/{identifier}")
+@app.get("/ark:/{naan}/{identifier}")
 def resolve_ark(request: Request, naan: str, identifier: str, info: Optional[str] = None):
     """
     The ARK resolver. Redirects the client to the target URL associated with the ARK.
