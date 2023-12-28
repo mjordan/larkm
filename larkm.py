@@ -11,7 +11,6 @@ import logging
 from datetime import datetime
 import time
 import os
-import os.path
 from whoosh import index
 from whoosh.qparser import QueryParser
 
@@ -185,7 +184,9 @@ def create_ark(request: Request, ark: Ark):
     a shoulder. If either of these is not provided, larkm will provide one.
     If a UUID v4 identifier is provided, it should not contain a shoulder,
     since larkm will always add a shoulder to new ARKs. Clients cannot
-    provide a NAAN. Clients must always provide a "where" value.
+    provide a NAAN. Clients must always provide a "target" value.
+
+    "where" always gets the value of ark_string.
 
     If the UUID that is provided is already in use, larkm will responde to the POST
     request with an HTTP `409` with the body `{"detail":"UUID already in use."}`.
@@ -194,7 +195,7 @@ def create_ark(request: Request, ark: Ark):
 
     curl -v -X POST "http://127.0.0.1:8000/larkm" \
         -H 'Content-Type: application/json' \
-        -d '{"shoulder": "x1", "identifier": "fde97fb3-634b-4232-b63e-e5128647efe7", "where": "https://digital.lib.sfu.ca"}'
+        -d '{"shoulder": "x1", "identifier": "fde97fb3-634b-4232-b63e-e5128647efe7", "target": "https://digital.lib.sfu.ca"}'
 
     Sample request with only a 'where', an identifier and a name, which asks larkm to
     generate an ARK string based on the NAAN specified in configuration settings, the
@@ -202,7 +203,7 @@ def create_ark(request: Request, ark: Ark):
 
     curl -v -X POST "http://127.0.0.1:8000/larkm" \
         -H 'Content-Type: application/json' \
-        -d '{"identifier": "fde97fb3-634b-4232-b63e-e5128647efe7", "where": "https://digital.lib.sfu.ca"}'
+        -d '{"identifier": "fde97fb3-634b-4232-b63e-e5128647efe7", "target": "https://digital.lib.sfu.ca"}'
 
     Sample request with only a 'where' and a shoulder, which asks larkm to generate
     an ARK string based on the NAAN specified in configuration settings and the supplied
@@ -211,14 +212,14 @@ def create_ark(request: Request, ark: Ark):
 
     curl -v -X POST "http://127.0.0.1:8000/larkm" \
         -H 'Content-Type: application/json' \
-        -d '{"shoulder": "x1", "where": "https://digital.lib.sfu.ca"}'
+        -d '{"shoulder": "x1", "target": "https://digital.lib.sfu.ca"}'
 
     Sample request with no 'where' or shoulder. larkm will generate an ARK using
     the configured NAAN, the default shoulder, and a v4 UUID.
 
     curl -v -X POST "http://127.0.0.1:8000/larkm" \
         -H 'Content-Type: application/json' \
-        -d '{"where": "https://digital.lib.sfu.ca"}'
+        -d '{"target": "https://digital.lib.sfu.ca"}'
 
     Sample request with ERC metadata values. ERC elements ("who", "what", "when")
     not included in the request body are given defaults from config. The ARK's 'target'
@@ -226,7 +227,7 @@ def create_ark(request: Request, ark: Ark):
 
     curl -v -X POST "http://127.0.0.1:8000/larkm" \
         -H 'Content-Type: application/json' \
-        -d '{"who": "Jordan, Mark", "what": "GitBags", "when": "2014", "where": "https://github.com/mjordan/GitBags"}'
+        -d '{"who": "Jordan, Mark", "what": "GitBags", "when": "2014", "target": "https://github.com/mjordan/GitBags"}'
 
     - **ark**: the ARK to create.
     """
@@ -235,8 +236,8 @@ def create_ark(request: Request, ark: Ark):
         log_request('WARNING', request.client.host, '', request.headers, message)
         raise HTTPException(status_code=403)
 
-    if ark.where is None:
-        raise HTTPException(status_code=422, detail="A 'where' value is required.")
+    if ark.target is None:
+        raise HTTPException(status_code=422, detail="A 'target' value is required.")
 
     # Validate shoulder if provided.
     if ark.shoulder is not None:
@@ -264,16 +265,16 @@ def create_ark(request: Request, ark: Ark):
             log_request('ERROR', request.client.host, ark_string, request.headers, str(e))
             raise HTTPException(status_code=500)
 
-    # See if provided 'where' value is already being used.
+    # See if provided 'target' value is already being used.
     try:
         con = sqlite3.connect(config["sqlite_db_path"])
         con.row_factory = sqlite3.Row
         cur = con.cursor()
-        cur.execute("select * from arks where erc_where = :a_s", {"a_s": ark.where})
+        cur.execute("select * from arks where target = :a_s", {"a_s": ark.target})
         record = cur.fetchone()
         if record is not None:
             con.close()
-            raise HTTPException(status_code=409, detail=f"'where' value {ark.where} already in use.")
+            raise HTTPException(status_code=409, detail=f"'target' value {ark.target} already in use.")
         con.close()
     except sqlite3.DatabaseError as e:
         log_request('ERROR', request.client.host, ark_string, request.headers, str(e))
@@ -293,15 +294,13 @@ def create_ark(request: Request, ark: Ark):
         ark.what = config["erc_metadata_defaults"]["what"]
     if ark.when is None:
         ark.when = config["erc_metadata_defaults"]["when"]
-    # if ark.target is None or len(ark.target) == 0:
-        # ark.target = ark.where
     if ark.policy is None:
         if ark.shoulder in config["committment_statements"].keys():
             ark.policy = config["committment_statements"][ark.shoulder]
         else:
             ark.policy = config["committment_statements"]['default']
 
-    ark.target = ark.where
+    ark.where = ark.ark_string
 
     try:
         ark_data = (ark.shoulder, ark.identifier, ark.ark_string, ark.target, ark.who, ark.what, ark.when, ark.where, ark.policy)
@@ -328,11 +327,11 @@ def update_ark(request: Request, naan: str, identifier: str, ark: Ark):
     """
     Update an ARK with new metadata, or policy statement. Shoulders,
     identifiers, and ark_strings cannot be updated. ark_string is a required
-    body field. 'target' always gets the value of 'where'. Sample query:
+    body field. 'where' always gets the value of ark_string. Sample query:
 
     curl -v -X PUT "http://127.0.0.1:8000/larkm/ark:12345/x931fd9bec-0bb6-4b6a-a08b-19554e6d711d" \
         -H 'Content-Type: application/json' \
-        -d '{"ark_string": "ark:12345/x931fd9bec-0bb6-4b6a-a08b-19554e6d711d", "where": "https://example.com/foo"}'
+        -d '{"ark_string": "ark:12345/x931fd9bec-0bb6-4b6a-a08b-19554e6d711d", "target": "https://example.com/foo"}'
 
     - **naan**: the NAAN portion of the ARK.
     - **identifier**: the identifier portion of the ARK, which will include a shoulder.
@@ -348,6 +347,10 @@ def update_ark(request: Request, naan: str, identifier: str, ark: Ark):
     ark_string = f'ark:{naan}/{identifier}'.strip()
     if ark_string != ark.ark_string:
         raise HTTPException(status_code=409, detail="NAAN/identifier combination and ark_string do not match.")
+
+    # 'where' cannot be updated.
+    if ark.where is not None:
+        raise HTTPException(status_code=409, detail="\'where\' is automatically assigned the value of the ark string and cannot be updated.")
 
     try:
         con = sqlite3.connect(config["sqlite_db_path"])
@@ -370,37 +373,20 @@ def update_ark(request: Request, naan: str, identifier: str, ark: Ark):
     ark.identifier = old_ark['identifier']
     ark.ark_string = old_ark['ark_string']
 
-    # See if provided 'where' value is already being used.
-    try:
-        erc_where_con = sqlite3.connect(config["sqlite_db_path"])
-        erc_where_con.row_factory = sqlite3.Row
-        erc_where_cur = erc_where_con.cursor()
-        erc_where_cur.execute("select * from arks where erc_where = :a_s", {"a_s": ark.where})
-        erc_where_record = erc_where_cur.fetchone()
-        if erc_where_record is not None:
-            erc_where_con.close()
-            raise HTTPException(status_code=409, detail="'where' value already in use.")
-        erc_where_con.close()
-    except sqlite3.DatabaseError as e:
-        log_request('ERROR', request.client.host, ark_string, request.headers, str(e))
-        raise HTTPException(status_code=500)
-
     # Only update ark properties that are in the request body, except for target, which
     # always gets the value of 'erc_where'.
-    # if ark.target is None:
-        # ark.target = old_ark['target']
+    if ark.target is None:
+        ark.target = old_ark['target']
     if ark.who is None:
         ark.who = old_ark['erc_who']
     if ark.what is None:
         ark.what = old_ark['erc_what']
     if ark.when is None:
         ark.when = old_ark['erc_when']
-    if ark.where is None:
-        ark.where = old_ark['erc_where']
     if ark.policy is None:
         ark.policy = old_ark['policy']
 
-    ark.target = ark.where
+    ark.where = ark.ark_string
 
     try:
         ark_data = (ark.shoulder, ark.identifier, ark.ark_string, ark.target, ark.who, ark.what, ark.when, ark.where, ark.policy, ark.ark_string)

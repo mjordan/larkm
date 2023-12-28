@@ -17,7 +17,7 @@ larkm is a simple [ARK](https://arks.org/) manager that can:
 
 ARK resolution is provided via requests to larkm's host followed by an ARK (e.g. `https://myhost.net/ark:12345/876543`) and the other operations are provided through standard REST requests to larkm's management endpoint (`/larkm`). This REST interface allows creating, persisting, updating, and deleting ARKs, and can expose a subset of larkm's configuration data to clients. Access to the REST endpoints can be controlled by registering the IP addresses of trused clients, as explained in the "Configuration" section below.
 
-larkm is currently a proof of concept as we learn about locally mananging ARKs. It is considered "lightweight" because it supports only a subset of ARK functionality, focusing on providing ways to manage ARKs locally and on using ARKs as persistent, resolvable identifiers. ARK features such as suffix passthrough and ARK qualifiers are currently out of scope.
+larkm is considered "lightweight" because it supports only a subset of ARK functionality, focusing on providing ways to manage ARKs locally and on using ARKs as persistent, resolvable identifiers. ARK features such as suffix passthrough and ARK qualifiers are currently out of scope.
 
 ## Requirements
 
@@ -105,7 +105,7 @@ To see the configured metadata and committment statement for the ARK instead of 
 REST clients can provide a `shoulder` and/or an `identifer` value in the requst body.
 
 * Clients cannot provide a NAAN.
-* Clients must always provide a `where` value.
+* Clients must always provide a `target` value.
 * If a shoulder is not provided, larkm will use its default shoulder.
 * If an identifier is not provided, larkm will generate a v4 UUID as the identifier.
 * If an identifier is provided, it must not contain a shoulder.
@@ -119,9 +119,9 @@ If you now visit `http://127.0.0.1:8000/ark:12345/s1fde97fb3-634b-4232-b63e-e512
 
 If you omit the `shoulder`, the configured default shoulder will be used. If you omit the `identifier`, larkm will mint one using a v4 UUID.
 
-All responses to a POST will include in their body the values values provided in the POST request, plus any default values for missing body fields. The `target` value will be identical to the provided `where` value unless you give it a different value. Metadata values not provided will get the ERC ":at" ("the real value is at the given URL or identifier") value:
+All responses to a POST will include in their body the values values provided in the POST request, plus any default values for missing body fields. The `where` value will be identical to the provided `ark_string` and cannot be populated on its own. Metadata values not provided will get the ERC ":at" ("the real value is at the given URL or identifier") value:
 
-`{"ark":{"shoulder": "s1", "identifier": "fde97fb3-634b-4232-b63e-e5128647efe7", "ark_string":"ark:12345/s1fde97fb3-634b-4232-b63e-e5128647efe7","target":"https://digital.lib.sfu.ca", "who":":at", "when":":at", "where":"https://digital.lib.sfu.ca", "what":":at"}, "urls":{"local":"https://resolver.myorg.net/ark:12345/s1fde97fb3-634b-4232-b63e-e5128647efe7","global":"https://n2t.net/ark:99999/s1fde97fb3-634b-4232-b63e-e5128647efe7"}}`
+`{"ark":{"shoulder": "s1", "identifier": "fde97fb3-634b-4232-b63e-e5128647efe7", "ark_string":"ark:12345/s1fde97fb3-634b-4232-b63e-e5128647efe7","target":"https://digital.lib.sfu.ca", "who":":at", "when":":at", "where":"ark:12345/s1fde97fb3-634b-4232-b63e-e5128647efe7", "what":":at"}, "urls":{"local":"https://resolver.myorg.net/ark:12345/s1fde97fb3-634b-4232-b63e-e5128647efe7","global":"https://n2t.net/ark:99999/s1fde97fb3-634b-4232-b63e-e5128647efe7"}}`
 
 Also included in the response are values for global and local `urls`.
 
@@ -134,6 +134,8 @@ Some sample queries:
 `curl -v -X PUT "http://127.0.0.1:8000/larkm/ark:12345/s1fde97fb3-634b-4232-b63e-e5128647efe7" -H 'Content-Type: application/json' -d '{"ark_string": "ark:12345/s1fde97fb3-634b-4232-b63e-e5128647efe7", "target": "https://summit.sfu.ca"}'`
 
 `curl -v -X PUT "http://127.0.0.1:8000/larkm/ark:12345/s1fde97fb3-634b-4232-b63e-e5128647efe7" -H 'Content-Type: application/json' -d '{"ark_string": "ark:12345/s1fde97fb3-634b-4232-b63e-e5128647efe7", "who": "Jordan, Mark", "when": "2020", "policy": "We will maintain this ARK for a long time."}'`
+
+Including `where` in the request body will result in an HTTP `409` response with the messagte `'where\' is automatically assigned the value of the ark string and cannot be updated.`
 
 
 ### Deleting an ARK
@@ -190,7 +192,7 @@ If the search was successful, larkm returns a 200 HTTP status code. A successful
         "erc_who": "Derex Godfry",
         "erc_what": "5 Ways to Immediately Start Selling Water",
         "erc_when": ":at",
-        "erc_where": "http://example.com/15",
+        "erc_where": "ark:99999/s1cea8e7f3-1c84-4919-a694-65bc9997d9fe",
         "policy": "We commit to keeping this ARK actionable until 2030."
       },
       {
@@ -203,7 +205,7 @@ If the search was successful, larkm returns a 200 HTTP status code. A successful
         "erc_who": "Toriana Kondo",
         "erc_what": "Water in Crisis: The Coming Shortages",
         "erc_when": ":at",
-        "erc_where": "http://example.com/16",
+        "erc_where": "ark:99999/s1714b3160-e138-49ed-969a-a514f034274f",
         "policy": ":at"
       }
     ]
@@ -244,8 +246,8 @@ Searching uses the [default Whoosh query language](https://whoosh.readthedocs.io
 * q=`date_modified:2022-02-23`
 * q=`date_created:[2022-02-20 TO 2022-02-28]`
 * q=`ark_string:ark:99999/s1cea8e7f3-1c84-4919-a694-65bc9997d9fe`
-* q=`erc_where:http://example.com`
-* q=`erc_where:"https://example.com*"`
+* q=`erc_where:ark:99999/s1cea8e7f3-1c84-4919-a694-65bc9997d9fe`
+* q=`erc_where:"ark:99999*"`
 * q=`target:http://example.com`
 * q=`target:"https://example.com*"`
 
@@ -286,7 +288,7 @@ Instructions are at the top of each file.
 
 ## Development
 
-* Run `larkm.py` and `test_larkm.py` through pycodestyle: `pycodestyle --show-source --show-pep8 --ignore=E402,E501,W504 *.py`
+* Run `larkm.py` and `test_larkm.py` through pycodestyle: `pycodestyle --show-source --show-pep8 --ignore=E124,E126,E127,E128,E402,E501,W504 *.py`
 * To run tests:
    * you don't need to start the web server or create a database
    * within the larkm directory, copy `larkm.json.sample` to `larkm.json` (back up `larkm.json` first if you have custom values in it)
