@@ -70,8 +70,7 @@ The config settings are:
   "erc_metadata_defaults": {
        "who": ":at",
        "what": ":at",
-       "when": ":at",
-       "where": ""
+       "when": ":at"
   },
   "sqlite_db_path": "fixtures/larkmtest.db",
   "log_file_path": "/tmp/larkm.log",
@@ -98,7 +97,7 @@ Visit `http://127.0.0.1:8000/ark:12345/x9062cdde7-f9d6-48bb-be17-bd3b9f441ec4` u
 
 To see the configured metadata and committment statement for the ARK instead of resolving to its target, append `?info` to the end of the ARK, e.g., `http://127.0.0.1:8000/ark:12345/x9062cdde7-f9d6-48bb-be17-bd3b9f441ec4?info`.
 
-> To comply with the ARK specification, the hyphens in the identifier are optional. Therefore, `http://127.0.0.1:8000/ark:12345/x9062cdde7-f9d648bbbe17bd3--b9f441ec4` is equivalent to `http://127.0.0.1:8000/ark:12345/x9062cdde7-f9d6-48bb-be17-bd3b9f441ec4`.  Since hyphens are integral parts of UUIDs, larkm restores the hyphens to their expected location within the UUID to perform its lookups during resolution. Hyphens in UUIDs are optional/ignored only when resolving an ARK. They are required for all other operations described below.
+To comply with the ARK specification, the hyphens in the identifier are optional. Therefore, `http://127.0.0.1:8000/ark:12345/x9062cdde7-f9d648bbbe17bd3--b9f441ec4` is equivalent to `http://127.0.0.1:8000/ark:12345/x9062cdde7-f9d6-48bb-be17-bd3b9f441ec4`.  Since hyphens are integral parts of UUIDs, larkm restores the hyphens to their expected location within the UUID to perform its lookups during resolution. Hyphens in UUIDs are optional/ignored only when resolving an ARK. They are required for all other operations described below.
 
 ### Creating a new ARK
 
@@ -113,7 +112,7 @@ REST clients can provide a `shoulder` and/or an `identifer` value in the requst 
 
 To add a new ARK (for example, to resolve to https://digital.lib.sfu.ca), issue the following request using curl:
 
-`curl -v -X POST "http://127.0.0.1:8000/larkm" -H 'Content-Type: application/json' -d '{"shoulder": "s1", "identifier": "fde97fb3-634b-4232-b63e-e5128647efe7", "where": "https://digital.lib.sfu.ca"}'`
+`curl -v -X POST "http://127.0.0.1:8000/larkm" -H 'Content-Type: application/json' -d '{"shoulder": "s1", "identifier": "fde97fb3-634b-4232-b63e-e5128647efe7", "target": "https://digital.lib.sfu.ca"}'`
 
 If you now visit `http://127.0.0.1:8000/ark:12345/s1fde97fb3-634b-4232-b63e-e5128647efe7`, you will be redirected to https://digital.lib.sfu.ca.
 
@@ -135,7 +134,7 @@ Some sample queries:
 
 `curl -v -X PUT "http://127.0.0.1:8000/larkm/ark:12345/s1fde97fb3-634b-4232-b63e-e5128647efe7" -H 'Content-Type: application/json' -d '{"ark_string": "ark:12345/s1fde97fb3-634b-4232-b63e-e5128647efe7", "who": "Jordan, Mark", "when": "2020", "policy": "We will maintain this ARK for a long time."}'`
 
-Including `where` in the request body will result in an HTTP `409` response with the messagte `'where\' is automatically assigned the value of the ark string and cannot be updated.`
+Including `where` in the request body will result in an HTTP `409` response with the message `'where' is automatically assigned the value of the ark string and cannot be updated.`
 
 
 ### Deleting an ARK
@@ -164,7 +163,7 @@ In the `private_shoulders` configuration setting, you can define which IP addres
 
 larkm supports the [Electronic Resource Citation](https://www.dublincore.org/groups/kernel/spec/) (ERC) metadata format expressed in ANVL syntax. Note that larkm accepts the raw values provided by the client and does not validate or format the values against any schema.
 
-`target` is not an ERC property. It is used internally by larkm to simplify resolution to an HTTP[S] URL. Generally speaking, larkm assigns the value of the `erc_where` property to it.
+`target` is not an ERC property. It is used internally by larkm to simplify resolution to an HTTP[S] URL.
 
 ### Searching metadata
 
@@ -247,7 +246,7 @@ Searching uses the [default Whoosh query language](https://whoosh.readthedocs.io
 * q=`date_created:[2022-02-20 TO 2022-02-28]`
 * q=`ark_string:ark:99999/s1cea8e7f3-1c84-4919-a694-65bc9997d9fe`
 * q=`erc_where:ark:99999/s1cea8e7f3-1c84-4919-a694-65bc9997d9fe`
-* q=`erc_where:"ark:99999*"`
+* q=`erc_where:"ark:99999/s1*"`
 * q=`target:http://example.com`
 * q=`target:"https://example.com*"`
 

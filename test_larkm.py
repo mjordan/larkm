@@ -16,6 +16,7 @@ def teardown_module(module):
     shutil.copyfile('fixtures/larkmtest.db.bak', 'fixtures/larkmtest.db')
 
 
+# Note: We don't actually test the redirect functionality, we only test other aspects of resolution.
 def test_resolve_ark():
     response = client.get("/ark:12345/x9062cdde7-f9d6-48bb-be17-bd3b9f441ec4?info")
     assert response.status_code == 200

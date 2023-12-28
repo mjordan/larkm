@@ -46,8 +46,7 @@ def resolve_ark(request: Request, naan: str, identifier: str, info: Optional[str
     - **identifier**: the identifier portion of the ARK. A v4 UUID prepended
       with a 2-character shoulder (in this example, "x9").
     - **info**: As described in the ARK specification, '?info' appended
-      to the ARK string should return a committment statement and resource
-      metadata. For now, return the configured committment statement only.
+      to the ARK string should return a committment statement and resource metadata.
     """
     ark_string = f'ark:{naan}/{identifier}'
 
