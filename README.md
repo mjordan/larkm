@@ -55,6 +55,7 @@ The config settings are:
 * "resolver_hosts": definition of the resolvers to include in the `urls` list returned to clients.
 * "whoosh_index_dir_path": absolute or relative (to larkm.py) path to the Whoosh index data directory. Leave empty if you are not indexing ARK data.
 * "trusted_ips": list of client IP addresses that can create, update, delete, and search ARKs; leave empty to no restrict access to these functions (e.g. during testing.
+* "api_keys": list of strings used as API keys. Clients must pass their API key in a "Authorization" header, e.g. `Authorization: myapikey`.
 * "private_shoulders": list of shouder-to-IP list mappings that defines which client IP addresses resolution requests for ARKs with those shoulders may come from.
 
 ```json
@@ -80,6 +81,7 @@ The config settings are:
   },
   "whoosh_index_dir_path": "index_dir",
   "trusted_ips": ["142.58.23.213", "142.59.78.175"],
+  "api_keys": ["d9771c6c-b9d0-4dc3-8549-e17ddfc12826", "some__--random--string"],
   "private_shoulders":  {
      "x9": ["123.456.789.123"],
      "z1": ["142.158.36.213", "142.58.123.45"]

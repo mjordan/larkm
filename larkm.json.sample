@@ -10,8 +10,7 @@
   "erc_metadata_defaults": {
        "who": ":at",
        "what": ":at",
-       "when": ":at",
-       "where": ""
+       "when": ":at"
   },
   "sqlite_db_path": "fixtures/larkmtest.db",
   "log_file_path": "/tmp/larkm.log",
@@ -21,5 +20,6 @@
   },
   "whoosh_index_dir_path": "fixtures/index_dir",
   "trusted_ips": [],
+  "api_keys": ["myapikey"],
   "private_shoulders": {}
 }

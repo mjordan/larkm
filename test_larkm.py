@@ -5,6 +5,7 @@ import os
 import re
 
 client = TestClient(app)
+client.headers = {"Authorization": "myapikey"}
 
 
 def setup_module(module):
@@ -227,7 +228,7 @@ def test_get_config():
                                {"s1": "ACME University commits to maintain ARKs that have 's1' as a shoulder for a long time.",
                                "s3": "ACME University commits to maintain ARKs that have 's3' as a shoulder until the end of 2025.",
                                "default": "Default committment statement."},
-                               "erc_metadata_defaults": {"who": ":at", "what": ":at", "when": ":at", "where": ""},
+                               "erc_metadata_defaults": {"who": ":at", "what": ":at", "when": ":at"},
                                "resolver_hosts": {"global": "https://n2t.net/", "local": "https://resolver.myorg.net"}}
 
 
@@ -363,3 +364,25 @@ def test_delete_ark():
         "/larkm/ark:99999/x915a1a0a1-20a3-4ef9-a0b5-91a6115bb538"
     )
     assert delete_response.status_code == 204
+
+
+def test_delete_ark_bad_api_key():
+    create_response = client.post(
+        "/larkm",
+        json={
+            "shoulder": "x9",
+            "identifier": "2d1237ef-9f7f-4a5c-8d35-58a6842f1159",
+            "target": "https://example.com/deleteme"
+        },
+    )
+    assert create_response.status_code == 201
+
+    delete_response = client.delete(
+        "/larkm/ark:99999/x915a1a0a1-20a3-4ef9-a0b5-91a6115bb538", headers={"Authorization": ""}
+    )
+    assert delete_response.status_code == 403
+
+    delete_response = client.delete(
+        "/larkm/ark:99999/x915a1a0a1-20a3-4ef9-a0b5-91a6115bb538", headers={"Authorization": "badkey"}
+    )
+    assert delete_response.status_code == 403

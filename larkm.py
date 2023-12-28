@@ -1,5 +1,6 @@
 from typing import Optional
-from fastapi import FastAPI, Response, Request, HTTPException
+from typing_extensions import Annotated
+from fastapi import FastAPI, Response, Request, Header, HTTPException
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 from uuid import uuid4
@@ -35,7 +36,7 @@ class Ark(BaseModel):
 
 @app.get("/ark:{naan}/{identifier}")
 @app.get("/ark:/{naan}/{identifier}")
-def resolve_ark(request: Request, naan: str, identifier: str, info: Optional[str] = None):
+def resolve_ark(request: Request, naan: str, identifier: str, info: Optional[str] = None, authorization: Annotated[str | None, Header()] = None):
     """
     The ARK resolver. Redirects the client to the target URL associated with the ARK.
     Sample request:
@@ -62,6 +63,11 @@ def resolve_ark(request: Request, naan: str, identifier: str, info: Optional[str
                 message = f"Resolution of ARK with a private shoulder ({ark_string}) from an unregistered IP address ({request.client.host}): resolve_ark()"
                 log_request('WARNING', request.client.host, '', request.headers, message)
                 raise HTTPException(status_code=403)
+
+        if len(config["api_keys"]) > 0 and authorization not in config["api_keys"]:
+            message = f"API key {authorization} not configured."
+            log_request('WARNING', request.client.host, '', request.headers, message)
+            raise HTTPException(status_code=403)
 
     try:
         con = sqlite3.connect(config["sqlite_db_path"])
@@ -99,7 +105,7 @@ def resolve_ark(request: Request, naan: str, identifier: str, info: Optional[str
 
 
 @app.get("/larkm/search")
-def search_arks(request: Request, q: Optional[str] = '', page=1, page_size=20):
+def search_arks(request: Request, q: Optional[str] = '', page=1, page_size=20, authorization: Annotated[str | None, Header()] = None):
     """
     Endpoint for searching the Whoosh index of ARK metadata. Sample request:
 
@@ -112,6 +118,11 @@ def search_arks(request: Request, q: Optional[str] = '', page=1, page_size=20):
     """
     if len(config["trusted_ips"]) > 0 and request.client.host not in config["trusted_ips"]:
         message = f"Request from untrusted IP address: search_arks()"
+        log_request('WARNING', request.client.host, '', request.headers, message)
+        raise HTTPException(status_code=403)
+
+    if len(config["api_keys"]) > 0 and authorization not in config["api_keys"]:
+        message = f"API key {authorization} not configured."
         log_request('WARNING', request.client.host, '', request.headers, message)
         raise HTTPException(status_code=403)
 
@@ -177,7 +188,7 @@ def search_arks(request: Request, q: Optional[str] = '', page=1, page_size=20):
 
 
 @app.post("/larkm", status_code=201)
-def create_ark(request: Request, ark: Ark):
+def create_ark(request: Request, ark: Ark, authorization: Annotated[str | None, Header()] = None):
     """
     Create/mint a new ARK. Clients can provide an identifier string and/or
     a shoulder. If either of these is not provided, larkm will provide one.
@@ -232,6 +243,11 @@ def create_ark(request: Request, ark: Ark):
     """
     if len(config["trusted_ips"]) > 0 and request.client.host not in config["trusted_ips"]:
         message = f"Request from untrusted IP address: create_ark()"
+        log_request('WARNING', request.client.host, '', request.headers, message)
+        raise HTTPException(status_code=403)
+
+    if len(config["api_keys"]) > 0 and authorization not in config["api_keys"]:
+        message = f"API key {authorization} not configured."
         log_request('WARNING', request.client.host, '', request.headers, message)
         raise HTTPException(status_code=403)
 
@@ -322,7 +338,7 @@ def create_ark(request: Request, ark: Ark):
 
 
 @app.put("/larkm/ark:{naan}/{identifier}")
-def update_ark(request: Request, naan: str, identifier: str, ark: Ark):
+def update_ark(request: Request, naan: str, identifier: str, ark: Ark, authorization: Annotated[str | None, Header()] = None):
     """
     Update an ARK with new metadata, or policy statement. Shoulders,
     identifiers, and ark_strings cannot be updated. ark_string is a required
@@ -338,6 +354,11 @@ def update_ark(request: Request, naan: str, identifier: str, ark: Ark):
     if len(config["trusted_ips"]) > 0 and request.client.host not in config["trusted_ips"]:
         message = f"Request from untrusted IP address: update_ark()"
         log_request('WARNING', request.client.host, ark_string, request.headers, message)
+        raise HTTPException(status_code=403)
+
+    if len(config["api_keys"]) > 0 and authorization not in config["api_keys"]:
+        message = f"API key {authorization} not configured."
+        log_request('WARNING', request.client.host, '', request.headers, message)
         raise HTTPException(status_code=403)
 
     if ark.ark_string is None:
@@ -408,7 +429,7 @@ def update_ark(request: Request, naan: str, identifier: str, ark: Ark):
 
 
 @app.delete("/larkm/ark:{naan}/{identifier}", status_code=204)
-def delete_ark(request: Request, naan: str, identifier: str):
+def delete_ark(request: Request, naan: str, identifier: str, authorization: Annotated[str | None, Header()] = None):
     """
     Given an ARK string, delete the ARK. Sample query:
 
@@ -420,6 +441,11 @@ def delete_ark(request: Request, naan: str, identifier: str):
     if len(config["trusted_ips"]) > 0 and request.client.host not in config["trusted_ips"]:
         message = f"Request from untrusted IP address: delete_ark()"
         log_request('WARNING', request.client.host, ark_string, request.headers, message)
+        raise HTTPException(status_code=403)
+
+    if len(config["api_keys"]) > 0 and authorization not in config["api_keys"]:
+        message = f"API key {authorization} not configured."
+        log_request('WARNING', request.client.host, '', request.headers, message)
         raise HTTPException(status_code=403)
 
     ark_string = f'ark:{naan}/{identifier}'
@@ -451,7 +477,7 @@ def delete_ark(request: Request, naan: str, identifier: str):
 
 
 @app.get("/larkm/config")
-def return_config(request: Request):
+def return_config(request: Request, authorization: Annotated[str | None, Header()] = None):
     """
     Returns a subset of larkm's configuration data to the client.
     """
@@ -460,9 +486,15 @@ def return_config(request: Request):
         log_request('WARNING', request.client.host, '', request.headers, message)
         raise HTTPException(status_code=403)
 
+    if len(config["api_keys"]) > 0 and authorization not in config["api_keys"]:
+        message = f"API key {authorization} not configured."
+        log_request('WARNING', request.client.host, '', request.headers, message)
+        raise HTTPException(status_code=403)
+
     # Remove configuration data the client doesn't need to know.
     subset = copy.deepcopy(config)
     del subset['trusted_ips']
+    del subset['api_keys']
     del subset['private_shoulders']
     del subset['sqlite_db_path']
     del subset['log_file_path']
