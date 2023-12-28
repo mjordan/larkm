@@ -232,7 +232,7 @@ def test_get_config():
 
 
 def test_update_ark():
-    # Only provide the required body fields, see if larkm provides the correct default values for other fields.
+    # Create an ARK to update.
     response = client.post(
         "/larkm",
         json={
@@ -315,7 +315,7 @@ def test_update_ark():
     assert response.status_code == 409
     assert response.json() == {'detail': 'NAAN/identifier combination and ark_string do not match.'}
 
-    # Intentionally trigger a 409 by trying to update the erc_where with a value already in use.
+    # Intentionally trigger a 409 by trying to update the erc_where property.
     response = client.post(
         "/larkm",
         json={

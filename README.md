@@ -126,7 +126,7 @@ Also included in the response are values for global and local `urls`.
 
 ### Updating an ARK's properties
 
-You can update an existing ARK's ERC metadata, policy statement, or target. However, an ARK's `shoulder`, `identifier`, and `ark_string` are immutable and cannot be updated. `ark_string` is a required body field, and the ARK NAAN, shoulder, and identifier provided in the PUT request URL must match those in the "ark_string" body field.
+You can update an existing ARK's ERC metadata, policy statement, or target. However, an ARK's `shoulder`, `identifier`, and `ark_string` are immutable and cannot be updated. `ark_string` is the only required body field, and the ARK NAAN, shoulder, and identifier provided in the PUT request URL must match those in the "ark_string" body field. Properties included in the request body will be updated.
 
 Some sample queries:
 
