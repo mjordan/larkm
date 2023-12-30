@@ -87,7 +87,7 @@ def resolve_ark(request: Request, naan: str, identifier: str, info: Optional[str
 
     if info is None:
         if config["log_file_path"]:
-            log_request('INFO', request.client.host, ark_string, request.headers, record['target'])
+            log_request('INFO', request.client.host, ark_string, request.headers, 'Resolution')
         return RedirectResponse(record['target'])
     else:
         erc = f"erc:\nwho: {record['erc_who']}\nwhat: {record['erc_what']}\nwhen: {record['erc_when']}\nwhere: {record['erc_where']}\n"
@@ -247,7 +247,7 @@ def create_ark(request: Request, ark: Ark, authorization: Annotated[str | None, 
         raise HTTPException(status_code=403)
 
     if len(config["api_keys"]) > 0 and authorization not in config["api_keys"]:
-        message = f"API key {authorization} not configured."
+        message = f"API key {authorization} not configured: create_ark()"
         log_request('WARNING', request.client.host, '', request.headers, message)
         raise HTTPException(status_code=403)
 
@@ -357,7 +357,7 @@ def update_ark(request: Request, naan: str, identifier: str, ark: Ark, authoriza
         raise HTTPException(status_code=403)
 
     if len(config["api_keys"]) > 0 and authorization not in config["api_keys"]:
-        message = f"API key {authorization} not configured."
+        message = f"API key {authorization} not configured: update_ark()"
         log_request('WARNING', request.client.host, '', request.headers, message)
         raise HTTPException(status_code=403)
 
@@ -444,7 +444,7 @@ def delete_ark(request: Request, naan: str, identifier: str, authorization: Anno
         raise HTTPException(status_code=403)
 
     if len(config["api_keys"]) > 0 and authorization not in config["api_keys"]:
-        message = f"API key {authorization} not configured."
+        message = f"API key {authorization} not configured: delete_ark()"
         log_request('WARNING', request.client.host, '', request.headers, message)
         raise HTTPException(status_code=403)
 
@@ -487,7 +487,7 @@ def return_config(request: Request, authorization: Annotated[str | None, Header(
         raise HTTPException(status_code=403)
 
     if len(config["api_keys"]) > 0 and authorization not in config["api_keys"]:
-        message = f"API key {authorization} not configured."
+        message = f"API key {authorization} not configured: return_config()"
         log_request('WARNING', request.client.host, '', request.headers, message)
         raise HTTPException(status_code=403)
 
