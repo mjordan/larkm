@@ -163,6 +163,8 @@ def search_arks(request: Request, q: Optional[str] = '', page=1, page_size=20, a
         if len(identifier_list) == 0:
             return {"num_results": number_of_results, "page": page, "page_size": page_size, "arks": []}
 
+        # We have retrieved identifiers from the Woosh index, now we get the full ARK records from the
+        # database to return to the user.
         try:
             con = sqlite3.connect(config["sqlite_db_path"])
             con.row_factory = sqlite3.Row

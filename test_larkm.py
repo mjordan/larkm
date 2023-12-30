@@ -7,12 +7,12 @@ import re
 client = TestClient(app)
 client.headers = {"Authorization": "myapikey"}
 
-
+# Replace Woosh index data with backups to ensure reliable test data.
 def setup_module(module):
     shutil.copyfile('fixtures/index_dir/_MAIN_1.toc.bak', 'fixtures/index_dir/_MAIN_1.toc')
     shutil.copyfile('fixtures/index_dir/MAIN_40us1wxonicoi7js.seg.bak', 'fixtures/index_dir/MAIN_40us1wxonicoi7js.seg')
 
-
+# Replace SQLite db with backup since testing will have altered the db.
 def teardown_module(module):
     shutil.copyfile('fixtures/larkmtest.db.bak', 'fixtures/larkmtest.db')
 
@@ -366,7 +366,7 @@ def test_delete_ark():
     assert delete_response.status_code == 204
 
 
-def test_delete_ark_bad_api_key():
+def test_bad_api_key():
     create_response = client.post(
         "/larkm",
         json={
@@ -377,6 +377,7 @@ def test_delete_ark_bad_api_key():
     )
     assert create_response.status_code == 201
 
+    # Provide an API key that is not registered in the config file to trigger a 403.
     delete_response = client.delete(
         "/larkm/ark:99999/x915a1a0a1-20a3-4ef9-a0b5-91a6115bb538", headers={"Authorization": ""}
     )
