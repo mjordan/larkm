@@ -82,13 +82,36 @@ def resolve_ark(request: Request, naan: str, identifier: str, info: Optional[str
             raise HTTPException(status_code=404, detail="ARK not found")
         con.close()
     except sqlite3.DatabaseError as e:
-        # @todo: log (do not add to response!) str(e).
+        message = "Database error: " + str(e)
+        log_request('ERROR', request.client.host, '', request.headers, message)
         raise HTTPException(status_code=500)
 
+    # Handle requests for ARKs with private shoulders and non-http targets, regardless of whether '?info' is present.
+    if shoulder in private_shoulders and request.client.host in config["private_shoulders"][shoulder] and record['target'].strip().startswith('http') is False:
+        erc = f"erc:\nwho: {record['erc_who']}\nwhat: {record['erc_what']}\nwhen: {record['erc_when']}\nwhere: {record['erc_where']}\n"
+        if len(record['policy']) > 0:
+            policy = "policy: " + record['policy']
+        else:
+            for sh in config["allowed_shoulders"]:
+                if ark_string.startswith(sh):
+                    policy = "policy: " + config["committment_statements"][sh]
+                else:
+                    policy = "policy: " + config["committment_statements"]["default"]
+        message = f"Resolution of ARK with a private shoulder ({ark_string}) and a non-HTTP target from a IP address ({request.client.host}): resolve_ark()"
+        log_request('INFO', request.client.host, '', request.headers, message)
+        return Response(content=erc + "target: " + record['target'].strip() + "\n" + policy + "\n\n", media_type="text/plain")
+
     if info is None:
-        if config["log_file_path"]:
-            log_request('INFO', request.client.host, ark_string, request.headers, 'Resolution')
-        return RedirectResponse(record['target'])
+        # This is the most common case in resolution - anonymous requester, target starts with 'http'.
+        if record['target'].strip().startswith('http') is True:
+            if config["log_file_path"]:
+                log_request('INFO', request.client.host, ark_string, request.headers, 'Resolution')
+            return RedirectResponse(record['target'])
+        else:
+            # Unauthorized clients are not allowed to see ARKs with non-http targets.
+            raise HTTPException(status_code=403)
+    # At this point, authorized clients have gotten their non-http target results, and anonymous clients have been redirected to the HTTP target.
+    # Only case left is an anonymous client requests '?info'.
     else:
         erc = f"erc:\nwho: {record['erc_who']}\nwhat: {record['erc_what']}\nwhen: {record['erc_when']}\nwhere: {record['erc_where']}\n"
         if len(record['policy']) > 0:
@@ -99,9 +122,31 @@ def resolve_ark(request: Request, naan: str, identifier: str, info: Optional[str
                     policy = "policy: " + config["committment_statements"][sh]
                 else:
                     policy = "policy: " + config["committment_statements"]["default"]
+
         if config["log_file_path"]:
             log_request('INFO', request.client.host, ark_string, request.headers, '?info')
         return Response(content=erc + policy + "\n\n", media_type="text/plain")
+
+
+        '''
+        else:
+            if config["log_file_path"]:
+                log_request('INFO', request.client.host, ark_string, request.headers, 'Offline resource')
+
+            if len(config["private_shoulders"]) > 0:
+                # shoulder = identifier[:2]
+                # private_shoulders = list(config["private_shoulders"].keys())
+                if shoulder in private_shoulders and request.client.host in config["private_shoulders"][shoulder]:
+                    return Response(content=erc + "target: " + record['target'].strip() + "\n" + policy + "\n\n", media_type="text/plain")
+                else:
+                    message = f"Resolution of ARK with a private shoulder ({ark_string}) and a non-HTTP target from an unregistered IP address ({request.client.host}): resolve_ark()"
+                    log_request('WARNING', request.client.host, '', request.headers, message)
+                    raise HTTPException(status_code=403)
+            else:
+                # Return a 403 since the request was for an ARK that had a non-http target and
+                # there are no private shoulders configured.
+                raise HTTPException(status_code=403)
+        '''
 
 
 @app.get("/larkm/search")

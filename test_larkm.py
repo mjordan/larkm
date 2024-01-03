@@ -3,21 +3,27 @@ from larkm import app
 import shutil
 import os
 import re
+import json
 
 client = TestClient(app)
 client.headers = {"Authorization": "myapikey"}
 
-# Replace Woosh index data with backups to ensure reliable test data.
+
+# Replace Woosh index data and config file with backups.
 def setup_module(module):
     shutil.copyfile('fixtures/index_dir/_MAIN_1.toc.bak', 'fixtures/index_dir/_MAIN_1.toc')
     shutil.copyfile('fixtures/index_dir/MAIN_40us1wxonicoi7js.seg.bak', 'fixtures/index_dir/MAIN_40us1wxonicoi7js.seg')
+    shutil.copyfile('larkm.json', 'larkm.json.pretests')
+    shutil.copyfile('fixtures/larkm.json.tests', 'larkm.json')
+
 
 # Replace SQLite db with backup since testing will have altered the db.
 def teardown_module(module):
     shutil.copyfile('fixtures/larkmtest.db.bak', 'fixtures/larkmtest.db')
+    shutil.copyfile('larkm.json.pretests', 'larkm.json')
 
 
-# Note: We don't actually test the redirect functionality, we only test other aspects of resolution.
+# Note: We don't test the redirect functionality, we only test other aspects of resolution.
 def test_resolve_ark():
     response = client.get("/ark:12345/x9062cdde7-f9d6-48bb-be17-bd3b9f441ec4?info")
     assert response.status_code == 200
@@ -57,6 +63,24 @@ def test_resolve_ark():
     response = client.get("/ark:12345/x9062cdde7f9d648bbbe17bd3b9f441ec4?info")
     assert response.status_code == 200
     assert response.text == "erc:\nwho: :at\nwhat: :at\nwhen: :at\nwhere: ark:12345/x9062cdde7-f9d6-48bb-be17-bd3b9f441ec4\npolicy: Default committment statement.\n\n"
+
+
+def test_resolve_non_http_target():
+    response = client.post(
+        "/larkm",
+        json={
+            "shoulder": "p1",
+            "identifier": "8d3fd3f6-6ed0-4173-aea9-1784eaa5a656",
+            "what": "A new ARK with a non-HTTP target",
+            "target": "some_windows_share_UNC_address."
+        },
+    )
+    assert response.status_code == 201
+
+    # If the value of "target" does not start with "http", larkm returns the eqivalent of an "?info"
+    # request with the target included.
+    response = client.get("/ark:99999/p18d3fd3f6-6ed0-4173-aea9-1784eaa5a656")
+    assert response.status_code == 403
 
 
 def test_create_ark():
@@ -223,7 +247,7 @@ def test_get_config():
     response = client.get("/larkm/config")
     assert response.status_code == 200
     assert response.json() == {"NAAN": "99999", "default_shoulder": "s1",
-                               "allowed_shoulders": ["s1", "s2", "s3", "x9"],
+                               "allowed_shoulders": ["s1", "s2", "s3", "x9", "p1"],
                                "committment_statements":
                                {"s1": "ACME University commits to maintain ARKs that have 's1' as a shoulder for a long time.",
                                "s3": "ACME University commits to maintain ARKs that have 's3' as a shoulder until the end of 2025.",

@@ -22,6 +22,6 @@
   "trusted_ips": [],
   "api_keys": ["myapikey"],
   "private_shoulders": {
-	  "p1": ["127.0.0.2"]
+	  "p1": ["testclient"]
   }
 }
