@@ -77,8 +77,8 @@ def test_resolve_non_http_target():
     )
     assert response.status_code == 201
 
-    # If the value of "target" does not start with "http", larkm returns the eqivalent of an "?info"
-    # request with the target included.
+    # This ARK has a private shoulder but the client's IP ("testclient") is not
+    # registered with that shoulder, so it gets a 403.
     response = client.get("/ark:99999/p18d3fd3f6-6ed0-4173-aea9-1784eaa5a656")
     assert response.status_code == 403
 
