@@ -56,7 +56,6 @@ The config settings are:
 * "whoosh_index_dir_path": absolute or relative (to larkm.py) path to the Whoosh index data directory. Leave empty if you are not indexing ARK data.
 * "trusted_ips": list of client IP addresses that can create, update, delete, and search ARKs; leave empty to no restrict access to these functions (e.g. during testing).
 * "api_keys": list of strings used as API keys. Clients must pass their API key in a "Authorization" header, e.g. `Authorization: myapikey`.
-* "private_shoulders": list of shouder-to-IP list mappings that defines which client IP addresses resolution requests for ARKs with those shoulders may come from.
 
 ```json
 {
@@ -81,11 +80,7 @@ The config settings are:
   },
   "whoosh_index_dir_path": "index_dir",
   "trusted_ips": ["142.58.23.213", "142.59.78.175"],
-  "api_keys": ["d9771c6c-b9d0-4dc3-8549-e17ddfc12826", "some__--random--string"],
-  "private_shoulders":  {
-     "x9": ["123.456.789.123"],
-     "z1": ["142.158.36.213", "142.58.123.45"]
-  }
+  "api_keys": ["d9771c6c-b9d0-4dc3-8549-e17ddfc12826", "some__--random--string"]
 }
 ```
 
@@ -157,9 +152,6 @@ Note that larkm returns only the subset of configuration data that clients need 
 
 Following ARK best practice, larkm requires the use of [shoulders](https://wiki.lyrasis.org/display/ARKs/ARK+Identifiers+FAQ#ARKIdentifiersFAQ-shouldersWhatisashoulder?) in newly added ARKs. Shoulders allowed within your NAAN are defined in the "default_shoulder" and "allowed_shoulders" configuration settings. When a new ARK is added, larkm will validate that the ARK string starts with either the default shoulder or one of the allowed shoulders. Note however that larkm does not validate the [format of shoulders](https://wiki.lyrasis.org/display/ARKs/ARK+Shoulders+FAQ#ARKShouldersFAQ-HowdoIformatashoulder?).
 
-### Private shoulders
-
-In the `private_shoulders` configuration setting, you can define which IP addresses resolution requests for ARKs with specific shoulders can come from. This feature is useful for ARKs for non-public Web resources, or where you are using larkm to manage ARKs for resources that do not resolve to a public location, e.g. on a private fileshare or in a physical location. Requests from unregistered IP addresses will get a `403` HTTP response.
 
 ## Metadata support
 

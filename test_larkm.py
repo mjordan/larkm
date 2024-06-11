@@ -7,10 +7,12 @@ import re
 client = TestClient(app)
 client.headers = {"Authorization": "myapikey"}
 
+
 # Replace Woosh index data with backups to ensure reliable test data.
 def setup_module(module):
     shutil.copyfile('fixtures/index_dir/_MAIN_1.toc.bak', 'fixtures/index_dir/_MAIN_1.toc')
     shutil.copyfile('fixtures/index_dir/MAIN_40us1wxonicoi7js.seg.bak', 'fixtures/index_dir/MAIN_40us1wxonicoi7js.seg')
+
 
 # Replace SQLite db with backup since testing will have altered the db.
 def teardown_module(module):

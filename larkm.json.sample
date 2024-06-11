@@ -20,6 +20,5 @@
   },
   "whoosh_index_dir_path": "fixtures/index_dir",
   "trusted_ips": [],
-  "api_keys": ["myapikey"],
-  "private_shoulders": {}
+  "api_keys": ["myapikey"]
 }

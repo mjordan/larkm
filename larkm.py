@@ -55,19 +55,10 @@ def resolve_ark(request: Request, naan: str, identifier: str, info: Optional[str
     if not ark_string:
         raise HTTPException(status_code=422, detail="Invalid ARK string.")
 
-    if len(config["private_shoulders"]) > 0:
-        shoulder = identifier[:2]
-        private_shoulders = list(config["private_shoulders"].keys())
-        if shoulder in private_shoulders:
-            if request.client.host not in config["private_shoulders"][shoulder]:
-                message = f"Resolution of ARK with a private shoulder ({ark_string}) from an unregistered IP address ({request.client.host}): resolve_ark()"
-                log_request('WARNING', request.client.host, '', request.headers, message)
-                raise HTTPException(status_code=403)
-
-        if len(config["api_keys"]) > 0 and authorization not in config["api_keys"]:
-            message = f"API key {authorization} not configured."
-            log_request('WARNING', request.client.host, '', request.headers, message)
-            raise HTTPException(status_code=403)
+    if len(config["api_keys"]) > 0 and authorization not in config["api_keys"]:
+        message = f"API key {authorization} not configured."
+        log_request('WARNING', request.client.host, '', request.headers, message)
+        raise HTTPException(status_code=403)
 
     try:
         con = sqlite3.connect(config["sqlite_db_path"])
@@ -497,7 +488,6 @@ def return_config(request: Request, authorization: Annotated[str | None, Header(
     subset = copy.deepcopy(config)
     del subset['trusted_ips']
     del subset['api_keys']
-    del subset['private_shoulders']
     del subset['sqlite_db_path']
     del subset['log_file_path']
     del subset['whoosh_index_dir_path']
