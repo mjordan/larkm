@@ -224,7 +224,7 @@ def test_search_arks():
 def test_get_config():
     response = client.get("/larkm/config")
     assert response.status_code == 200
-    assert response.json() == {"NAAN": "99999", "default_shoulder": "s1",
+    assert response.json() == {"default_naan": "99999", "allowed_naans": ["11111", "22222", "33333"], "default_shoulder": "s1",
                                "allowed_shoulders": ["s1", "s2", "s3", "x9"],
                                "committment_statements":
                                {"s1": "ACME University commits to maintain ARKs that have 's1' as a shoulder for a long time.",

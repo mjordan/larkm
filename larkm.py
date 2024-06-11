@@ -23,6 +23,7 @@ app = FastAPI()
 
 
 class Ark(BaseModel):
+    naan: Optional[str] = None
     shoulder: Optional[str] = None
     identifier: Optional[str] = None
     ark_string: Optional[str] = None
@@ -183,11 +184,11 @@ def search_arks(request: Request, q: Optional[str] = '', page=1, page_size=20, a
 @app.post("/larkm", status_code=201)
 def create_ark(request: Request, ark: Ark, authorization: Annotated[str | None, Header()] = None):
     """
-    Create/mint a new ARK. Clients can provide an identifier string and/or
-    a shoulder. If either of these is not provided, larkm will provide one.
-    If a UUID v4 identifier is provided, it should not contain a shoulder,
-    since larkm will always add a shoulder to new ARKs. Clients cannot
-    provide a NAAN. Clients must always provide a "target" value.
+    Create/mint a new ARK. Clients can provide a NAAN, an identifier string
+    and/or a shoulder. If either of these is not provided, larkm will provide
+    one. If a UUID v4 identifier is provided, it should not contain a shoulder,
+    since larkm will always add a shoulder to new ARKs. Clients must always
+    provide a "target" value.
 
     "where" always gets the value of ark_string.
 
@@ -201,24 +202,23 @@ def create_ark(request: Request, ark: Ark, authorization: Annotated[str | None, 
         -d '{"shoulder": "x1", "identifier": "fde97fb3-634b-4232-b63e-e5128647efe7", "target": "https://digital.lib.sfu.ca"}'
 
     Sample request with only a 'where', an identifier and a name, which asks larkm to
-    generate an ARK string based on the NAAN specified in configuration settings, the
-    default shoulder, and the provided ID/name:
+    generate an ARK string based on the default NAAN, the default shoulder, and the
+    provided ID/name:
 
     curl -v -X POST "http://127.0.0.1:8000/larkm" \
         -H 'Content-Type: application/json' \
         -d '{"identifier": "fde97fb3-634b-4232-b63e-e5128647efe7", "target": "https://digital.lib.sfu.ca"}'
 
-    Sample request with only a 'where' and a shoulder, which asks larkm to generate
-    an ARK string based on the NAAN specified in configuration settings and the supplied
-    shoulder. If the ID/name is not provided, larkm will provide one in the form of a
-    v4 UUID:
+    Sample request with only a 'where' and a shoulder, which asks larkm to generate an ARK
+    string based on the supplied NAAN and the supplied shoulder. If the ID/name is not provided,
+    larkm will provide one in the form of a v4 UUID:
 
     curl -v -X POST "http://127.0.0.1:8000/larkm" \
         -H 'Content-Type: application/json' \
-        -d '{"shoulder": "x1", "target": "https://digital.lib.sfu.ca"}'
+        -d '{"shoulder": "x1", "naan": "99999", "target": "https://digital.lib.sfu.ca"}'
 
     Sample request with no 'where' or shoulder. larkm will generate an ARK using
-    the configured NAAN, the default shoulder, and a v4 UUID.
+    the default NAAN, the default shoulder, and a v4 UUID.
 
     curl -v -X POST "http://127.0.0.1:8000/larkm" \
         -H 'Content-Type: application/json' \
@@ -249,9 +249,13 @@ def create_ark(request: Request, ark: Ark, authorization: Annotated[str | None, 
 
     # Validate shoulder if provided.
     if ark.shoulder is not None:
-        for sh in config["allowed_shoulders"]:
-            if ark.shoulder not in config["allowed_shoulders"]:
-                raise HTTPException(status_code=422, detail="Provided shoulder is invalid.")
+        if ark.shoulder not in config["allowed_shoulders"]:
+            raise HTTPException(status_code=422, detail="Provided shoulder is invalid.")
+
+    # Validate NAAN if provided.
+    if ark.naan is not None:
+        if ark.naan not in config["allowed_naans"]:
+            raise HTTPException(status_code=422, detail="Provided NAAN is invalid.")
 
     # Validate UUID if provided.
     if ark.identifier is not None:
@@ -289,12 +293,14 @@ def create_ark(request: Request, ark: Ark, authorization: Annotated[str | None, 
         raise HTTPException(status_code=500)
 
     # Assemble the ARK. Generate parts the client didn't provide.
+    if ark.naan is None:
+        ark.naan = config["default_naan"]
     if ark.shoulder is None:
         ark.shoulder = config["default_shoulder"]
     if ark.identifier is None:
         ark.identifier = str(uuid4())
 
-    ark.ark_string = f'ark:{config["NAAN"]}/{ark.shoulder}{ark.identifier}'
+    ark.ark_string = f'ark:{ark.naan}/{ark.shoulder}{ark.identifier}'
 
     if ark.who is None:
         ark.who = config["erc_metadata_defaults"]["who"]
@@ -327,13 +333,14 @@ def create_ark(request: Request, ark: Ark, authorization: Annotated[str | None, 
     if len(config["resolver_hosts"]["global"]) > 0:
         urls['global'] = f'{config["resolver_hosts"]["global"].rstrip("/")}/{ark.ark_string}'
 
+    del ark.naan
     return {"ark": ark, "urls": urls}
 
 
 @app.put("/larkm/ark:{naan}/{identifier}")
 def update_ark(request: Request, naan: str, identifier: str, ark: Ark, authorization: Annotated[str | None, Header()] = None):
     """
-    Update an ARK with new metadata, or policy statement. Shoulders,
+    Update an ARK with new metadata, or policy statement. Shoulders, NAANs,
     identifiers, and ark_strings cannot be updated. ark_string is a required
     body field. 'where' always gets the value of ark_string. Sample query:
 
@@ -418,6 +425,8 @@ def update_ark(request: Request, naan: str, identifier: str, ark: Ark, authoriza
     if len(config["resolver_hosts"]["global"]) > 0:
         urls['global'] = f'{config["resolver_hosts"]["global"].rstrip("/")}/{ark.ark_string}'
 
+    # Delete the NAAN because we do not return it to the requesting client.
+    del ark.naan
     return {"ark": ark, "urls": urls}
 
 

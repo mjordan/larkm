@@ -1,5 +1,6 @@
 {
-  "NAAN": "99999",
+  "default_naan": "99999",
+  "allowed_naans": ["11111", "22222", "33333"],
   "default_shoulder": "s1",
   "allowed_shoulders": ["s2", "s3", "x9"],
   "committment_statements": {
