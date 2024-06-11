@@ -54,7 +54,7 @@ The config settings are:
 * "log_file_path": absolute or relative (to larkm.py) path to the log file. Directory must exist and be writable by the process running larkm.
 * "resolver_hosts": definition of the resolvers to include in the `urls` list returned to clients.
 * "whoosh_index_dir_path": absolute or relative (to larkm.py) path to the Whoosh index data directory. Leave empty if you are not indexing ARK data.
-* "trusted_ips": list of client IP addresses that can create, update, delete, and search ARKs; leave empty to no restrict access to these functions (e.g. during testing.
+* "trusted_ips": list of client IP addresses that can create, update, delete, and search ARKs; leave empty to no restrict access to these functions (e.g. during testing).
 * "api_keys": list of strings used as API keys. Clients must pass their API key in a "Authorization" header, e.g. `Authorization: myapikey`.
 * "private_shoulders": list of shouder-to-IP list mappings that defines which client IP addresses resolution requests for ARKs with those shoulders may come from.
 
