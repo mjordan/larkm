@@ -1,8 +1,6 @@
 from fastapi.testclient import TestClient
 from larkm import app
 import shutil
-import os
-import re
 
 client = TestClient(app)
 client.headers = {"Authorization": "myapikey"}
@@ -11,7 +9,7 @@ client.headers = {"Authorization": "myapikey"}
 def setup_module(module):
     shutil.copyfile('larkm.json', 'larkm.json.pretests')
     shutil.copyfile('fixtures/larkmtest.db.bak', 'fixtures/larkmtest.db')
-    shutil.copyfile('fixtures/larkm.json.tests.privateshoulder', 'larkm.json')
+    shutil.copyfile('fixtures/larkm.json.tests_privateshoulder_authorized_ip', 'larkm.json')
 
 
 def teardown_module(module):
@@ -31,7 +29,7 @@ def test_resolve_private_shoulder():
     )
     assert response.status_code == 201
 
-    # Expect a 403, since the IP address associated with the 'p1' shoulder is not 127.0.0.1.
+    # Expect a 403, since the IP address associated with the 'p1' shoulder is not 'testclient'.
     response = client.get("/ark:99999/p1eb7b1687-6704-4986-87de-2e992b176ab5")
     assert response.status_code == 403
 
@@ -48,9 +46,10 @@ def test_resolve_non_http_target_from_unregistered_address():
     )
     assert response.status_code == 201
 
-    # If the value of "target" does not start with "http", larkm returns a 403 the eqivalent of an "?info"
+    # If the value of "target" does not start with "http", larkm returns a 200
+    # since this client is registered in the config.
     # request with the target included.
     response = client.get("/ark:99999/p18d3fd3f6-6ed0-4173-aea9-1784eaa5a656")
-    assert response.status_code == 403
+    assert response.status_code == 200
 
 

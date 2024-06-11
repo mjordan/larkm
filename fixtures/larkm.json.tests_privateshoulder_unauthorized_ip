@@ -1,0 +1,27 @@
+{
+  "NAAN": "99999",
+  "default_shoulder": "s1",
+  "allowed_shoulders": ["s2", "s3", "x9", "p1"],
+  "committment_statements": {
+       "s1": "ACME University commits to maintain ARKs that have 's1' as a shoulder for a long time.",
+       "s3": "ACME University commits to maintain ARKs that have 's3' as a shoulder until the end of 2025.",
+       "default": "Default committment statement."
+  },
+  "erc_metadata_defaults": {
+       "who": ":at",
+       "what": ":at",
+       "when": ":at"
+  },
+  "sqlite_db_path": "fixtures/larkmtest.db",
+  "log_file_path": "/tmp/larkm.log",
+  "resolver_hosts": {
+     "global": "https://n2t.net/",
+     "local": "https://resolver.myorg.net"
+  },
+  "whoosh_index_dir_path": "",
+  "trusted_ips": [],
+  "api_keys": ["myapikey"],
+  "private_shoulders": {
+	  "p1": ["192.168.0.5"]
+  }
+}
