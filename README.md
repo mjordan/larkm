@@ -47,8 +47,8 @@ larkm uses a JSON configuration file in the same directory as `larkm.py` named `
 The config settings are:
 
 * "NAAN", which is your insitution's Name Assigning Authority Number.
-* "default_shoulder", the ARK shoulder applied to new ARKs if one is not provided).
-* "allowed_shoulders", a list of shoulders that are allowed in new ARKs provided by clients). If your default shoulder is the only one currently used by your NAAN, provide an empty list for "allowed_shoulders" (e.g. `[]`).
+* "default_shoulder", the ARK shoulder applied to new ARKs if one is not provided.
+* "allowed_shoulders", a list of shoulders that are allowed in new ARKs provided by clients. If your default shoulder is the only one currently used by your NAAN, provide an empty list for "allowed_shoulders" (e.g. `[]`).
 * "committment_statement", a mapping from shoulders to text expressing your institution's committment to maintaining the ARKs.
 * "sqlite_db_path": absolute or relative (to larkm.py) path to larkm's sqlite3 database file.
 * "log_file_path": absolute or relative (to larkm.py) path to the log file. Directory must exist and be writable by the process running larkm.
