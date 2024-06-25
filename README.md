@@ -8,7 +8,7 @@ larkm is a simple [ARK](https://arks.org/) manager that can:
 * supports ARKs with the optional trailing `/` (e.g. `ark:` and `ark:/`)
 * mint ARKs using UUID (v4) strings
 * persist new ARKs to an sqlite database
-* validate ARK shoulders
+* validate NAANs and ARK shoulders
 * update the ERC/Kernel metadata, committment statements, and target URLs of existing ARKs
 * provide basic [committment statements](https://arks.org/about/best-practices/) that are specific to shoulders
 * proivdes fulltext indexing of ERC metadata
@@ -46,7 +46,8 @@ larkm uses a JSON configuration file in the same directory as `larkm.py` named `
 
 The config settings are:
 
-* "NAAN", which is your insitution's Name Assigning Authority Number.
+* "default_naan": the Name Assigning Authority Number to use if none is supplied when an ARK is created.
+* "allowed_naans": a list of NAANS that are allowed in new ARKs provided by clients. If your default NAAN is the only one registered in your config file, provide an empty list for "allowed_naans" (e.g. `[]`).
 * "default_shoulder", the ARK shoulder applied to new ARKs if one is not provided.
 * "allowed_shoulders", a list of shoulders that are allowed in new ARKs provided by clients. If your default shoulder is the only one currently used by your NAAN, provide an empty list for "allowed_shoulders" (e.g. `[]`).
 * "committment_statement", a mapping from shoulders to text expressing your institution's committment to maintaining the ARKs.
