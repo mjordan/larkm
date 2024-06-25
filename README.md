@@ -60,7 +60,8 @@ The config settings are:
 
 ```json
 {
-  "NAAN": "12345",
+  "default_naan": "99999",
+  "allowed_naans": ["11111", "22222", "33333"],
   "default_shoulder": "s1",
   "allowed_shoulders": ["s8", "s9", "x9", "z1"],
   "committment_statement": {
@@ -101,20 +102,23 @@ To comply with the ARK specification, the hyphens in the identifier are optional
 
 REST clients can provide a `shoulder` and/or an `identifer` value in the requst body.
 
-* Clients cannot provide a NAAN.
 * Clients must always provide a `target` value.
 * If a shoulder is not provided, larkm will use its default shoulder.
 * If an identifier is not provided, larkm will generate a v4 UUID as the identifier.
 * If an identifier is provided, it must not contain a shoulder.
 * If the identifier that is provided is already in use, larkm will respond to the `POST` request with an `409` status code acommpanied by the body `{"detail":"UUID <uuid> already in use."}`.
 
-To add a new ARK (for example, to resolve to https://digital.lib.sfu.ca), issue the following request using curl:
+To add a new ARK (for example, to resolve to https://digital.lib.sfu.ca), issue the following request using curl (the configured default NAAN is `12345`):
 
 `curl -v -X POST "http://127.0.0.1:8000/larkm" -H 'Content-Type: application/json' -d '{"shoulder": "s1", "identifier": "fde97fb3-634b-4232-b63e-e5128647efe7", "target": "https://digital.lib.sfu.ca"}'`
 
 If you now visit `http://127.0.0.1:8000/ark:12345/s1fde97fb3-634b-4232-b63e-e5128647efe7`, you will be redirected to https://digital.lib.sfu.ca.
 
 If you omit the `shoulder`, the configured default shoulder will be used. If you omit the `identifier`, larkm will mint one using a v4 UUID.
+
+If you provide a NAAN, and it is in the configured list of `allowed_naans`, it will be used instead of the NAAN configured as the `default_naan`:
+
+`curl -v -X POST "http://127.0.0.1:8000/larkm" -H 'Content-Type: application/json' -d '{"naan": "454545", "shoulder": "s1", "identifier": "fde97fb3-634b-4232-b63e-e5128647efe7", "target": "https://digital.lib.sfu.ca"}'`
 
 All responses to a POST will include in their body the values values provided in the POST request, plus any default values for missing body fields. The `where` value will be identical to the provided `ark_string` and cannot be populated on its own. Metadata values not provided will get the ERC ":at" ("the real value is at the given URL or identifier") value:
 
