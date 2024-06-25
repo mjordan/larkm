@@ -100,9 +100,10 @@ To comply with the ARK specification, the hyphens in the identifier are optional
 
 ### Creating a new ARK
 
-REST clients can provide a `shoulder` and/or an `identifer` value in the requst body.
+REST clients can provide a `naan,` a `shoulder` and/or an `identifer` value in the requst body.
 
 * Clients must always provide a `target` value.
+* If a NAAN is not provided, larkm will use its default NAAN.
 * If a shoulder is not provided, larkm will use its default shoulder.
 * If an identifier is not provided, larkm will generate a v4 UUID as the identifier.
 * If an identifier is provided, it must not contain a shoulder.
@@ -128,7 +129,7 @@ Also included in the response are values for global and local `urls`.
 
 ### Updating an ARK's properties
 
-You can update an existing ARK's ERC metadata, policy statement, or target. However, an ARK's `shoulder`, `identifier`, and `ark_string` are immutable and cannot be updated. `ark_string` is the only required body field, and the ARK NAAN, shoulder, and identifier provided in the PUT request URL must match those in the "ark_string" body field. Properties included in the request body will be updated.
+You can update an existing ARK's ERC metadata, policy statement, or target. However, an ARK's `naan`, `shoulder`, `identifier`, and `ark_string` are immutable and cannot be updated. `ark_string` is the only required body field, and the ARK NAAN, shoulder, and identifier provided in the PUT request URL must match those in the "ark_string" body field. Properties included in the request body will be updated.
 
 Some sample queries:
 
