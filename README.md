@@ -53,7 +53,7 @@ The config settings are:
 * "committment_statement", a mapping from shoulders to text expressing your institution's committment to maintaining the ARKs.
 * "sqlite_db_path": absolute or relative (to larkm.py) path to larkm's sqlite3 database file.
 * "log_file_path": absolute or relative (to larkm.py) path to the log file. Directory must exist and be writable by the process running larkm.
-* "resolver_hosts": definition of the resolvers to include in the `urls` list returned to clients.
+* "resolver_hosts": definition of the resolvers to include in the `urls` list returned to clients. Note that these are only returned in requests for `?info`; this setting has nothing to do with the resolution of an incoming ARK to its target URL.
 * "whoosh_index_dir_path": absolute or relative (to larkm.py) path to the Whoosh index data directory. Leave empty if you are not indexing ARK data.
 * "trusted_ips": list of client IP addresses that can create, update, delete, and search ARKs; leave empty to no restrict access to these functions (e.g. during testing).
 * "api_keys": list of strings used as API keys. Clients must pass their API key in a "Authorization" header, e.g. `Authorization: myapikey`.
