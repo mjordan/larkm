@@ -5,17 +5,17 @@
 larkm is a simple [ARK](https://arks.org/) manager that can:
 
 * resolve ARKs to their target URLs
-* supports both "streamlined label" ARKs with no trailing `/` (e.g. `ark:`) and legacy ARKs with the trailing `/` (e.g. `ark:/`). New ARKs are created without the trailing `/`, following current practice.
+* supports both "modern" ARKs with no trailing `/` (e.g. `ark:`) and "classic" ARKs with the trailing `/` (e.g. `ark:/`). New ARKs are created without the trailing `/`, following current practice.
 * mint ARKs using UUID (v4) strings
 * persist new ARKs to an sqlite database
 * validate NAANs and ARK shoulders
 * update the ERC/Kernel metadata, committment statements, and target URLs of existing ARKs
 * provide basic [committment statements](https://arks.org/about/best-practices/) that are specific to shoulders
-* proivdes fulltext indexing of ERC metadata
+* allow fulltext indexing of ERC metadata
 * delete ARKs
 * log requests for ARK resolution
 
-ARK resolution is provided via requests to larkm's host followed by an ARK (e.g. `https://myhost.net/ark:12345/876543`) and the other operations are provided through standard REST requests to larkm's management endpoint (`/larkm`). This REST interface allows creating, persisting, updating, and deleting ARKs, and can expose a subset of larkm's configuration data to clients. Access to the REST endpoints can be controlled by registering the IP addresses of trused clients, as explained in the "Configuration" section below.
+ARK resolution is provided via requests to larkm's host followed by an ARK (e.g. `https://myhost.net/ark:12345/876543`) and the other operations are provided through standard REST requests to larkm's management endpoint (`/larkm`). This REST interface allows creating, persisting, updating, and deleting ARKs, and can expose a subset of larkm's configuration data to clients. Access to the REST endpoints can be controlled by registering the IP addresses of trused clients and using API keys, as explained in the "Configuration" section below.
 
 larkm is considered "lightweight" because it supports only a subset of ARK functionality, focusing on providing ways to manage ARKs locally and on using ARKs as persistent, resolvable identifiers. ARK features such as suffix passthrough and ARK qualifiers are currently out of scope.
 
@@ -167,7 +167,7 @@ larkm supports the [Electronic Resource Citation](https://www.dublincore.org/gro
 
 ### Searching metadata
 
-larkm supports fulltext indexing of ERC metadata and other ARK properties via the [Whoosh](https://pypi.org/project/Whoosh/) indexer. This feature is not intended as a general-purpose, end-user search interface but rather to be used for administrative purposes. Access to the `/larkm/search` endpoint is restricted to the IP addresses registered in the "trusted_ips" configuration setting.
+larkm supports fulltext indexing of ERC metadata and other ARK properties via the [Whoosh](https://pypi.org/project/Whoosh/) indexer. This feature is not intended as a general-purpose, end-user search interface but rather to be used for administrative purposes. Access to the `/larkm/search` endpoint is restricted to the IP addresses registered in the "trusted_ips" configuration setting and API keys.
 
 A simple example search is:
 
