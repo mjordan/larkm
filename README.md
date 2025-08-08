@@ -22,7 +22,7 @@ larkm is considered "lightweight" because it supports only a subset of ARK funct
 ## Requirements
 
 * Python 3.7+
-* sqlite3 (installed by default with Python)
+* sqlite3
 * [FastAPI](https://fastapi.tiangolo.com/)
 * [Uvicorn](https://www.uvicorn.org/) for demo/testing, or some other ASGI web server for production uses
 * [Whoosh](https://pypi.org/project/Whoosh/) for fulltext indexing of metadata
