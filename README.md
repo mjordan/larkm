@@ -5,7 +5,7 @@
 larkm is a simple [ARK](https://arks.org/) manager that can:
 
 * resolve ARKs to their target URLs
-* supports ARKs with the optional trailing `/` (e.g. `ark:` and `ark:/`)
+* supports both "streamlined label" ARKs with no trailing `/` (e.g. `ark:`) and legacy ARKs with the trailing `/` (e.g. `ark:/`). New ARKs are created without the trailing `/`, following current practice.
 * mint ARKs using UUID (v4) strings
 * persist new ARKs to an sqlite database
 * validate NAANs and ARK shoulders
@@ -280,18 +280,17 @@ The "extras" directory contains two sample scripts:
 
 1. a script to test larkm's performance
 1. a script to mint ARKs from a CSV file
-1. a script to mint ARKs from the output of the [larkm Integration Drupal module](https://github.com/mjordan/larkm_integration)
 1. a script to build the Whoosh search index from entries in the database
 
 Instructions are at the top of each file.
 
 ## Development
 
-* Run `larkm.py` and `test_larkm.py` through pycodestyle: `pycodestyle --show-source --show-pep8 --ignore=E124,E126,E127,E128,E402,E501,W504 *.py`
+* Run `larkm.py` and `test_larkm.py` through `black`.
 * To run tests:
    * you don't need to start the web server or create a database
    * within the larkm directory, copy `larkm.json.sample` to `larkm.json` (back up `larkm.json` first if you have custom values in it)
-   * execute `pytest`
+   * execute `pytest`.
 
 ## License
 
