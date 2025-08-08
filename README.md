@@ -44,6 +44,8 @@ If you want to create your own, run the following commands:
 
 larkm uses a JSON configuration file in the same directory as `larkm.py` named `larkm.json`. Copy the sample configuration file, `larkm.json.sample`, to `larkm.json`, make any changes you need, and you are good to go.
 
+If you want to put your configuration file in a different location, create an environment variable `LARKM_CONFIG_FILE_PATH` that contains the abolute path to the config file. Larkm will check this environment variable first, and if it is not set or is set an is empty, will use the default location described above.
+
 The config settings are:
 
 * "default_naan": the Name Assigning Authority Number to use if none is supplied when an ARK is created.

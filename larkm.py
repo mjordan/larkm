@@ -15,7 +15,8 @@ import os
 from whoosh import index
 from whoosh.qparser import QueryParser
 
-with open("larkm.json", "r") as config_file:
+config_file_path = os.getenv("LARKM_CONFIG_FILE_PATH") or "larkm.json"
+with open(config_file_path, "r") as config_file:
     config = json.load(config_file)
     config["allowed_naans"].insert(0, config["default_naan"])
     config["allowed_shoulders"].insert(0, config["default_shoulder"])
