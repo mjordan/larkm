@@ -5,7 +5,7 @@
 larkm is a simple [ARK](https://arks.org/) manager that can:
 
 * resolve ARKs to their target URLs
-* supports both "modern" ARKs with no trailing `/` (e.g. `ark:`) and "classic" ARKs with the trailing `/` (e.g. `ark:/`). New ARKs are created without the trailing `/`, following current practice.
+* supports both "modern" ARKs with no trailing `/` (e.g. `ark:12345`) and "classic" ARKs with the trailing `/` (e.g. `ark:/12345`). New ARKs are created without the trailing `/`, following current practice.
 * mint ARKs using UUID (v4) strings
 * persist new ARKs to an sqlite database
 * validate NAANs and ARK shoulders
@@ -24,7 +24,7 @@ larkm is considered "lightweight" because it supports only a subset of ARK funct
 * Python 3.7+
 * sqlite3
 * [FastAPI](https://fastapi.tiangolo.com/)
-* [Uvicorn](https://www.uvicorn.org/) for demo/testing, or some other ASGI web server for production uses
+* [Uvicorn](https://www.uvicorn.org/) or some other ASGI web server
 * [Whoosh](https://pypi.org/project/Whoosh/) for fulltext indexing of metadata
 * To have your ARKs resolve from [N2T](http://n2t.net/), you will to register a NAAN (Name Assigning Authority Number) using [this form](https://goo.gl/forms/bmckLSPpbzpZ5dix1).
 
@@ -90,7 +90,7 @@ The config settings are:
 
 ### Starting larkm
 
-To start the larkm app with the local Uvicorn web server, in a terminal run `python3 -m uvicorn larkm:app`
+To start larkm with the local Uvicorn web server, in a terminal run `python3 -m uvicorn larkm:app`
 
 ### Resolving an ARK
 
@@ -98,7 +98,7 @@ Visit `http://127.0.0.1:8000/ark:12345/x9062cdde7-f9d6-48bb-be17-bd3b9f441ec4` u
 
 To see the configured metadata and committment statement for the ARK instead of resolving to its target, append `?info` to the end of the ARK, e.g., `http://127.0.0.1:8000/ark:12345/x9062cdde7-f9d6-48bb-be17-bd3b9f441ec4?info`.
 
-To comply with the ARK specification, the hyphens in the identifier are optional. Therefore, `http://127.0.0.1:8000/ark:12345/x9062cdde7-f9d648bbbe17bd3--b9f441ec4` is equivalent to `http://127.0.0.1:8000/ark:12345/x9062cdde7-f9d6-48bb-be17-bd3b9f441ec4`.  Since hyphens are integral parts of UUIDs, larkm restores the hyphens to their expected location within the UUID to perform its lookups during resolution. Hyphens in UUIDs are optional/ignored only when resolving an ARK. They are required for all other operations described below.
+To comply with the ARK specification, the hyphens in the identifier are optional. Therefore, `http://127.0.0.1:8000/ark:12345/x9062cdde7-f9d648bbbe17bd3--b9f441ec4` is equivalent to `http://127.0.0.1:8000/ark:12345/x9062cdde7-f9d6-48bb-be17-bd3b9f441ec4` (both of shich are equivalent to `http://127.0.0.1:8000/ark:12345/x9062cdde7f9d648bbbe17bd3b9f441ec4`). Since hyphens are integral parts of UUIDs, larkm restores the hyphens to their expected location within the UUID to perform its lookups during resolution. Hyphens in UUIDs are optional/ignored only when resolving an ARK. They are required for all other operations described below.
 
 ### Creating a new ARK
 
