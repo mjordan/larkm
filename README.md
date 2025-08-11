@@ -5,7 +5,7 @@
 larkm is a simple [ARK](https://arks.org/) manager that can:
 
 * resolve ARKs to their target URLs
-* supports both "modern" ARKs with no trailing `/` (e.g. `ark:12345`) and "classic" ARKs with the trailing `/` (e.g. `ark:/12345`). New ARKs are created without the trailing `/`, following current practice.
+* support both "modern" ARKs with no trailing `/` (e.g. `ark:12345`) and "classic" ARKs with the trailing `/` (e.g. `ark:/12345`). New ARKs are created without the trailing `/`, following current practice.
 * mint ARKs using UUID (v4) strings
 * persist new ARKs to an sqlite database
 * validate NAANs and ARK shoulders
