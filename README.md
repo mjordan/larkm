@@ -274,7 +274,11 @@ Thanks to [OpenAPI](https://github.com/OAI/OpenAPI-Specification), you can see l
 
 ## Logging
 
-larkm provides basic logging of requests to its resolver endpoint (i.e., `/ark:foo/bar`). The path to the log is set in the "log_file_path" configuration option. To disable logging, use `false` as the value of this option. The log is a tab-delimited file containing a datestamp, the client's IP address, the requested ARK string, the corresponding target URL (or "ARK not found" if the requested ARK was not found, or "info" if the request was for the ARK's metadata), and the HTTP referer. If the referer is not available, the value in the TSV entry is "null". Errors and warnings are also logged.
+larkm provides basic logging of requests to its resolver endpoint (i.e., `/ark:foo/bar`). The path to the log is set in the "log_file_path" configuration option. To disable logging, use `false` as the value of this option. The log is a tab-delimited file containing a datestamp, the client's IP address, the requested ARK string, the corresponding target URL (or "ARK not found" if the requested ARK was not found, or "info" if the request was for the ARK's metadata), and the HTTP referer. If the referer is not available, the value in the TSV entry is "null".
+
+Updates to ARKs are also logged, showing the original version of the updated properties and the new versions. ARK deletions are also logged.
+
+Errors and warnings are also logged.
 
 ## Scripts
 
