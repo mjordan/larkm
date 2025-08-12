@@ -380,6 +380,9 @@ def create_ark(
         ark.shoulder = config["default_shoulder"]
     if ark.identifier is None:
         ark.identifier = str(uuid4())
+        if "use_short_identifiers" in config and config["use_short_identifiers"] == "true":
+            # First 13 characters of the UUID including the '-' after the 8th character.
+            ark.identifier = ark.identifier[:13]
 
     ark.ark_string = f"ark:{ark.naan}/{ark.shoulder}{ark.identifier}"
 
@@ -734,26 +737,53 @@ def normalize_ark_string(ark_string):
 
     Returns the reconstituted ARK string or False if the UUID is not a valid UUID v4.
     """
-    # Everthing up to and including the shoulder.
-    prefix = ark_string[:12]
-    # Everything after the shoulder; assumed to be a UUID with or without hyphens.
-    suffix = ark_string[12:]
+    if "use_short_identifiers" in config and config["use_short_identifiers"] == "true":
+        # Everthing up to and including the shoulder.
+        prefix = ark_string[:12]
 
-    uuid_sans_hyphens = suffix.replace("-", "")
-    group5 = uuid_sans_hyphens[20:]
-    group4 = uuid_sans_hyphens[16:20]
-    group3 = uuid_sans_hyphens[12:16]
-    group2 = uuid_sans_hyphens[8:12]
-    group1 = uuid_sans_hyphens[:8]
+        # Everything after the shoulder; assumed to be a UUID with or without hyphens.
+        suffix = ark_string[12:]
 
-    reconstituted_uuid = f"{group1}-{group2}-{group3}-{group4}-{group5}"
-    if not re.match(
-        "^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}$",
-        reconstituted_uuid,
-    ):
-        return False
+        uuid_sans_hyphens = suffix.replace("-", "")
 
-    reconstituted_ark_string = prefix + reconstituted_uuid
+        '''
+        group5 = uuid_sans_hyphens[20:]
+        group4 = uuid_sans_hyphens[16:20]
+        group3 = uuid_sans_hyphens[12:16]
+        '''
+        group2 = uuid_sans_hyphens[8:12]
+        group1 = uuid_sans_hyphens[:8]
+
+        reconstituted_uuid = f"{group1}-{group2}"
+
+        if not re.match(
+            "^[a-f0-9]{8}-[a-f0-9]{4}$",
+            reconstituted_uuid,
+        ):
+            return False
+
+        reconstituted_ark_string = prefix + reconstituted_uuid
+    else:
+        # Everthing up to and including the shoulder.
+        prefix = ark_string[:12]
+        # Everything after the shoulder; assumed to be a UUID with or without hyphens.
+        suffix = ark_string[12:]
+
+        uuid_sans_hyphens = suffix.replace("-", "")
+        group5 = uuid_sans_hyphens[20:]
+        group4 = uuid_sans_hyphens[16:20]
+        group3 = uuid_sans_hyphens[12:16]
+        group2 = uuid_sans_hyphens[8:12]
+        group1 = uuid_sans_hyphens[:8]
+
+        reconstituted_uuid = f"{group1}-{group2}-{group3}-{group4}-{group5}"
+        if not re.match(
+            "^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}$",
+            reconstituted_uuid,
+        ):
+            return False
+
+        reconstituted_ark_string = prefix + reconstituted_uuid
 
     return reconstituted_ark_string
 

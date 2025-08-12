@@ -104,10 +104,16 @@ def test_create_ark():
         json={"target": "https://example.com/sssss"},
     )
     body = response.json()
-    assert re.match(
-        "^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}$",
-        body["ark"]["identifier"],
-    )
+    if len(body["ark"]["identifier"]) == 36:
+        assert re.match(
+            "^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}$",
+            body["ark"]["identifier"],
+        )
+    if len(body["ark"]["identifier"]) == 13:
+        assert re.match(
+            "^[a-f0-9]{8}-[a-f0-9]{4}$",
+            body["ark"]["identifier"],
+        )
 
     # Provide a shoulder and identifier.
     response = client.post(
@@ -346,6 +352,7 @@ def test_get_config():
         "allowed_naans": ["99999", "11111", "22222", "33333"],
         "default_shoulder": "s1",
         "allowed_shoulders": ["s1", "s2", "s3", "x9"],
+        "use_short_identifiers": "true",
         "committment_statements": {
             "s1": "ACME University commits to maintain ARKs that have 's1' as a shoulder for a long time.",
             "s3": "ACME University commits to maintain ARKs that have 's3' as a shoulder until the end of 2025.",
