@@ -41,7 +41,7 @@ def test_resolve_ark():
         == "erc:\nwho: :at\nwhat: :at\nwhen: :at\nwhere: ark:12345/x9062cdde7-f9d6-48bb-be17-bd3b9f441ec4\npolicy: Default committment statement.\n\n"
     )
 
-    # Resolve same ARK but with random hypens in UUID.
+    # Resolve same ARK but with random hyphens in UUID.
     response = client.get("/ark:/12345/x9062-cdde7f9d64-8bbbe17-bd3b9f441ec4?info")
     assert response.status_code == 200
     assert (
