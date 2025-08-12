@@ -508,18 +508,36 @@ def update_ark(
     ark.identifier = old_ark["identifier"]
     ark.ark_string = old_ark["ark_string"]
 
-    # Only update ark properties that are in the request body, except for target, which
-    # always gets the value of 'erc_where'.
+    # Only update ark properties that are in the request body, except for ark.where, which
+    # always gets the value of the ark_string. We also create two dictionaries for logging
+    # one containing the old property values and the other containing the updated properties.
+    original_properties = dict()
+    updated_properties = dict()
     if ark.target is None:
         ark.target = old_ark["target"]
+    else:
+        original_properties["target"] = old_ark["target"]
+        updated_properties["target"] = ark.target
     if ark.who is None:
         ark.who = old_ark["erc_who"]
+    else:
+        original_properties["erc_who"] = old_ark["erc_who"]
+        updated_properties["erc_who"] = ark.who
     if ark.what is None:
         ark.what = old_ark["erc_what"]
+    else:
+        original_properties["erc_what"] = old_ark["erc_what"]
+        updated_properties["erc_what"] = ark.what
     if ark.when is None:
         ark.when = old_ark["erc_when"]
+    else:
+        original_properties["erc_when"] = old_ark["erc_when"]
+        updated_properties["erc_when"] = ark.when
     if ark.policy is None:
         ark.policy = old_ark["policy"]
+    else:
+        original_properties["policy"] = old_ark["policy"]
+        updated_properties["policy"] = ark.policy
 
     ark.where = ark.ark_string
 
@@ -536,6 +554,7 @@ def update_ark(
             ark.policy,
             ark.ark_string,
         )
+
         con = sqlite3.connect(config["sqlite_db_path"])
         cur = con.cursor()
         cur.execute(
@@ -544,6 +563,13 @@ def update_ark(
         )
         con.commit()
         con.close()
+        log_request(
+            "INFO",
+            request.client.host,
+            ark_string,
+            request.headers,
+            f"ARK updated: {original_properties} updated to {updated_properties}",
+        )
     except sqlite3.DatabaseError as e:
         log_request("ERROR", request.client.host, ark_string, request.headers, str(e))
         raise HTTPException(status_code=500)
@@ -618,6 +644,9 @@ def delete_ark(
             cur.execute("delete from arks where ark_string=:a_s", {"a_s": ark_string})
             con.commit()
             con.close()
+            log_request(
+                "INFO", request.client.host, ark_string, request.headers, "ARK deleted."
+            )
         except sqlite3.DatabaseError as e:
             log_request(
                 "ERROR", request.client.host, ark_string, request.headers, str(e)
