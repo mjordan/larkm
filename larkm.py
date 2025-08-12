@@ -367,7 +367,10 @@ def create_ark(
             )
         con.close()
     except sqlite3.DatabaseError as e:
-        log_request("ERROR", request.client.host, ark_string, request.headers, str(e))
+        # We don't have the ark_string at this point so we use the ark.identifier in our log entry.
+        log_request(
+            "ERROR", request.client.host, ark.identifier, request.headers, str(e)
+        )
         raise HTTPException(status_code=500)
 
     # Assemble the ARK. Generate parts the client didn't provide.
@@ -723,8 +726,8 @@ def normalize_ark_string(ark_string):
     spec requires hyphens to be insignificant.
 
     Assumes that the ARK string does not contain the / after 'ark:', that
-    the NAAN is 5 characters long, and that the shoulder is present and is two
-    characters long.
+    the NAAN is 5 characters long, and that the shoulder is present and is
+    2 characters long.
 
     - **ark_string**: an ARK string in the form ark:/12345/y2ee65209e67fe-45fc-a9721da0b602c742
       where the UUID part of the string contains a 2-character shoulder and 0 or more hyphens (-).
