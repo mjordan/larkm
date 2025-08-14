@@ -746,11 +746,6 @@ def normalize_ark_string(ark_string):
 
         uuid_sans_hyphens = suffix.replace("-", "")
 
-        '''
-        group5 = uuid_sans_hyphens[20:]
-        group4 = uuid_sans_hyphens[16:20]
-        group3 = uuid_sans_hyphens[12:16]
-        '''
         group2 = uuid_sans_hyphens[8:12]
         group1 = uuid_sans_hyphens[:8]
 
