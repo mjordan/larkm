@@ -4,9 +4,7 @@ can be generated before a duplicate is generated.
 
 import uuid
 import logging
-import concurrent.futures
 
-max_workers = 1
 
 identifiers = list()
 max_number_identifiers = 100000000
@@ -33,14 +31,6 @@ def generate_identifier():
 
 
 if __name__ == "__main__":
-    logging.info(f"Script started using {max_workers} thread(s).")
-    if max_workers > 1:
-        executor = concurrent.futures.ProcessPoolExecutor(max_workers=max_workers)
-        futures = [
-            executor.submit(generate_identifier)
-            for attempt in range(max_number_identifiers)
-        ]
-        executor.shutdown()
-    else:
-        for attempt in range(max_number_identifiers):
-            generate_identifier()
+    logging.info(f"Script started.")
+    for attempt in range(max_number_identifiers):
+        generate_identifier()
