@@ -99,6 +99,17 @@ def test_create_ark():
         },
     }
 
+    # Provide a malformed UUID v4 as the identifier.
+    response = client.post(
+        "/larkm",
+        json={
+            "shoulder": "s1",
+            "identifier": "fdd17ff8892d7-4671-b25b-e9d8ead90239",
+            "target": "https://example.com/zxzxzxc",
+        },
+    )
+    assert response.status_code == 422
+
     # Provide a shoulder and identifier.
     response = client.post(
         "/larkm",
@@ -126,6 +137,39 @@ def test_create_ark():
             "global": "https://n2t.net/ark:99999/s114b7f127b358",
         },
     }
+
+    # Provide a malformed identifier (contains hyphen).
+    response = client.post(
+        "/larkm",
+        json={
+            "shoulder": "s1",
+            "identifier": "4eed199-4600",
+            "target": "https://example.com/wwwwwx",
+        },
+    )
+    assert response.status_code == 422
+
+    # Provide a malformed identifier (invalide letter)
+    response = client.post(
+        "/larkm",
+        json={
+            "shoulder": "s1",
+            "identifier": "80304d63ac0k",
+            "target": "https://example.com/wwwwwa",
+        },
+    )
+    assert response.status_code == 422
+
+    # Provide an identifier that is not 12 characters long.
+    response = client.post(
+        "/larkm",
+        json={
+            "shoulder": "s1",
+            "identifier": "d52d68a12d504",
+            "target": "https://example.com/wwwwwz",
+        },
+    )
+    assert response.status_code == 422
 
     # Provide a NAAN, shoulder and identifier.
     response = client.post(
@@ -324,7 +368,7 @@ def test_search_arks():
     )
     assert response.status_code == 422
     assert response.json() == {
-        "detail": "2022-02-29 in date_created is not not a valid date."
+        "detail": "2022-02-29 in date_created is not a valid date."
     }
 
 

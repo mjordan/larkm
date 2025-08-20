@@ -158,7 +158,7 @@ def search_arks(
                                 detail=range_date.strip(" []")
                                 + " in "
                                 + field_name
-                                + " is not not a valid date.",
+                                + " is not a valid date.",
                             )
                 else:
                     # Not a range query.
@@ -168,7 +168,7 @@ def search_arks(
                             detail=field_value.strip(" ")
                             + " in "
                             + field_name
-                            + " is not not a valid date.",
+                            + " is not a valid date.",
                         )
 
     idx = index.open_dir(config["whoosh_index_dir_path"])
@@ -244,7 +244,7 @@ def create_ark(
 
     "where" always gets the value of ark_string.
 
-    If the identifier that is provided is already in use, larkm will responde to the POST
+    If the identifier that is provided is already in use, larkm will respond to the POST
     request with an HTTP `409` with the body `{"detail":"Identifier <identifier> already in use."}`.
 
     Sample request with an provided ID/name and shoulder:
@@ -423,7 +423,9 @@ def create_ark(
         con.commit()
         con.close()
     except sqlite3.DatabaseError as e:
-        log_request("ERROR", request.client.host, ark.ark_string, request.headers, str(e))
+        log_request(
+            "ERROR", request.client.host, ark.ark_string, request.headers, str(e)
+        )
         raise HTTPException(status_code=500)
 
     urls = dict()
@@ -746,6 +748,7 @@ def validate_identifier(identifier):
         return True
     else:
         return False
+
 
 def validate_uuid(identifier):
     if re.match(

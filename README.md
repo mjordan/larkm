@@ -6,7 +6,7 @@ larkm is a simple [ARK](https://arks.org/) manager that can:
 
 * resolve ARKs to their target URLs
 * support both "modern" ARKs with no trailing `/` (e.g. `ark:12345`) and "classic" ARKs with the trailing `/` (e.g. `ark:/12345`). New ARKs are created without the trailing `/`, following current practice.
-* mint ARKs using the first 12 characters from UUID (v4) strings
+* mint ARKs using the first 12 alphanumeric characters from UUID (v4) strings
 * persist new ARKs to an sqlite database
 * validate NAANs and ARK shoulders
 * update the ERC/Kernel metadata, committment statements, and target URLs of existing ARKs
@@ -15,7 +15,7 @@ larkm is a simple [ARK](https://arks.org/) manager that can:
 * delete ARKs
 * log requests for ARK resolution
 
-ARK resolution is provided via requests to larkm's host followed by an ARK (e.g. `https://myhost.net/ark:12345/s1f4eca6e0a8ab`) and the other operations are provided through standard REST requests to larkm's management endpoint (`/larkm`). This REST interface allows creating, persisting, updating, and deleting ARKs, and can expose a subset of larkm's configuration data to clients. Access to the REST endpoints can be controlled by registering the IP addresses of trused clients and using API keys, as explained in the "Configuration" section below.
+ARK resolution is provided via requests to larkm's host followed by an ARK (e.g. `https://myhost.net/ark:12345/s1f4eca6e0a8ab`) and the other operations are provided through standard REST requests to larkm's management endpoint (`/larkm`). This REST interface allows creating, persisting, updating, and deleting ARKs, and can expose a subset of larkm's configuration data to trusted clients. Access to the REST endpoints can be controlled by registering the IP addresses of trused clients and using API keys, as explained in the "Configuration" section below.
 
 larkm is considered "lightweight" because it supports only a subset of ARK functionality, focusing on providing ways to manage ARKs locally and on using ARKs as persistent, resolvable identifiers. ARK features such as suffix passthrough and ARK qualifiers are currently out of scope.
 
@@ -26,7 +26,7 @@ larkm is considered "lightweight" because it supports only a subset of ARK funct
 * [FastAPI](https://fastapi.tiangolo.com/)
 * [Uvicorn](https://www.uvicorn.org/) or some other ASGI web server
 * [Whoosh](https://pypi.org/project/Whoosh/) for fulltext indexing of metadata
-* To have your ARKs resolve from [N2T](http://n2t.net/), you will to register a NAAN (Name Assigning Authority Number) using [this form](https://goo.gl/forms/bmckLSPpbzpZ5dix1).
+* To have your ARKs resolve from [N2T](http://n2t.net/), you will to register a NAAN (Name Assigning Authority Number) using [this form](https://forms.gle/2a8HQUNJRAcvq5UGA).
 
 ## Usage
 
@@ -87,6 +87,15 @@ The config settings are:
   "api_keys": ["d9771c6c-b9d0-4dc3-8549-e17ddfc12826", "some__--random--string"]
 }
 ```
+
+### Restricting access to larkm's REST interface
+
+All requests to larkm other than simple ARK resolution (i.e., to its REST interface) are allowed if:
+
+1. The client's IP address is registered in the `trusted_ips` configuration setting, and
+1. The client provides an "Authorization" request header containing an API key registered in the `api_keys` configuration setting.
+
+Both of these conditions must be met. If they are not, clients will receive a `403` response.
 
 ### Starting larkm
 
