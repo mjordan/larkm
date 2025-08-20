@@ -90,12 +90,14 @@ The config settings are:
 
 ### Restricting access to larkm's REST interface
 
-All requests to larkm other than simple ARK resolution (i.e., to its REST interface) are allowed if:
+Requests to larkm's REST interface at `/larkm` are allowed if:
 
 1. The client's IP address is registered in the `trusted_ips` configuration setting, and
 1. The client provides an "Authorization" request header containing an API key registered in the `api_keys` configuration setting.
 
 Both of these conditions must be met. If they are not, clients will receive a `403` response.
+
+Requests for simple ARK resolution, including requests that contain `?info`, are not restricted.
 
 ### Starting larkm
 
