@@ -6,7 +6,7 @@ larkm is a simple [ARK](https://arks.org/) manager that can:
 
 * resolve ARKs to their target URLs
 * support both "modern" ARKs with no trailing `/` (e.g. `ark:12345`) and "classic" ARKs with the trailing `/` (e.g. `ark:/12345`). New ARKs are created without the trailing `/`, following current practice.
-* mint ARKs using UUID (v4) strings
+* mint ARKs using the first 12 characters from UUID (v4) strings
 * persist new ARKs to an sqlite database
 * validate NAANs and ARK shoulders
 * update the ERC/Kernel metadata, committment statements, and target URLs of existing ARKs
@@ -15,7 +15,7 @@ larkm is a simple [ARK](https://arks.org/) manager that can:
 * delete ARKs
 * log requests for ARK resolution
 
-ARK resolution is provided via requests to larkm's host followed by an ARK (e.g. `https://myhost.net/ark:12345/876543`) and the other operations are provided through standard REST requests to larkm's management endpoint (`/larkm`). This REST interface allows creating, persisting, updating, and deleting ARKs, and can expose a subset of larkm's configuration data to clients. Access to the REST endpoints can be controlled by registering the IP addresses of trused clients and using API keys, as explained in the "Configuration" section below.
+ARK resolution is provided via requests to larkm's host followed by an ARK (e.g. `https://myhost.net/ark:12345/s1f4eca6e0a8ab`) and the other operations are provided through standard REST requests to larkm's management endpoint (`/larkm`). This REST interface allows creating, persisting, updating, and deleting ARKs, and can expose a subset of larkm's configuration data to clients. Access to the REST endpoints can be controlled by registering the IP addresses of trused clients and using API keys, as explained in the "Configuration" section below.
 
 larkm is considered "lightweight" because it supports only a subset of ARK functionality, focusing on providing ways to manage ARKs locally and on using ARKs as persistent, resolvable identifiers. ARK features such as suffix passthrough and ARK qualifiers are currently out of scope.
 
@@ -94,11 +94,9 @@ To start larkm with the local Uvicorn web server, in a terminal run `python3 -m 
 
 ### Resolving an ARK
 
-Visit `http://127.0.0.1:8000/ark:12345/x9062cdde7-f9d6-48bb-be17-bd3b9f441ec4` using `curl -Lv`. You will see a redirect to `https://example.com/foo`.
+Visit `http://127.0.0.1:8000/ark:12345/x9062cdde7f9d6` using `curl -Lv`. You will see a redirect to `https://example.com/foo`.
 
-To see the configured metadata and committment statement for the ARK instead of resolving to its target, append `?info` to the end of the ARK, e.g., `http://127.0.0.1:8000/ark:12345/x9062cdde7-f9d6-48bb-be17-bd3b9f441ec4?info`.
-
-To comply with the ARK specification, the hyphens in the identifier are optional. Therefore, `http://127.0.0.1:8000/ark:12345/x9062cdde7-f9d648bbbe17bd3--b9f441ec4` is equivalent to `http://127.0.0.1:8000/ark:12345/x9062cdde7-f9d6-48bb-be17-bd3b9f441ec4` (both of shich are equivalent to `http://127.0.0.1:8000/ark:12345/x9062cdde7f9d648bbbe17bd3b9f441ec4`). Since hyphens are integral parts of UUIDs, larkm restores the hyphens to their expected location within the UUID to perform its lookups during resolution. Hyphens in UUIDs are optional/ignored only when resolving an ARK. They are required for all other operations described below.
+To see the configured metadata and committment statement for the ARK instead of resolving to its target, append `?info` to the end of the ARK, e.g., `http://127.0.0.1:8000/ark:12345/x9062cdde7f9d6?info`.
 
 ### Creating a new ARK
 
@@ -107,17 +105,17 @@ REST clients can provide a `naan,` a `shoulder` and/or an `identifer` value in t
 * Clients must always provide a `target` value.
 * If a NAAN is not provided, larkm will use its default NAAN.
 * If a shoulder is not provided, larkm will use its default shoulder.
-* If an identifier is not provided, larkm will generate a v4 UUID as the identifier.
+* If an identifier is not provided, larkm will generate one using the first 12 characters (minus the hypen at position 9) of a v4 UUID as the identifier.
 * If an identifier is provided, it must not contain a shoulder.
-* If the identifier that is provided is already in use, larkm will respond to the `POST` request with an `409` status code acommpanied by the body `{"detail":"UUID <uuid> already in use."}`.
+* If the identifier that is provided is already in use, larkm will respond to the `POST` request with an `409` status code acommpanied by the body `{"detail":"Identifier <identifier> already in use."}`.
 
 To add a new ARK (for example, to resolve to https://digital.lib.sfu.ca), issue the following request using curl (the configured default NAAN is `12345`):
 
 `curl -v -X POST "http://127.0.0.1:8000/larkm" -H 'Content-Type: application/json' -d '{"shoulder": "s1", "identifier": "fde97fb3-634b-4232-b63e-e5128647efe7", "target": "https://digital.lib.sfu.ca"}'`
 
-If you now visit `http://127.0.0.1:8000/ark:12345/s1fde97fb3-634b-4232-b63e-e5128647efe7`, you will be redirected to https://digital.lib.sfu.ca.
+If you now visit `http://127.0.0.1:8000/ark:12345/s1fde97fb3634b`, you will be redirected to https://digital.lib.sfu.ca.
 
-If you omit the `shoulder`, the configured default shoulder will be used. If you omit the `identifier`, larkm will mint one using a v4 UUID.
+If you omit the `shoulder`, the configured default shoulder will be used. If you omit the `identifier`, larkm will mint one using the first 12 characters (minus the hypen at position 9) of a v4 UUID.
 
 If you provide a NAAN, and it is in the configured list of `allowed_naans`, it will be used instead of the NAAN configured as the `default_naan`:
 

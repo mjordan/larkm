@@ -50,24 +50,15 @@ def resolve_ark(
     The ARK resolver. Redirects the client to the target URL associated with the ARK.
     Sample request:
 
-    curl -L "http://127.0.0.1:8000/ark:12345/x9062cdde7-f9d6-48bb-be17-bd3b9f441ec4"
+    curl -L "http://127.0.0.1:8000/ark:12345/x9062cdde7f9d6"
 
     - **naan**: the NAAN portion of the ARK.
-    - **identifier**: the identifier portion of the ARK. A v4 UUID prepended
-      with a 2-character shoulder (in this example, "x9").
+    - **identifier**: the identifier portion of the ARK. The first 12 characters of a
+      v4 UUID (with dashes removed) prepended with a 2-character shoulder (in this example, "x9").
     - **info**: As described in the ARK specification, '?info' appended
       to the ARK string should return a committment statement and resource metadata.
     """
     ark_string = f"ark:{naan}/{identifier}"
-
-    ark_string = normalize_ark_string(ark_string)
-    if not ark_string:
-        raise HTTPException(status_code=422, detail="Invalid ARK string.")
-
-    if len(config["api_keys"]) > 0 and authorization not in config["api_keys"]:
-        message = f"API key {authorization} not configured."
-        log_request("WARNING", request.client.host, "", request.headers, message)
-        raise HTTPException(status_code=403)
 
     try:
         con = sqlite3.connect(config["sqlite_db_path"])
@@ -207,8 +198,7 @@ def search_arks(
             cur = con.cursor()
             identifier_list_string = ",".join(f'"{i}"' for i in identifier_list)
             # identifier_list_string is safe to use here since it is not user input, it is
-            # comprised of UUIDs that are validated using regex at the time of creation
-            # in create_ark().
+            # validated using a regex at the time of creation in create_ark().
             cur.execute(
                 "select * from arks where identifier IN ("
                 + identifier_list_string
@@ -248,20 +238,20 @@ def create_ark(
     """
     Create/mint a new ARK. Clients can provide a NAAN, an identifier string
     and/or a shoulder. If either of these is not provided, larkm will provide
-    one. If a UUID v4 identifier is provided, it should not contain a shoulder,
-    since larkm will always add a shoulder to new ARKs. Clients must always
-    provide a "target" value.
+    one. If an identifier (first 12 characters of a UUIDv4 with dashes removed)
+    is provided, it should not contain a shoulder, since larkm will always add
+    a shoulder to new ARKs. Clients must always provide a "target" value.
 
     "where" always gets the value of ark_string.
 
-    If the UUID that is provided is already in use, larkm will responde to the POST
-    request with an HTTP `409` with the body `{"detail":"UUID already in use."}`.
+    If the identifier that is provided is already in use, larkm will responde to the POST
+    request with an HTTP `409` with the body `{"detail":"Identifier <identifier> already in use."}`.
 
     Sample request with an provided ID/name and shoulder:
 
     curl -v -X POST "http://127.0.0.1:8000/larkm" \
         -H 'Content-Type: application/json' \
-        -d '{"shoulder": "x1", "identifier": "fde97fb3-634b-4232-b63e-e5128647efe7", "target": "https://digital.lib.sfu.ca"}'
+        -d '{"shoulder": "x1", "identifier": "fde97fb3634b", "target": "https://digital.lib.sfu.ca"}'
 
     Sample request with only a 'where', an identifier and a name, which asks larkm to
     generate an ARK string based on the default NAAN, the default shoulder, and the
@@ -269,18 +259,19 @@ def create_ark(
 
     curl -v -X POST "http://127.0.0.1:8000/larkm" \
         -H 'Content-Type: application/json' \
-        -d '{"identifier": "fde97fb3-634b-4232-b63e-e5128647efe7", "target": "https://digital.lib.sfu.ca"}'
+        -d '{"identifier": "fde97fb3-634b4232", "target": "https://digital.lib.sfu.ca"}'
 
     Sample request with only a 'where' and a shoulder, which asks larkm to generate an ARK
     string based on the supplied NAAN and the supplied shoulder. If the ID/name is not provided,
-    larkm will provide one in the form of a v4 UUID:
+    larkm will provide one in the form of the first 12 characters of a UUIDv4 with dashes removed:
 
     curl -v -X POST "http://127.0.0.1:8000/larkm" \
         -H 'Content-Type: application/json' \
         -d '{"shoulder": "x1", "naan": "99999", "target": "https://digital.lib.sfu.ca"}'
 
     Sample request with no 'where' or shoulder. larkm will generate an ARK using
-    the default NAAN, the default shoulder, and a v4 UUID.
+    the default NAAN, the default shoulder, and a identifier (first 12 characters of a
+    UUIDv4 with dashes removed).
 
     curl -v -X POST "http://127.0.0.1:8000/larkm" \
         -H 'Content-Type: application/json' \
@@ -322,36 +313,50 @@ def create_ark(
         if ark.naan not in config["allowed_naans"]:
             raise HTTPException(status_code=422, detail="Provided NAAN is invalid.")
 
-    # Validate UUID if provided.
-    if ark.identifier is not None:
-        if not re.match(
-            "^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}$",
-            ark.identifier,
-        ):
+    # Validate identifer if provided.
+    if ark.identifier is not None and len(ark.identifier) == 36:
+        if validate_uuid(ark.identifier) is True:
+            ark.identifier = generate_identifier(uuid=ark.identifier)
+        else:
             raise HTTPException(
-                status_code=422, detail=f"Provided UUID {ark.identifier} is invalid."
+                status_code=422,
+                detail=f"Provided UUID {ark.identifier} is invalid.",
             )
+    elif ark.identifier is not None and len(ark.identifier) == 12:
+        if validate_identifier(ark.identifier) is False:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Provided UUID {ark.identifier} is invalid.",
+            )
+    elif ark.identifier is not None and validate_identifier(ark.identifier) is False:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Provided identifier {ark.identifier} is invalid.",
+        )
+    else:
+        ark.identifier = generate_identifier()
 
-        # See if provided UUID is already being used.
-        try:
-            con = sqlite3.connect(config["sqlite_db_path"])
-            con.row_factory = sqlite3.Row
-            cur = con.cursor()
-            cur.execute(
-                "select * from arks where identifier = :a_s", {"a_s": ark.identifier}
-            )
-            record = cur.fetchone()
-            if record is not None:
-                con.close()
-                raise HTTPException(
-                    status_code=409, detail=f"UUID {ark.identifier} already in use."
-                )
+    # See if provided identifier is already being used.
+    try:
+        con = sqlite3.connect(config["sqlite_db_path"])
+        con.row_factory = sqlite3.Row
+        cur = con.cursor()
+        cur.execute(
+            "select * from arks where identifier = :a_s", {"a_s": ark.identifier}
+        )
+        record = cur.fetchone()
+        if record is not None:
             con.close()
-        except sqlite3.DatabaseError as e:
-            log_request(
-                "ERROR", request.client.host, ark_string, request.headers, str(e)
+            raise HTTPException(
+                status_code=409,
+                detail=f"Identifier {ark.identifier} already in use.",
             )
-            raise HTTPException(status_code=500)
+        con.close()
+    except sqlite3.DatabaseError as e:
+        log_request(
+            "ERROR", request.client.host, ark.ark_string, request.headers, str(e)
+        )
+        raise HTTPException(status_code=500)
 
     # See if provided 'target' value is already being used.
     try:
@@ -379,10 +384,7 @@ def create_ark(
     if ark.shoulder is None:
         ark.shoulder = config["default_shoulder"]
     if ark.identifier is None:
-        ark.identifier = str(uuid4())
-        if "use_short_identifiers" in config and config["use_short_identifiers"] == "true":
-            # First 13 characters of the UUID including the '-' after the 8th character.
-            ark.identifier = ark.identifier[:13]
+        ark.identifier = generate_identifier()
 
     ark.ark_string = f"ark:{ark.naan}/{ark.shoulder}{ark.identifier}"
 
@@ -421,7 +423,7 @@ def create_ark(
         con.commit()
         con.close()
     except sqlite3.DatabaseError as e:
-        log_request("ERROR", request.client.host, ark_string, request.headers, str(e))
+        log_request("ERROR", request.client.host, ark.ark_string, request.headers, str(e))
         raise HTTPException(status_code=500)
 
     urls = dict()
@@ -451,9 +453,9 @@ def update_ark(
     identifiers, and ark_strings cannot be updated. ark_string is a required
     body field. 'where' always gets the value of ark_string. Sample query:
 
-    curl -v -X PUT "http://127.0.0.1:8000/larkm/ark:12345/x931fd9bec-0bb6-4b6a-a08b-19554e6d711d" \
+    curl -v -X PUT "http://127.0.0.1:8000/larkm/ark:12345/x931fd9bec0bb6" \
         -H 'Content-Type: application/json' \
-        -d '{"ark_string": "ark:12345/x931fd9bec-0bb6-4b6a-a08b-19554e6d711d", "target": "https://example.com/foo"}'
+        -d '{"ark_string": "ark:12345/x931fd9bec0bb6", "target": "https://example.com/foo"}'
 
     - **naan**: the NAAN portion of the ARK.
     - **identifier**: the identifier portion of the ARK, which will include a shoulder.
@@ -605,7 +607,7 @@ def delete_ark(
     """
     Given an ARK string, delete the ARK. Sample query:
 
-    curl -v -X DELETE "http://127.0.0.1:8000/larkm/ark:12345/x931fd9bec-0bb6-4b6a-a08b-19554e6d711d"
+    curl -v -X DELETE "http://127.0.0.1:8000/larkm/ark:12345/x931fd9bec0bb6"
 
     - **naan**: the NAAN portion of the ARK.
     - **identifier**: the identifier portion of the ARK.
@@ -723,64 +725,36 @@ def log_request(level, client_ip, ark_string, request_headers, event_type):
         logging.info(entry)
 
 
-def normalize_ark_string(ark_string):
+def generate_identifier(uuid=None):
     """
-    Reconsitutues the hypens in the UUID portion of the ARK string. The ARK
-    spec requires hyphens to be insignificant.
-
-    Assumes that the ARK string does not contain the / after 'ark:', that
-    the NAAN is 5 characters long, and that the shoulder is present and is
-    2 characters long.
-
-    - **ark_string**: an ARK string in the form ark:/12345/y2ee65209e67fe-45fc-a9721da0b602c742
-      where the UUID part of the string contains a 2-character shoulder and 0 or more hyphens (-).
-
-    Returns the reconstituted ARK string or False if the UUID is not a valid UUID v4.
+    Derives an identifier from a UUIDv4. If UUID is not provided,
+    generates one and uses it.
     """
-    if "use_short_identifiers" in config and config["use_short_identifiers"] == "true":
-        # Everthing up to and including the shoulder.
-        prefix = ark_string[:12]
-
-        # Everything after the shoulder; assumed to be a UUID with or without hyphens.
-        suffix = ark_string[12:]
-
-        uuid_sans_hyphens = suffix.replace("-", "")
-
-        group2 = uuid_sans_hyphens[8:12]
-        group1 = uuid_sans_hyphens[:8]
-
-        reconstituted_uuid = f"{group1}-{group2}"
-
-        if not re.match(
-            "^[a-f0-9]{8}-[a-f0-9]{4}$",
-            reconstituted_uuid,
-        ):
-            return False
-
-        reconstituted_ark_string = prefix + reconstituted_uuid
+    if uuid is None:
+        uuid_without_hypens = str(uuid4()).replace("-", "")
+        return uuid_without_hypens[:12]
     else:
-        # Everthing up to and including the shoulder.
-        prefix = ark_string[:12]
-        # Everything after the shoulder; assumed to be a UUID with or without hyphens.
-        suffix = ark_string[12:]
+        uuid_without_hypens = uuid.replace("-", "")
+        return uuid_without_hypens[:12]
 
-        uuid_sans_hyphens = suffix.replace("-", "")
-        group5 = uuid_sans_hyphens[20:]
-        group4 = uuid_sans_hyphens[16:20]
-        group3 = uuid_sans_hyphens[12:16]
-        group2 = uuid_sans_hyphens[8:12]
-        group1 = uuid_sans_hyphens[:8]
 
-        reconstituted_uuid = f"{group1}-{group2}-{group3}-{group4}-{group5}"
-        if not re.match(
-            "^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}$",
-            reconstituted_uuid,
-        ):
-            return False
+def validate_identifier(identifier):
+    if re.match(
+        "^[a-f0-9]{12}$",
+        identifier,
+    ):
+        return True
+    else:
+        return False
 
-        reconstituted_ark_string = prefix + reconstituted_uuid
-
-    return reconstituted_ark_string
+def validate_uuid(identifier):
+    if re.match(
+        "^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}$",
+        identifier,
+    ):
+        return True
+    else:
+        return False
 
 
 def validate_date(date_string):
