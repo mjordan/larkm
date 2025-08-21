@@ -57,7 +57,7 @@ The config settings are:
 * "log_file_path": absolute or relative (to larkm.py) path to the log file. Directory must exist and be writable by the process running larkm.
 * "resolver_hosts": definition of the resolvers to include in the `urls` list returned to clients. Note that these are only returned in requests for `?info`; this setting has nothing to do with the resolution of an incoming ARK to its target URL.
 * "whoosh_index_dir_path": absolute or relative (to larkm.py) path to the Whoosh index data directory. Leave empty if you are not indexing ARK data.
-* "trusted_ips": list of client IP addresses that can create, update, delete, and search ARKs; leave empty to no restrict access to these functions (e.g. during testing).
+* "trusted_ips": list of client IP addresses that can create, update, delete, and search ARKs; leave empty to allow access from all IPs (e.g. during testing).
 * "api_keys": list of strings used as API keys. Clients must pass their API key in a "Authorization" header, e.g. `Authorization: myapikey`.
 
 ```json
@@ -83,7 +83,7 @@ The config settings are:
      "local": "https://resolver.myorg.net"
   },
   "whoosh_index_dir_path": "index_dir",
-  "trusted_ips": ["142.58.23.213", "142.59.78.175"],
+  "trusted_ips": ["144.5.723.213", "144.56.78.175"],
   "api_keys": ["d9771c6c-b9d0-4dc3-8549-e17ddfc12826", "some__--random--string"]
 }
 ```
@@ -95,7 +95,7 @@ Requests to larkm's REST interface at `/larkm` are allowed if:
 1. The client's IP address is registered in the `trusted_ips` configuration setting, and
 1. The client provides an "Authorization" request header containing an API key registered in the `api_keys` configuration setting.
 
-Both of these conditions must be met. If they are not, clients will receive a `403` response.
+Both of these conditions must be met (unless `trusted_ips` is empty, e.g. during testing). If both conditions are not met, clients will receive a `403` response.
 
 Requests for simple ARK resolution, including requests that contain `?info`, are not restricted.
 

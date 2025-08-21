@@ -1,7 +1,6 @@
 from fastapi.testclient import TestClient
 from larkm import app
 import shutil
-import time
 import re
 
 client = TestClient(app)
@@ -24,8 +23,27 @@ def teardown_module(module):
     shutil.copyfile("fixtures/larkmtest.db.bak", "fixtures/larkmtest.db")
 
 
-# Note: We don't actually test the redirect functionality, we only test other aspects of resolution.
+# Test the redirect functionality and other aspects of ARK resolution
 def test_resolve_ark():
+    # Test basic resolution request by checking for a 307 response.
+    response = client.post(
+        "/larkm",
+        json={
+            "shoulder": "s1",
+            "identifier": "bd805e3b-6ba6-4517-a197-05d99981bcba",
+            "target": "https://example.com/redirect_target",
+        },
+    )
+    assert response.status_code == 201
+
+    response = client.get("/ark:99999/s1bd805e3b6ba6", follow_redirects=False)
+    assert response.status_code == 307
+
+    # Same ARK but with optional /.
+    response = client.get("/ark:/99999/s1bd805e3b6ba6", follow_redirects=False)
+    assert response.status_code == 307
+
+    # Test basic ?info request.
     response = client.get("/ark:12345/x9062cdde7f9d6?info")
     assert response.status_code == 200
     assert (

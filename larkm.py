@@ -44,7 +44,6 @@ def resolve_ark(
     naan: str,
     identifier: str,
     info: Optional[str] = None,
-    authorization: Annotated[str | None, Header()] = None,
 ):
     """
     The ARK resolver. Redirects the client to the target URL associated with the ARK.
@@ -79,7 +78,7 @@ def resolve_ark(
             raise HTTPException(status_code=404, detail="ARK not found")
         con.close()
     except sqlite3.DatabaseError as e:
-        # @todo: log (do not add to response!) str(e).
+        log_request("ERROR", request.client.host, ark_string, request.headers, str(e))
         raise HTTPException(status_code=500)
 
     if info is None:
@@ -103,132 +102,6 @@ def resolve_ark(
                 "INFO", request.client.host, ark_string, request.headers, "?info"
             )
         return Response(content=erc + policy + "\n\n", media_type="text/plain")
-
-
-@app.get("/larkm/search")
-def search_arks(
-    request: Request,
-    q: Optional[str] = "",
-    page=1,
-    page_size=20,
-    authorization: Annotated[str | None, Header()] = None,
-):
-    """
-    Endpoint for searching the Whoosh index of ARK metadata. Sample request:
-
-    curl "http://127.0.0.1:8000/larkm/search?q=erc_what:example"
-
-    - **q**: the Whoosh query, using Whoosh's default query language. Must be URL escaped.
-      See the README for more information.
-    - **page**: the page number to retrieve from the results.
-    - **page_size**: the number of results to include in the page.
-    """
-    if (
-        len(config["trusted_ips"]) > 0
-        and request.client.host not in config["trusted_ips"]
-    ):
-        message = f"Request from untrusted IP address: search_arks()"
-        log_request("WARNING", request.client.host, "", request.headers, message)
-        raise HTTPException(status_code=403)
-
-    if len(config["api_keys"]) > 0 and authorization not in config["api_keys"]:
-        message = f"API key {authorization} not configured."
-        log_request("WARNING", request.client.host, "", request.headers, message)
-        raise HTTPException(status_code=403)
-
-    if not os.path.exists(config["whoosh_index_dir_path"]):
-        raise HTTPException(status_code=204)
-
-    # Validate values provided in date_created and date_modified fields.
-    request_args = dict(request.query_params)
-    fields_to_validate = ["date_created", "date_modified"]
-    if "q" in request_args:
-        field_queries = request_args["q"].split("&")
-        for field_query in field_queries:
-            field_name = field_query.split(":")[0]
-            if field_name in fields_to_validate:
-                field_value = field_query.split(":")[1]
-                if "to".lower() in field_value.lower():
-                    # We have a range query.
-                    range_dates = field_value.lower().split("to")
-                    for range_date in range_dates:
-                        if validate_date(range_date.strip(" []")) is False:
-                            raise HTTPException(
-                                status_code=422,
-                                detail=range_date.strip(" []")
-                                + " in "
-                                + field_name
-                                + " is not a valid date.",
-                            )
-                else:
-                    # Not a range query.
-                    if validate_date(field_value) is False:
-                        raise HTTPException(
-                            status_code=422,
-                            detail=field_value.strip(" ")
-                            + " in "
-                            + field_name
-                            + " is not a valid date.",
-                        )
-
-    idx = index.open_dir(config["whoosh_index_dir_path"])
-
-    query_parser = QueryParser("identifier", schema=idx.schema)
-    query = query_parser.parse(q)
-    with idx.searcher() as searcher:
-        results = searcher.search_page(query, int(page), pagelen=int(page_size))
-        number_of_results = len(results)
-        identifier_list = list()
-        for doc in results:
-            identifier_list.append(doc["identifier"])
-
-        if len(identifier_list) == 0:
-            return {
-                "num_results": number_of_results,
-                "page": page,
-                "page_size": page_size,
-                "arks": [],
-            }
-
-        # We have retrieved identifiers from the Woosh index, now we get the full ARK records from the
-        # database to return to the user.
-        try:
-            con = sqlite3.connect(config["sqlite_db_path"])
-            con.row_factory = sqlite3.Row
-            cur = con.cursor()
-            identifier_list_string = ",".join(f'"{i}"' for i in identifier_list)
-            # identifier_list_string is safe to use here since it is not user input, it is
-            # validated using a regex at the time of creation in create_ark().
-            cur.execute(
-                "select * from arks where identifier IN ("
-                + identifier_list_string
-                + ")"
-            )
-            arks = cur.fetchmany(len(identifier_list))
-            con.close()
-        except sqlite3.DatabaseError as e:
-            log_request(
-                "ERROR", request.client.host, ark_string, request.headers, str(e)
-            )
-            raise HTTPException(status_code=500)
-
-    if len(arks) == 0:
-        return {
-            "num_results": number_of_results,
-            "page": page,
-            "page_size": page_size,
-            "arks": [],
-        }
-    else:
-        return_list = list()
-        for ark in arks:
-            return_list.append(ark)
-    return {
-        "num_results": number_of_results,
-        "page": page,
-        "page_size": page_size,
-        "arks": return_list,
-    }
 
 
 @app.post("/larkm", status_code=201)
@@ -287,18 +160,7 @@ def create_ark(
 
     - **ark**: the ARK to create.
     """
-    if (
-        len(config["trusted_ips"]) > 0
-        and request.client.host not in config["trusted_ips"]
-    ):
-        message = f"Request from untrusted IP address: create_ark()"
-        log_request("WARNING", request.client.host, "", request.headers, message)
-        raise HTTPException(status_code=403)
-
-    if len(config["api_keys"]) > 0 and authorization not in config["api_keys"]:
-        message = f"API key {authorization} not configured: create_ark()"
-        log_request("WARNING", request.client.host, "", request.headers, message)
-        raise HTTPException(status_code=403)
+    check_access(request, authorization)
 
     if ark.target is None:
         raise HTTPException(status_code=422, detail="A 'target' value is required.")
@@ -462,20 +324,7 @@ def update_ark(
     - **naan**: the NAAN portion of the ARK.
     - **identifier**: the identifier portion of the ARK, which will include a shoulder.
     """
-    if (
-        len(config["trusted_ips"]) > 0
-        and request.client.host not in config["trusted_ips"]
-    ):
-        message = f"Request from untrusted IP address: update_ark()"
-        log_request(
-            "WARNING", request.client.host, ark_string, request.headers, message
-        )
-        raise HTTPException(status_code=403)
-
-    if len(config["api_keys"]) > 0 and authorization not in config["api_keys"]:
-        message = f"API key {authorization} not configured: update_ark()"
-        log_request("WARNING", request.client.host, "", request.headers, message)
-        raise HTTPException(status_code=403)
+    check_access(request, authorization)
 
     if ark.ark_string is None:
         raise HTTPException(
@@ -614,20 +463,7 @@ def delete_ark(
     - **naan**: the NAAN portion of the ARK.
     - **identifier**: the identifier portion of the ARK.
     """
-    if (
-        len(config["trusted_ips"]) > 0
-        and request.client.host not in config["trusted_ips"]
-    ):
-        message = f"Request from untrusted IP address: delete_ark()"
-        log_request(
-            "WARNING", request.client.host, ark_string, request.headers, message
-        )
-        raise HTTPException(status_code=403)
-
-    if len(config["api_keys"]) > 0 and authorization not in config["api_keys"]:
-        message = f"API key {authorization} not configured: delete_ark()"
-        log_request("WARNING", request.client.host, "", request.headers, message)
-        raise HTTPException(status_code=403)
+    check_access(request, authorization)
 
     ark_string = f"ark:{naan}/{identifier}"
 
@@ -664,6 +500,121 @@ def delete_ark(
             raise HTTPException(status_code=500)
 
 
+@app.get("/larkm/search")
+def search_arks(
+    request: Request,
+    q: Optional[str] = "",
+    page=1,
+    page_size=20,
+    authorization: Annotated[str | None, Header()] = None,
+):
+    """
+    Endpoint for searching the Whoosh index of ARK metadata. Sample request:
+
+    curl "http://127.0.0.1:8000/larkm/search?q=erc_what:example"
+
+    - **q**: the Whoosh query, using Whoosh's default query language. Must be URL escaped.
+      See the README for more information.
+    - **page**: the page number to retrieve from the results.
+    - **page_size**: the number of results to include in the page.
+    """
+    check_access(request, authorization)
+
+    if not os.path.exists(config["whoosh_index_dir_path"]):
+        raise HTTPException(status_code=204)
+
+    # Validate values provided in date_created and date_modified fields.
+    request_args = dict(request.query_params)
+    fields_to_validate = ["date_created", "date_modified"]
+    if "q" in request_args:
+        field_queries = request_args["q"].split("&")
+        for field_query in field_queries:
+            field_name = field_query.split(":")[0]
+            if field_name in fields_to_validate:
+                field_value = field_query.split(":")[1]
+                if "to".lower() in field_value.lower():
+                    # We have a range query.
+                    range_dates = field_value.lower().split("to")
+                    for range_date in range_dates:
+                        if validate_date(range_date.strip(" []")) is False:
+                            raise HTTPException(
+                                status_code=422,
+                                detail=range_date.strip(" []")
+                                + " in "
+                                + field_name
+                                + " is not a valid date.",
+                            )
+                else:
+                    # Not a range query.
+                    if validate_date(field_value) is False:
+                        raise HTTPException(
+                            status_code=422,
+                            detail=field_value.strip(" ")
+                            + " in "
+                            + field_name
+                            + " is not a valid date.",
+                        )
+
+    idx = index.open_dir(config["whoosh_index_dir_path"])
+
+    query_parser = QueryParser("identifier", schema=idx.schema)
+    query = query_parser.parse(q)
+    with idx.searcher() as searcher:
+        results = searcher.search_page(query, int(page), pagelen=int(page_size))
+        number_of_results = len(results)
+        identifier_list = list()
+        for doc in results:
+            identifier_list.append(doc["identifier"])
+
+        if len(identifier_list) == 0:
+            return {
+                "num_results": number_of_results,
+                "page": page,
+                "page_size": page_size,
+                "arks": [],
+            }
+
+        # We have retrieved identifiers from the Woosh index, now we get the full ARK records from the
+        # database to return to the user.
+        try:
+            con = sqlite3.connect(config["sqlite_db_path"])
+            con.row_factory = sqlite3.Row
+            cur = con.cursor()
+            identifier_list_string = ",".join(f'"{i}"' for i in identifier_list)
+            # identifier_list_string is safe to use here since it is not user input, it is
+            # validated using a regex at the time of creation in create_ark().
+            cur.execute(
+                "select * from arks where identifier IN ("
+                + identifier_list_string
+                + ")"
+            )
+            arks = cur.fetchmany(len(identifier_list))
+            con.close()
+        except sqlite3.DatabaseError as e:
+            log_request(
+                "ERROR", request.client.host, request_args, request.headers, str(e)
+            )
+            raise HTTPException(status_code=500)
+
+    if len(arks) == 0:
+        return {
+            "num_results": number_of_results,
+            "page": page,
+            "page_size": page_size,
+            "arks": [],
+        }
+    else:
+        return_list = list()
+        for ark in arks:
+            return_list.append(ark)
+    return {
+        "num_results": number_of_results,
+        "page": page,
+        "page_size": page_size,
+        "arks": return_list,
+    }
+
+
 @app.get("/larkm/config")
 def return_config(
     request: Request, authorization: Annotated[str | None, Header()] = None
@@ -671,18 +622,7 @@ def return_config(
     """
     Returns a subset of larkm's configuration data to the client.
     """
-    if (
-        len(config["trusted_ips"]) > 0
-        and request.client.host not in config["trusted_ips"]
-    ):
-        message = f"Request from untrusted IP address: return_config()"
-        log_request("WARNING", request.client.host, "", request.headers, message)
-        raise HTTPException(status_code=403)
-
-    if len(config["api_keys"]) > 0 and authorization not in config["api_keys"]:
-        message = f"API key {authorization} not configured: return_config()"
-        log_request("WARNING", request.client.host, "", request.headers, message)
-        raise HTTPException(status_code=403)
+    check_access(request, authorization)
 
     # Remove configuration data the client doesn't need to know.
     subset = copy.deepcopy(config)
@@ -700,7 +640,8 @@ def log_request(level, client_ip, ark_string, request_headers, event_type):
 
     - **level**: INFO, WARNING, or ERROR from the standard Python logging levels.
     - **client_ip**: the IP address of the client triggering the event.
-    - **ark_string**: the ARK string from the event being logged.
+    - **ark_string**: the ARK string from the event being logged. When called from search_arks(),
+      this is the request query string.
     - **request_headers**: the HTTP headers from the FastAPI Request object.
     - **event_type**: a brief description of the event.
     """
@@ -763,6 +704,7 @@ def validate_uuid(identifier):
 def validate_date(date_string):
     """
     Validates a yyyy-mm-dd date string.
+
     - **date**: the date string to validate.
     """
     try:
@@ -772,3 +714,30 @@ def validate_date(date_string):
 
     # If there's no ValueError, date validates.
     return True
+
+
+def check_access(request, authorization):
+    """Checks whether client has access to a route. Doesn't return anything
+    to caller, but raises an exception that is returned to the client.
+
+    - **request**: The Request object.
+    - **authorization**: The "authorization" header, Annotated[str | None, Header()]
+    """
+    # "trusted_ips" can be empty.
+    if (
+        len(config["trusted_ips"]) > 0
+        and request.client.host not in config["trusted_ips"]
+    ):
+        message = f"Request from an untrusted IP address."
+        log_request(
+            "WARNING", request.client.host, str(request.url), request.headers, message
+        )
+        raise HTTPException(status_code=403)
+
+    # API keys are not required.
+    if authorization not in config["api_keys"]:
+        message = f"API key {authorization} not configured."
+        log_request(
+            "WARNING", request.client.host, str(request.url), request.headers, message
+        )
+        raise HTTPException(status_code=403)
