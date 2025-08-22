@@ -124,9 +124,9 @@ To add a new ARK (for example, to resolve to https://digital.lib.sfu.ca), issue 
 
 `curl -v -X POST "http://127.0.0.1:8000/larkm" -H 'Content-Type: application/json' -d '{"shoulder": "s1", "identifier": "fde97fb3-634b-4232-b63e-e5128647efe7", "target": "https://digital.lib.sfu.ca"}'`
 
-If you now visit `http://127.0.0.1:8000/ark:12345/s1fde97fb3634b`, you will be redirected to https://digital.lib.sfu.ca.
+If you now visit `http://127.0.0.1:8000/ark:12345/s1fde97fb3634b`, you will be redirected to https://digital.lib.sfu.ca. Larkm has used the first 12 characters from the UUID provided in the "identifer" field in the request body as the ID portion of the new ARK. You can also provide the first 12 characters of a UUID v4 in the request's "identifier" field, instead of a full UUID, but in most cases it's more convenient to provide a full UUID.
 
-If you omit the `shoulder`, the configured default shoulder will be used. If you omit the `identifier`, larkm will mint one using the first 12 characters (minus the hypen at position 9) of a v4 UUID.
+If you omit the `shoulder`, the configured default shoulder will be used. If you omit the `identifier`, larkm will mint one using the first 12 characters (minus the hypen at position 9) of a v4 UUID it generates.
 
 If you provide a NAAN, and it is in the configured list of `allowed_naans`, it will be used instead of the NAAN configured as the `default_naan`:
 
@@ -134,7 +134,7 @@ If you provide a NAAN, and it is in the configured list of `allowed_naans`, it w
 
 All responses to a POST will include in their body the values values provided in the POST request, plus any default values for missing body fields. The `where` value will be identical to the provided `ark_string` and cannot be populated on its own. Metadata values not provided will get the ERC ":at" ("the real value is at the given URL or identifier") value:
 
-`{"ark":{"shoulder": "s1", "identifier": "fde97fb3-634b-4232-b63e-e5128647efe7", "ark_string":"ark:12345/s1fde97fb3-634b-4232-b63e-e5128647efe7","target":"https://digital.lib.sfu.ca", "who":":at", "when":":at", "where":"ark:12345/s1fde97fb3-634b-4232-b63e-e5128647efe7", "what":":at"}, "urls":{"local":"https://resolver.myorg.net/ark:12345/s1fde97fb3-634b-4232-b63e-e5128647efe7","global":"https://n2t.net/ark:99999/s1fde97fb3-634b-4232-b63e-e5128647efe7"}}`
+`{"ark":{"shoulder": "s1", "identifier": "fde97fb3-634b-4232-b63e-e5128647efe7", "ark_string":"ark:12345/s1fde97fb3634b","target":"https://digital.lib.sfu.ca", "who":":at", "when":":at", "where":"ark:12345/s1fde97fb3634b", "what":":at"}, "urls":{"local":"https://resolver.myorg.net/ark:12345/s1fde97fb3634b","global":"https://n2t.net/ark:99999/s1fde97fb3634b"}}`
 
 Also included in the response are values for global and local `urls`.
 
@@ -144,20 +144,24 @@ You can update an existing ARK's ERC metadata, policy statement, or target. Howe
 
 Some sample queries:
 
-`curl -v -X PUT "http://127.0.0.1:8000/larkm/ark:12345/s1fde97fb3-634b-4232-b63e-e5128647efe7" -H 'Content-Type: application/json' -d '{"ark_string": "ark:12345/s1fde97fb3-634b-4232-b63e-e5128647efe7", "target": "https://summit.sfu.ca"}'`
+`curl -v -X PUT "http://127.0.0.1:8000/larkm/ark:12345/s1fde97fb3634b" -H 'Content-Type: application/json' -d '{"ark_string": "ark:12345/s1fde97fb3634b", "target": "https://summit.sfu.ca"}'`
 
-`curl -v -X PUT "http://127.0.0.1:8000/larkm/ark:12345/s1fde97fb3-634b-4232-b63e-e5128647efe7" -H 'Content-Type: application/json' -d '{"ark_string": "ark:12345/s1fde97fb3-634b-4232-b63e-e5128647efe7", "who": "Jordan, Mark", "when": "2020", "policy": "We will maintain this ARK for a long time."}'`
+`curl -v -X PUT "http://127.0.0.1:8000/larkm/ark:12345/s1fde97fb3634b" -H 'Content-Type: application/json' -d '{"ark_string": "ark:12345/s1fde97fb3634b", "who": "Jordan, Mark", "when": "2020", "policy": "We will maintain this ARK for a long time."}'`
 
 Including `where` in the request body will result in an HTTP `409` response with the message `'where' is automatically assigned the value of the ark string and cannot be updated.`
+
+Note that while you can provide a full UUID as the "identifier" when you create an ARK, you cannot use the same UUID identifier to update that ARK. You must use the exact ARK string.
 
 
 ### Deleting an ARK
 
 Delete an ARK using a request like:
 
-`curl -v -X DELETE "http://127.0.0.1:8000/larkm/ark:12345/s1fde97fb3-634b-4232-b63e-e5128647efe7"`
+`curl -v -X DELETE "http://127.0.0.1:8000/larkm/ark:12345/s1fde97fb3634b"`
 
 If the ARK was deleted, larkm returns a `204 No Content` response with no body. If the ARK was not found, larkm returns a `404` response with the body `{"detail":"ARK not found"}`.
+
+Like in updating an ARK, when deleting, you cannot use an UUID identifier to delete that ARK. You must use the exact ARK string.
 
 ### Getting larkm's configuration data
 
@@ -196,26 +200,26 @@ If the search was successful, larkm returns a 200 HTTP status code. A successful
         "date_created": "2022-06-23 03:00:45",
         "date_modified": "2022-06-23 03:00:45",
         "shoulder": "s1",
-        "identifier": "cea8e7f3-1c84-4919-a694-65bc9997d9fe",
-        "ark_string": "ark:99999/s1cea8e7f3-1c84-4919-a694-65bc9997d9fe",
+        "identifier": "cea8e7f31c84",
+        "ark_string": "ark:99999/s1cea8e7f31c84",
         "target": "http://example.com/15",
         "erc_who": "Derex Godfry",
         "erc_what": "5 Ways to Immediately Start Selling Water",
         "erc_when": ":at",
-        "erc_where": "ark:99999/s1cea8e7f3-1c84-4919-a694-65bc9997d9fe",
+        "erc_where": "ark:99999/s1cea8e7f31c84",
         "policy": "We commit to keeping this ARK actionable until 2030."
       },
       {
         "date_created": "2022-06-23 03:00:45",
         "date_modified": "2022-06-23 03:00:45",
         "shoulder": "s1",
-        "identifier": "714b3160-e138-49ed-969a-a514f034274f",
-        "ark_string": "ark:99999/s1714b3160-e138-49ed-969a-a514f034274f",
+        "identifier": "714b3160e138",
+        "ark_string": "ark:99999/s1714b3160e138",
         "target": "http://example.com/16",
         "erc_who": "Toriana Kondo",
         "erc_what": "Water in Crisis: The Coming Shortages",
         "erc_when": ":at",
-        "erc_where": "ark:99999/s1714b3160-e138-49ed-969a-a514f034274f",
+        "erc_where": "ark:99999/s1714b3160e138",
         "policy": ":at"
       }
     ]
@@ -255,8 +259,8 @@ Searching uses the [default Whoosh query language](https://whoosh.readthedocs.io
 * q=`policy:"commits only to ensuring" AND erc_what:vancouver`
 * q=`date_modified:2022-02-23`
 * q=`date_created:[2022-02-20 TO 2022-02-28]`
-* q=`ark_string:ark:99999/s1cea8e7f3-1c84-4919-a694-65bc9997d9fe`
-* q=`erc_where:ark:99999/s1cea8e7f3-1c84-4919-a694-65bc9997d9fe`
+* q=`ark_string:ark:99999/s1cea8e7f31c84`
+* q=`erc_where:ark:99999/s1cea8e7f31c84`
 * q=`erc_where:"ark:99999/s1*"`
 * q=`target:http://example.com`
 * q=`target:"https://example.com*"`
@@ -273,9 +277,9 @@ If you run the indexer via cron, make sure the paths in `sqlite_db_path` and `wh
 
 ## Using the Names to Things global resolver
 
-If you have a registered NAAN that points to the server running larkm, you can use the Names to Things global ARK resolver's domain redirection feature by replacing the hostname of the server larkm is running on with `https://n2t.net/`. For example, if the local server larkm is running on is `https://ids.myorg.ca`, and your insitution's NAAN is registered to use that hostname, you can use a local instance of larkm to manage ARKs like `https://n2t.net/ark:12345/s1fde97fb3-634b-4232-b63e-e5128647efe7` (using your NAAN instead of `12345`) and they will resolve through your local larkm running on `https://ids.myorg.ca` to their target URLs.
+If you have a registered NAAN that points to the server running larkm, you can use the Names to Things global ARK resolver's domain redirection feature by replacing the hostname of the server larkm is running on with `https://n2t.net/`. For example, if the local server larkm is running on is `https://ids.myorg.ca`, and your insitution's NAAN is registered to use that hostname, you can use a local instance of larkm to manage ARKs like `https://n2t.net/ark:12345/s1fde97fb3634b` (using your NAAN instead of `12345`) and they will resolve through your local larkm running on `https://ids.myorg.ca` to their target URLs.
 
-An advantage of doing this is that if your local resolver needs to be changed from `https://ids.myorg.ca/` to another host, assuming you update your NAAN record to use the new host, requests to `https://n2t.net/ark:12345/s1fde97fb3-634b-4232-b63e-e5128647efe7` will continue to resolve to their targets.
+An advantage of doing this is that if your local resolver needs to be changed from `https://ids.myorg.ca/` to another host, assuming you update your NAAN record to use the new host, requests to `https://n2t.net/ark:12345/s1fde97fb3634b` will continue to resolve to their targets.
 
 ## API docs
 

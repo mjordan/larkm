@@ -1,17 +1,18 @@
-from typing import Optional
-from typing_extensions import Annotated
-from fastapi import FastAPI, Response, Request, Header, HTTPException
-from fastapi.responses import RedirectResponse
-from pydantic import BaseModel
-from uuid import uuid4
+import os
+import time
 import copy
 import re
 import sqlite3
 import json
+from uuid import uuid4
 import logging
 from datetime import datetime
-import time
-import os
+from typing import Optional
+
+from typing_extensions import Annotated
+from fastapi import FastAPI, Response, Request, Header, HTTPException
+from fastapi.responses import RedirectResponse
+from pydantic import BaseModel
 from whoosh import index
 from whoosh.qparser import QueryParser
 
@@ -113,9 +114,9 @@ def create_ark(
     and/or a shoulder. If either of these is not provided, larkm will provide
     one. If an identifier (first 12 characters of a UUIDv4 with dashes removed)
     is provided, it should not contain a shoulder, since larkm will always add
-    a shoulder to new ARKs. Clients must always provide a "target" value.
-
-    "where" always gets the value of ark_string.
+    a shoulder to new ARKs either based on the configured default shoulder or
+    using the one provided in the "shoulder" key in the request body. Clients
+    must always provide a "target" value.
 
     If the identifier that is provided is already in use, larkm will respond to the POST
     request with an HTTP `409` with the body `{"detail":"Identifier <identifier> already in use."}`.
@@ -151,12 +152,13 @@ def create_ark(
         -d '{"target": "https://digital.lib.sfu.ca"}'
 
     Sample request with ERC metadata values. ERC elements ("who", "what", "when")
-    not included in the request body are given defaults from config. The ARK's 'target'
-    is given the value of the ARK's required 'where' value.
+    not included in the request body are given defaults from config.
 
     curl -v -X POST "http://127.0.0.1:8000/larkm" \
         -H 'Content-Type: application/json' \
         -d '{"who": "Jordan, Mark", "what": "GitBags", "when": "2014", "target": "https://github.com/mjordan/GitBags"}'
+
+    "where" always gets the value of ark_string, regardless of whether it is provided in the request body.
 
     - **ark**: the ARK to create.
     """
@@ -658,7 +660,7 @@ def log_request(level, client_ip, ark_string, request_headers, event_type):
         level=logging.INFO,
         filename=config["log_file_path"],
         filemode="a",
-        format="%(message)s",
+        format="%(lineno)d - %(message)s",
     )
     if level == "ERROR":
         logging.error(entry)
