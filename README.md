@@ -53,10 +53,10 @@ The config settings are:
 * "default_shoulder", the ARK shoulder applied to new ARKs if one is not provided.
 * "allowed_shoulders", a list of shoulders that are allowed in new ARKs provided by clients. If your default shoulder is the only one currently used by your NAAN, provide an empty list for "allowed_shoulders" (e.g. `[]`).
 * "committment_statement", a mapping from shoulders to text expressing your institution's committment to maintaining the ARKs.
-* "sqlite_db_path": absolute or relative (to larkm.py) path to larkm's sqlite3 database file.
-* "log_file_path": absolute or relative (to larkm.py) path to the log file. Directory must exist and be writable by the process running larkm.
+* "sqlite_db_path": absolute or relative (to larkm.py) path to larkm's sqlite3 database file. Must exist and be writable by the process running larkm.
+* "log_file_path": absolute or relative (to larkm.py) path to the log file. Must exist and be writable by the process running larkm.
 * "resolver_hosts": definition of the resolvers to include in the `urls` list returned to clients. Note that these are only returned in requests for `?info`; this setting has nothing to do with the resolution of an incoming ARK to its target URL.
-* "whoosh_index_dir_path": absolute or relative (to larkm.py) path to the Whoosh index data directory. Leave empty if you are not indexing ARK data.
+* "whoosh_index_dir_path": absolute or relative (to larkm.py) path to the Whoosh index data directory. Leave empty if you are not indexing ARK data. Must exist and be writable by the process running larkm.
 * "trusted_ips": list of client IP addresses that can create, update, delete, and search ARKs; leave empty to allow access from all IPs (e.g. during testing).
 * "api_keys": list of strings used as API keys. Clients must pass their API key in a "Authorization" header, e.g. `Authorization: myapikey`.
 
@@ -120,11 +120,11 @@ REST clients can provide a `naan,` a `shoulder` and/or an `identifer` value in t
 * If an identifier is provided, it must not contain a shoulder.
 * If the identifier that is provided is already in use, larkm will respond to the `POST` request with an `409` status code acommpanied by the body `{"detail":"Identifier <identifier> already in use."}`.
 
-To add a new ARK (for example, to resolve to https://digital.lib.sfu.ca), issue the following request using curl (the configured default NAAN is `12345`):
+To add a new ARK (for example, to resolve to https://digital.lib.sfu.ca), issue the following request (the configured default NAAN is `12345`):
 
 `curl -v -X POST "http://127.0.0.1:8000/larkm" -H 'Content-Type: application/json' -d '{"shoulder": "s1", "identifier": "fde97fb3-634b-4232-b63e-e5128647efe7", "target": "https://digital.lib.sfu.ca"}'`
 
-If you now visit `http://127.0.0.1:8000/ark:12345/s1fde97fb3634b`, you will be redirected to https://digital.lib.sfu.ca. Larkm has used the first 12 characters from the UUID provided in the "identifer" field in the request body as the ID portion of the new ARK. You can also provide the first 12 characters of a UUID v4 in the request's "identifier" field, instead of a full UUID, but in most cases it's more convenient to provide a full UUID.
+If you now visit `http://127.0.0.1:8000/ark:12345/s1fde97fb3634b`, you will be redirected to https://digital.lib.sfu.ca. Larkm has used the first 12 characters from the UUID provided in the "identifer" field in the request body as the ID portion of the new ARK. You can also provide only the first 12 characters of a UUID v4 (with no hyphen) in the request's "identifier" field, instead of a full UUID, but in most cases it's simpler to provide a full UUID. If you provide a short ID, it will be validated as a truncated UUID v4.
 
 If you omit the `shoulder`, the configured default shoulder will be used. If you omit the `identifier`, larkm will mint one using the first 12 characters (minus the hypen at position 9) of a v4 UUID it generates.
 
@@ -161,7 +161,7 @@ Delete an ARK using a request like:
 
 If the ARK was deleted, larkm returns a `204 No Content` response with no body. If the ARK was not found, larkm returns a `404` response with the body `{"detail":"ARK not found"}`.
 
-Like in updating an ARK, when deleting, you cannot use an UUID identifier to delete that ARK. You must use the exact ARK string.
+As when updating an ARK, when deleting, you cannot use an UUID identifier to delete that ARK. You must use the exact ARK string.
 
 ### Getting larkm's configuration data
 
