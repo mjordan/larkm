@@ -161,7 +161,7 @@ Delete an ARK using a request like:
 
 If the ARK was deleted, larkm returns a `204 No Content` response with no body. If the ARK was not found, larkm returns a `404` response with the body `{"detail":"ARK not found"}`.
 
-As when updating an ARK, when deleting, you cannot use an UUID identifier to delete that ARK. You must use the exact ARK string.
+As when  updating an ARK, when deleting, you cannot use an UUID identifier to delete that ARK. You must use the exact ARK string.
 
 ### Getting larkm's configuration data
 
