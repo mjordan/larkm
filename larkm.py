@@ -105,6 +105,61 @@ def resolve_ark(
         return Response(content=erc + policy + "\n\n", media_type="text/plain")
 
 
+@app.get("/larkm/ark:{naan}/{identifier}")
+@app.get("/larkm/ark:/{naan}/{identifier}")
+def get_ark(
+    request: Request,
+    naan: str,
+    identifier: str,
+    authorization: Annotated[str | None, Header()] = None,
+):
+    """
+    Retrieve all the ARK's data, for example to populate a form on an external CRUD tool.
+    Sample request:
+
+    curl "http://127.0.0.1:8000/larkm/ark:12345/x931fd9bec0bb6"
+
+    - **naan**: the NAAN portion of the ARK.
+    - **identifier**: the identifier portion of the ARK, which will include a shoulder.
+    """
+    check_access(request, authorization)
+
+    ark_string = f"ark:{naan}/{identifier}"
+
+    try:
+        con = sqlite3.connect(config["sqlite_db_path"])
+        con.row_factory = sqlite3.Row
+        cur = con.cursor()
+        cur.execute("select * from arks where ark_string = :a_s", {"a_s": ark_string})
+        record = cur.fetchone()
+        if record is None:
+            con.close()
+            if config["log_file_path"]:
+                log_request(
+                    "INFO",
+                    request.client.host,
+                    ark_string,
+                    request.headers,
+                    "ARK not found",
+                )
+            raise HTTPException(status_code=404, detail="ARK not found")
+        con.close()
+        ark = record
+    except sqlite3.DatabaseError as e:
+        log_request("ERROR", request.client.host, ark_string, request.headers, str(e))
+        raise HTTPException(status_code=500)
+
+    if config["log_file_path"]:
+        log_request(
+            "INFO",
+            request.client.host,
+            ark_string,
+            request.headers,
+            "Retrieve ARK data",
+        )
+    return record
+
+
 @app.post("/larkm", status_code=201)
 def create_ark(
     request: Request, ark: Ark, authorization: Annotated[str | None, Header()] = None

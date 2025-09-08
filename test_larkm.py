@@ -23,7 +23,7 @@ def teardown_module(module):
     shutil.copyfile("fixtures/larkmtest.db.bak", "fixtures/larkmtest.db")
 
 
-# Test the redirect functionality and other aspects of ARK resolution
+# Test the redirect functionality and other aspects of ARK resolution.
 def test_resolve_ark():
     # Test basic resolution request by checking for a 307 response.
     response = client.post(
@@ -68,6 +68,26 @@ def test_resolve_ark():
     response = client.get("/foo/bar")
     assert response.status_code == 404
     assert response.text == '{"detail":"Not Found"}'
+
+
+# Test the "get ARK" functionality.
+def test_get_ark():
+    response = client.get("/larkm/ark:/99999/s1cea8e7f31c84")
+    assert response.status_code == 200
+
+    assert response.json() == {
+        "date_created": "2022-06-23 03:00:45",
+        "date_modified": "2022-06-23 03:00:45",
+        "shoulder": "s1",
+        "identifier": "cea8e7f31c84",
+        "ark_string": "ark:99999/s1cea8e7f31c84",
+        "target": "http://example.com/15",
+        "erc_who": "Derex Godfry",
+        "erc_what": "5 Ways to Immediately Start Selling WATER",
+        "erc_when": ":at",
+        "erc_where": "ark:99999/s1cea8e7f31c84",
+        "policy": "Random policy generators generally suck.",
+    }
 
 
 def test_create_ark():
