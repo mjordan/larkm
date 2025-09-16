@@ -15,7 +15,7 @@ larkm is a simple [ARK](https://arks.org/) manager that can:
 * delete ARKs
 * log requests for ARK resolution
 
-ARK resolution is provided via requests to larkm's host followed by an ARK (e.g. `https://myhost.net/ark:12345/s1f4eca6e0a8ab`) and the other operations are provided through standard REST requests to larkm's management endpoint (`/larkm`). This REST interface allows creating, persisting, updating, and deleting ARKs, and can expose a subset of larkm's configuration data to trusted clients. Access to the REST endpoints can be controlled by registering the IP addresses of trused clients and using API keys, as explained in the "Configuration" section below.
+ARK resolution is provided via requests to larkm's host followed by an ARK (e.g. `https://myhost.net/ark:12345/s1f4eca6e0a8ab`) and the other operations are provided through standard REST requests to larkm's management endpoint (`/larkm`). This REST interface allows creating, persisting, updating, and deleting ARKs, and can expose a subset of larkm's configuration data to trusted clients. Access to the REST endpoints can be controlled by registering the IP addresses of trused clients and using API keys, as explained in the "Configuration" section below. Even though larkm is designed to be REST-first, a [simple GUI application](https://github.com/mjordan/larkm_manager) for managing ARKs in larkm is under development.
 
 larkm is considered "lightweight" because it supports only a subset of ARK functionality, focusing on providing ways to manage ARKs locally and on using ARKs as persistent, resolvable identifiers. ARK features such as suffix passthrough and ARK qualifiers are currently out of scope.
 
@@ -95,7 +95,7 @@ Requests to larkm's REST interface at `/larkm` are allowed if:
 1. The client's IP address is registered in the `trusted_ips` configuration setting, and
 1. The client provides an "Authorization" request header containing an API key registered in the `api_keys` configuration setting.
 
-Both of these conditions must be met (unless `trusted_ips` is empty, e.g. during testing). If both conditions are not met, clients will receive a `403` response.
+Both of these conditions must be met (unless `trusted_ips` is empty, e.g. during testing). If both conditions are not met, clients will receive a `403` response. During production, it is highly recommended that you register the IP addresses of authorized clients.
 
 Requests for simple ARK resolution, including requests that contain `?info`, are not restricted.
 
