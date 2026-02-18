@@ -125,7 +125,7 @@ def get_ark(
     - **naan**: the NAAN portion of the ARK.
     - **identifier**: the identifier portion of the ARK, which will include a shoulder.
     """
-    check_access(request, authorization)
+    check_access(request, naan, authorization)
 
     ark_string = f"ark:{naan}/{identifier}"
 
@@ -168,8 +168,8 @@ def create_ark(
     request: Request, ark: Ark, authorization: Annotated[str | None, Header()] = None
 ):
     """
-    Create/mint a new ARK. Clients can provide a NAAN, an identifier string
-    and/or a shoulder. If either of these is not provided, larkm will provide
+    Create/mint a new ARK. Clients must provide a NAAN, and can provide an identifier
+    string and/or a shoulder. If either of these is not provided, larkm will provide
     one. If an identifier (first 12 characters of a UUIDv4 with dashes removed)
     is provided, it should not contain a shoulder, since larkm will always add
     a shoulder to new ARKs either based on the configured default shoulder or
@@ -183,15 +183,14 @@ def create_ark(
 
     curl -v -X POST "http://127.0.0.1:8000/larkm" \
         -H 'Content-Type: application/json' \
-        -d '{"shoulder": "x1", "identifier": "fde97fb3634b", "target": "https://digital.lib.sfu.ca"}'
+        -d '{"shoulder": "x1", "naan": "99999", "identifier": "fde97fb3634b", "target": "https://digital.lib.sfu.ca"}'
 
     Sample request with only a 'where', an identifier and a name, which asks larkm to
-    generate an ARK string based on the default NAAN, the default shoulder, and the
-    provided ID/name:
+    generate an ARK string based on the default shoulder, and the provided ID/name:
 
     curl -v -X POST "http://127.0.0.1:8000/larkm" \
         -H 'Content-Type: application/json' \
-        -d '{"identifier": "fde97fb3-634b4232", "target": "https://digital.lib.sfu.ca"}'
+        -d '{"naan": "99999", "identifier": "fde97fb3-634b4232", "target": "https://digital.lib.sfu.ca"}'
 
     Sample request with only a 'where' and a shoulder, which asks larkm to generate an ARK
     string based on the supplied NAAN and the supplied shoulder. If the ID/name is not provided,
@@ -202,25 +201,25 @@ def create_ark(
         -d '{"shoulder": "x1", "naan": "99999", "target": "https://digital.lib.sfu.ca"}'
 
     Sample request with no 'where' or shoulder. larkm will generate an ARK using
-    the default NAAN, the default shoulder, and a identifier (first 12 characters of a
+    the provided NAAN, the default shoulder, and a identifier (first 12 characters of a
     UUIDv4 with dashes removed).
 
     curl -v -X POST "http://127.0.0.1:8000/larkm" \
         -H 'Content-Type: application/json' \
-        -d '{"target": "https://digital.lib.sfu.ca"}'
+        -d '{"naan": "99999", "target": "https://digital.lib.sfu.ca"}'
 
     Sample request with ERC metadata values. ERC elements ("who", "what", "when")
     not included in the request body are given defaults from config.
 
     curl -v -X POST "http://127.0.0.1:8000/larkm" \
         -H 'Content-Type: application/json' \
-        -d '{"who": "Jordan, Mark", "what": "GitBags", "when": "2014", "target": "https://github.com/mjordan/GitBags"}'
+        -d '{"naan": "99999", "who": "Jordan, Mark", "what": "GitBags", "when": "2014", "target": "https://github.com/mjordan/GitBags"}'
 
     "where" always gets the value of ark_string, regardless of whether it is provided in the request body.
 
     - **ark**: the ARK to create.
     """
-    check_access(request, authorization)
+    check_access(request, ark.naan, authorization)
 
     if ark.target is None:
         raise HTTPException(status_code=422, detail="A 'target' value is required.")
@@ -384,7 +383,7 @@ def update_ark(
     - **naan**: the NAAN portion of the ARK.
     - **identifier**: the identifier portion of the ARK, which will include a shoulder.
     """
-    check_access(request, authorization)
+    check_access(request, naan, authorization)
 
     if ark.ark_string is None:
         raise HTTPException(
@@ -523,7 +522,7 @@ def delete_ark(
     - **naan**: the NAAN portion of the ARK.
     - **identifier**: the identifier portion of the ARK.
     """
-    check_access(request, authorization)
+    check_access(request, naan, authorization)
 
     ark_string = f"ark:{naan}/{identifier}"
 
@@ -573,15 +572,16 @@ def search_arks(
 
     curl "http://127.0.0.1:8000/larkm/search?naan=99999&q=erc_what:example"
 
+    - **naan**: the NAAN.
     - **q**: the Whoosh query, using Whoosh's default query language. Must be URL escaped.
       See the README for more information.
     - **page**: the page number to retrieve from the results.
     - **page_size**: the number of results to include in the page.
     """
-    check_access(request, authorization)
-
     # WIP issue 18
     naan = request_args["naan"]
+
+    check_access(request, naan, authorization)
 
     if not os.path.exists(config[naan]["whoosh_index_dir_path"]):
         raise HTTPException(status_code=204)
@@ -685,7 +685,7 @@ def return_config(
     """
     Returns a subset of larkm's configuration data to the client.
     """
-    check_access(request, authorization)
+    check_access(request, None, authorization)
 
     # Remove configuration data the client doesn't need to know.
     subset = copy.deepcopy(config)
@@ -782,20 +782,21 @@ def validate_date(date_string):
     return True
 
 
-def check_access(request, authorization):
+def check_access(request, naan, authorization):
 
-    # todo WIP issuw 18: get naan
+    # todo WIP issuw 18: deal with naan = None, i.e. from log_request() and return_config().
 
     """Checks whether client has access to a route. Doesn't return anything
     to caller, but raises an exception that is returned to the client.
 
     - **request**: The Request object.
+    - **naan*: The NAAN.
     - **authorization**: The "authorization" header, Annotated[str | None, Header()]
     """
     # "trusted_ips" can be empty.
     if (
-        len(config["trusted_ips"]) > 0
-        and request.client.host not in config["trusted_ips"]
+        len(config[naan]["trusted_ips"]) > 0
+        and request.client.host not in config[naan]["trusted_ips"]
     ):
         message = f"Request from an untrusted IP address."
         log_request(
@@ -804,7 +805,7 @@ def check_access(request, authorization):
         raise HTTPException(status_code=403)
 
     # API keys are not required.
-    if authorization not in config["api_keys"]:
+    if authorization not in config[naan]["api_keys"]:
         message = f"API key {authorization} not configured."
         log_request(
             "WARNING", request.client.host, str(request.url), request.headers, message
