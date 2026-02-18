@@ -19,8 +19,6 @@ from whoosh.qparser import QueryParser
 config_file_path = os.getenv("LARKM_CONFIG_FILE_PATH") or "larkm.json"
 with open(config_file_path, "r") as config_file:
     config = json.load(config_file)
-    config["allowed_naans"].insert(0, config["default_naan"])
-    config["allowed_shoulders"].insert(0, config["default_shoulder"])
 
 app = FastAPI()
 
@@ -60,15 +58,18 @@ def resolve_ark(
     """
     ark_string = f"ark:{naan}/{identifier}"
 
+    # WIP issue 18
+    config[naan]["allowed_shoulders"].insert(0, config[naan]["default_shoulder"])
+
     try:
-        con = sqlite3.connect(config["sqlite_db_path"])
+        con = sqlite3.connect(config[naan]["sqlite_db_path"])
         con.row_factory = sqlite3.Row
         cur = con.cursor()
         cur.execute("select * from arks where ark_string = :a_s", {"a_s": ark_string})
         record = cur.fetchone()
         if record is None:
             con.close()
-            if config["log_file_path"]:
+            if config[naan]["log_file_path"]:
                 log_request(
                     "INFO",
                     request.client.host,
@@ -93,12 +94,14 @@ def resolve_ark(
         if len(record["policy"]) > 0:
             policy = "policy: " + record["policy"]
         else:
-            for sh in config["allowed_shoulders"]:
+            for sh in config[naan]["allowed_shoulders"]:
                 if ark_string.startswith(sh):
-                    policy = "policy: " + config["committment_statements"][sh]
+                    policy = "policy: " + config[naan]["committment_statements"][sh]
                 else:
-                    policy = "policy: " + config["committment_statements"]["default"]
-        if config["log_file_path"]:
+                    policy = (
+                        "policy: " + config[naan]["committment_statements"]["default"]
+                    )
+        if config[naan]["log_file_path"]:
             log_request(
                 "INFO", request.client.host, ark_string, request.headers, "?info"
             )
@@ -127,14 +130,14 @@ def get_ark(
     ark_string = f"ark:{naan}/{identifier}"
 
     try:
-        con = sqlite3.connect(config["sqlite_db_path"])
+        con = sqlite3.connect(config[naan]["sqlite_db_path"])
         con.row_factory = sqlite3.Row
         cur = con.cursor()
         cur.execute("select * from arks where ark_string = :a_s", {"a_s": ark_string})
         record = cur.fetchone()
         if record is None:
             con.close()
-            if config["log_file_path"]:
+            if config[naan]["log_file_path"]:
                 log_request(
                     "INFO",
                     request.client.host,
@@ -149,7 +152,7 @@ def get_ark(
         log_request("ERROR", request.client.host, ark_string, request.headers, str(e))
         raise HTTPException(status_code=500)
 
-    if config["log_file_path"]:
+    if config[naan]["log_file_path"]:
         log_request(
             "INFO",
             request.client.host,
@@ -224,12 +227,12 @@ def create_ark(
 
     # Validate shoulder if provided.
     if ark.shoulder is not None:
-        if ark.shoulder not in config["allowed_shoulders"]:
+        if ark.shoulder not in config[ark.naan]["allowed_shoulders"]:
             raise HTTPException(status_code=422, detail="Provided shoulder is invalid.")
 
     # Validate NAAN if provided.
     if ark.naan is not None:
-        if ark.naan not in config["allowed_naans"]:
+        if ark.naan != config[ark.naan]["naan"]:
             raise HTTPException(status_code=422, detail="Provided NAAN is invalid.")
 
     # Validate identifer if provided.
@@ -257,7 +260,7 @@ def create_ark(
 
     # See if provided identifier is already being used.
     try:
-        con = sqlite3.connect(config["sqlite_db_path"])
+        con = sqlite3.connect(config[ark.naan]["sqlite_db_path"])
         con.row_factory = sqlite3.Row
         cur = con.cursor()
         cur.execute(
@@ -279,7 +282,7 @@ def create_ark(
 
     # See if provided 'target' value is already being used.
     try:
-        con = sqlite3.connect(config["sqlite_db_path"])
+        con = sqlite3.connect(config[ark.naan]["sqlite_db_path"])
         con.row_factory = sqlite3.Row
         cur = con.cursor()
         cur.execute("select * from arks where target = :a_s", {"a_s": ark.target})
@@ -299,25 +302,25 @@ def create_ark(
 
     # Assemble the ARK. Generate parts the client didn't provide.
     if ark.naan is None:
-        ark.naan = config["default_naan"]
+        ark.naan = config[ark.naan]["naan"]
     if ark.shoulder is None:
-        ark.shoulder = config["default_shoulder"]
+        ark.shoulder = config[ark.naan]["default_shoulder"]
     if ark.identifier is None:
         ark.identifier = generate_identifier()
 
     ark.ark_string = f"ark:{ark.naan}/{ark.shoulder}{ark.identifier}"
 
     if ark.who is None:
-        ark.who = config["erc_metadata_defaults"]["who"]
+        ark.who = config[ark.naan]["erc_metadata_defaults"]["who"]
     if ark.what is None:
-        ark.what = config["erc_metadata_defaults"]["what"]
+        ark.what = config[ark.naan]["erc_metadata_defaults"]["what"]
     if ark.when is None:
-        ark.when = config["erc_metadata_defaults"]["when"]
+        ark.when = config[ark.naan]["erc_metadata_defaults"]["when"]
     if ark.policy is None:
-        if ark.shoulder in config["committment_statements"].keys():
-            ark.policy = config["committment_statements"][ark.shoulder]
+        if ark.shoulder in config[ark.naan]["committment_statements"].keys():
+            ark.policy = config[ark.naan]["committment_statements"][ark.shoulder]
         else:
-            ark.policy = config["committment_statements"]["default"]
+            ark.policy = config[ark.naan]["committment_statements"]["default"]
 
     ark.where = ark.ark_string
 
@@ -333,7 +336,7 @@ def create_ark(
             ark.where,
             ark.policy,
         )
-        con = sqlite3.connect(config["sqlite_db_path"])
+        con = sqlite3.connect(config[ark.naan]["sqlite_db_path"])
         cur = con.cursor()
         cur.execute(
             "insert into arks values (datetime(), datetime(), ?,?,?,?,?,?,?,?,?)",
@@ -348,13 +351,13 @@ def create_ark(
         raise HTTPException(status_code=500)
 
     urls = dict()
-    if len(config["resolver_hosts"]["local"]) > 0:
+    if len(config[ark.naan]["resolver_hosts"]["local"]) > 0:
         urls["local"] = (
-            f'{config["resolver_hosts"]["local"].rstrip("/")}/{ark.ark_string}'
+            f'{config[ark.naan]["resolver_hosts"]["local"].rstrip("/")}/{ark.ark_string}'
         )
-    if len(config["resolver_hosts"]["global"]) > 0:
+    if len(config[ark.naan]["resolver_hosts"]["global"]) > 0:
         urls["global"] = (
-            f'{config["resolver_hosts"]["global"].rstrip("/")}/{ark.ark_string}'
+            f'{config[ark.naan]["resolver_hosts"]["global"].rstrip("/")}/{ark.ark_string}'
         )
 
     del ark.naan
@@ -404,7 +407,7 @@ def update_ark(
         )
 
     try:
-        con = sqlite3.connect(config["sqlite_db_path"])
+        con = sqlite3.connect(config[naan]["sqlite_db_path"])
         con.row_factory = sqlite3.Row
         cur = con.cursor()
         cur.execute("select * from arks where ark_string = :a_s", {"a_s": ark_string})
@@ -471,7 +474,7 @@ def update_ark(
             ark.ark_string,
         )
 
-        con = sqlite3.connect(config["sqlite_db_path"])
+        con = sqlite3.connect(config[naan]["sqlite_db_path"])
         cur = con.cursor()
         cur.execute(
             "update arks set date_modified = datetime(), shoulder = ?, identifier = ?, ark_string = ?, target = ?, erc_who = ?, erc_what = ?, erc_when = ?, erc_where = ?, policy = ? where ark_string = ?",
@@ -491,13 +494,13 @@ def update_ark(
         raise HTTPException(status_code=500)
 
     urls = dict()
-    if len(config["resolver_hosts"]["local"]) > 0:
+    if len(config[naan]["resolver_hosts"]["local"]) > 0:
         urls["local"] = (
-            f'{config["resolver_hosts"]["local"].rstrip("/")}/{ark.ark_string}'
+            f'{config[naan]["resolver_hosts"]["local"].rstrip("/")}/{ark.ark_string}'
         )
-    if len(config["resolver_hosts"]["global"]) > 0:
+    if len(config[naan]["resolver_hosts"]["global"]) > 0:
         urls["global"] = (
-            f'{config["resolver_hosts"]["global"].rstrip("/")}/{ark.ark_string}'
+            f'{config[naan]["resolver_hosts"]["global"].rstrip("/")}/{ark.ark_string}'
         )
 
     # Delete the NAAN because we do not return it to the requesting client.
@@ -525,7 +528,7 @@ def delete_ark(
     ark_string = f"ark:{naan}/{identifier}"
 
     try:
-        con = sqlite3.connect(config["sqlite_db_path"])
+        con = sqlite3.connect(config[naan]["sqlite_db_path"])
         cur = con.cursor()
         cur.execute(
             "select ark_string from arks where ark_string = :a_s", {"a_s": ark_string}
@@ -542,7 +545,7 @@ def delete_ark(
     # If ARK found, delete it.
     else:
         try:
-            con = sqlite3.connect(config["sqlite_db_path"])
+            con = sqlite3.connect(config[naan]["sqlite_db_path"])
             cur = con.cursor()
             cur.execute("delete from arks where ark_string=:a_s", {"a_s": ark_string})
             con.commit()
@@ -568,7 +571,7 @@ def search_arks(
     """
     Endpoint for searching the Whoosh index of ARK metadata. Sample request:
 
-    curl "http://127.0.0.1:8000/larkm/search?q=erc_what:example"
+    curl "http://127.0.0.1:8000/larkm/search?naan=99999&q=erc_what:example"
 
     - **q**: the Whoosh query, using Whoosh's default query language. Must be URL escaped.
       See the README for more information.
@@ -577,7 +580,10 @@ def search_arks(
     """
     check_access(request, authorization)
 
-    if not os.path.exists(config["whoosh_index_dir_path"]):
+    # WIP issue 18
+    naan = request_args["naan"]
+
+    if not os.path.exists(config[naan]["whoosh_index_dir_path"]):
         raise HTTPException(status_code=204)
 
     # Validate values provided in date_created and date_modified fields.
@@ -612,7 +618,7 @@ def search_arks(
                             + " is not a valid date.",
                         )
 
-    idx = index.open_dir(config["whoosh_index_dir_path"])
+    idx = index.open_dir(config[naan]["whoosh_index_dir_path"])
 
     query_parser = QueryParser("identifier", schema=idx.schema)
     query = query_parser.parse(q)
@@ -634,7 +640,7 @@ def search_arks(
         # We have retrieved identifiers from the Woosh index, now we get the full ARK records from the
         # database to return to the user.
         try:
-            con = sqlite3.connect(config["sqlite_db_path"])
+            con = sqlite3.connect(config[naan]["sqlite_db_path"])
             con.row_factory = sqlite3.Row
             cur = con.cursor()
             identifier_list_string = ",".join(f'"{i}"' for i in identifier_list)
@@ -692,6 +698,9 @@ def return_config(
 
 
 def log_request(level, client_ip, ark_string, request_headers, event_type):
+
+    # todo WIP issuw 18: get naan
+
     """
     Assembles a tab-delmited log entry and writes it to the log file.
 
@@ -774,6 +783,9 @@ def validate_date(date_string):
 
 
 def check_access(request, authorization):
+
+    # todo WIP issuw 18: get naan
+
     """Checks whether client has access to a route. Doesn't return anything
     to caller, but raises an exception that is returned to the client.
 
