@@ -678,17 +678,21 @@ def search_arks(
     }
 
 
-@app.get("/larkm/config")
+@app.get("/larkm/config/{naan}")
 def return_config(
-    request: Request, authorization: Annotated[str | None, Header()] = None
+    request: Request, naan: str, authorization: Annotated[str | None, Header()] = None
 ):
     """
     Returns a subset of larkm's configuration data to the client.
+
+    curl "http://127.0.0.1:8000/larkm/config/99999"
+
+    - **naan**: the NAAN.
     """
-    check_access(request, None, authorization)
+    check_access(request, naan, authorization)
 
     # Remove configuration data the client doesn't need to know.
-    subset = copy.deepcopy(config)
+    subset = copy.deepcopy(config[naan])
     del subset["trusted_ips"]
     del subset["api_keys"]
     del subset["sqlite_db_path"]
@@ -716,13 +720,15 @@ def log_request(level, client_ip, ark_string, request_headers, event_type):
     else:
         referer = "null"
 
+    naan = get_naan_from_ark_string(ark_string)
+
     now = datetime.now()
     date_format = "%Y-%m-%d %H:%M:%S"
 
     entry = f"{now.strftime(date_format)}\t{client_ip}\t{referer}\t{ark_string}\t{event_type}"
     logging.basicConfig(
         level=logging.INFO,
-        filename=config["log_file_path"],
+        filename=config[naan]["log_file_path"],
         filemode="a",
         format="%(lineno)d - %(message)s",
     )
@@ -782,10 +788,19 @@ def validate_date(date_string):
     return True
 
 
+def get_naan_from_ark_string(ark_string):
+    """
+    Extracts the NAAN from an ARK.
+
+    - **ark_string**: the ARK as a string, i.e., ark:{naan}/{identifier}
+    """
+
+
+    # If there's no NAAN, return None.
+    return None
+
+
 def check_access(request, naan, authorization):
-
-    # todo WIP issuw 18: deal with naan = None, i.e. from log_request() and return_config().
-
     """Checks whether client has access to a route. Doesn't return anything
     to caller, but raises an exception that is returned to the client.
 
@@ -793,6 +808,14 @@ def check_access(request, naan, authorization):
     - **naan*: The NAAN.
     - **authorization**: The "authorization" header, Annotated[str | None, Header()]
     """
+    registered_naans = config.keys()
+    if naan not in registered_naans:
+        message = f"Request using an unregistered NAAN."
+        log_request(
+            "WARNING", request.client.host, str(request.url), request.headers, message
+        )
+        raise HTTPException(status_code=403)
+
     # "trusted_ips" can be empty.
     if (
         len(config[naan]["trusted_ips"]) > 0
