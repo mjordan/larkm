@@ -1,5 +1,5 @@
 from fastapi.testclient import TestClient
-from larkm import app
+from larkm import app, get_naan_from_ark_string
 import shutil
 import re
 
@@ -618,3 +618,21 @@ def test_bad_api_key():
         headers={"Authorization": "badkey"},
     )
     assert delete_response.status_code == 403
+
+
+def test_get_naan_from_ark():
+    naans_to_get_from_arks = {
+        "12345": "ark:12345/x9062cdde7f9d6",
+        "49875": "ark:49875/s19d7adca03a96",
+        "10190": "ark:10190/s175b939ec2b46",
+        "83765": "ark:/83765/s1114064a06c67",
+        "28272": "ark:28272/s1a47f2e3afb9d",
+        "95876": "https://foo.com/ark:95876/s1a39b99f934e6",
+        "57209": "https://foobar.org/ark:/57209/s17ffc8979b4d6",
+        "87256": "ark:/87256/s10903ff26d28a",
+        "99999": "ark:99999/s1338c49c7a3d9",
+    }
+
+    for naan, ark in naans_to_get_from_arks.items():
+        ret = get_naan_from_ark_string(ark)
+        assert ret == naan

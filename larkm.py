@@ -795,9 +795,13 @@ def get_naan_from_ark_string(ark_string):
     - **ark_string**: the ARK as a string, i.e., ark:{naan}/{identifier}
     """
 
-
-    # If there's no NAAN, return None.
-    return None
+    pattern = r"ark:/{0,1}(.+)/"
+    match = re.search(pattern, ark_string)
+    if match:
+        return match.group(1)
+    else:
+        # If there's no NAAN, return None.
+        return None
 
 
 def check_access(request, naan, authorization):
