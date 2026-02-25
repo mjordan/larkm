@@ -29,6 +29,7 @@ def test_resolve_ark():
     response = client.post(
         "/larkm",
         json={
+            "naan": "99999",
             "shoulder": "s1",
             "identifier": "bd805e3b-6ba6-4517-a197-05d99981bcba",
             "target": "https://example.com/redirect_target",
@@ -94,14 +95,14 @@ def test_create_ark():
     # Check the HTTP response code.
     response = client.post(
         "/larkm",
-        json={"target": "https://example.com/ppppp"},
+        json={"naan": "99999", "target": "https://example.com/ppppp"},
     )
     assert response.status_code == 201
 
     # Test if the generated identifier is valid.
     response = client.post(
         "/larkm",
-        json={"target": "https://example.com/sssss"},
+        json={"naan": "99999", "target": "https://example.com/sssss"},
     )
     body = response.json()
     assert re.match(
@@ -113,6 +114,7 @@ def test_create_ark():
     response = client.post(
         "/larkm",
         json={
+            "naan": "99999",
             "shoulder": "s1",
             "identifier": "586ef08c-b2a0-4b5b-a9e9-954e0259ed63",
             "target": "https://example.com/zxzxzx",
@@ -141,6 +143,7 @@ def test_create_ark():
     response = client.post(
         "/larkm",
         json={
+            "naan": "99999",
             "shoulder": "s1",
             "identifier": "fdd17ff8892d7-4671-b25b-e9d8ead90239",
             "target": "https://example.com/zxzxzxc",
@@ -152,6 +155,7 @@ def test_create_ark():
     response = client.post(
         "/larkm",
         json={
+            "naan": "99999",
             "shoulder": "s1",
             "identifier": "14b7f127b358",
             "target": "https://example.com/wwwww",
@@ -180,6 +184,7 @@ def test_create_ark():
     response = client.post(
         "/larkm",
         json={
+            "naan": "99999",
             "shoulder": "s1",
             "identifier": "4eed199-4600",
             "target": "https://example.com/wwwwwx",
@@ -191,6 +196,7 @@ def test_create_ark():
     response = client.post(
         "/larkm",
         json={
+            "naan": "99999",
             "shoulder": "s1",
             "identifier": "80304d63ac0k",
             "target": "https://example.com/wwwwwa",
@@ -202,6 +208,7 @@ def test_create_ark():
     response = client.post(
         "/larkm",
         json={
+            "naan": "99999",
             "shoulder": "s1",
             "identifier": "d52d68a12d504",
             "target": "https://example.com/wwwwwz",
@@ -213,7 +220,7 @@ def test_create_ark():
     response = client.post(
         "/larkm",
         json={
-            "naan": "22222",
+            "naan": "12345",
             "shoulder": "s1",
             "identifier": "9e2e12759dfc",
             "target": "https://example.com/uuytr",
@@ -224,17 +231,17 @@ def test_create_ark():
         "ark": {
             "shoulder": "s1",
             "identifier": "9e2e12759dfc",
-            "ark_string": "ark:22222/s19e2e12759dfc",
+            "ark_string": "ark:12345/s19e2e12759dfc",
             "target": "https://example.com/uuytr",
             "who": ":at",
             "what": ":at",
             "when": ":at",
-            "where": "ark:22222/s19e2e12759dfc",
+            "where": "ark:12345/s19e2e12759dfc",
             "policy": "ACME University commits to maintain ARKs that have 's1' as a shoulder for a long time.",
         },
         "urls": {
-            "local": "https://resolver.myorg.net/ark:22222/s19e2e12759dfc",
-            "global": "https://n2t.net/ark:22222/s19e2e12759dfc",
+            "local": "https://resolver.myorg.net/ark:12345/s19e2e12759dfc",
+            "global": "https://n2t.net/ark:12345/s19e2e12759dfc",
         },
     }
 
@@ -242,6 +249,7 @@ def test_create_ark():
     response = client.post(
         "/larkm",
         json={
+            "naan": "99999",
             "shoulder": "x9",
             "identifier": "20578b9eba6e",
             "what": "A new ARK",
@@ -281,6 +289,7 @@ def test_create_ark():
     response = client.post(
         "/larkm",
         json={
+            "naan": "99999",
             "shoulder": "x9",
             "identifier": "47321e027df6",
             "target": "https://example.com/fffff",
@@ -310,6 +319,7 @@ def test_create_ark():
     response = client.post(
         "/larkm",
         json={
+            "naan": "99999",
             "shoulder": "s2",
             "identifier": "cda60df9-b468-4520-8e9",
             "target": "https://example.com/ddddd",
@@ -326,6 +336,7 @@ def test_create_ark():
     response = client.post(
         "/larkm",
         json={
+            "naan": "12345",
             "shoulder": "s1",
             "identifier": "2d24d07fed23",
             "target": "https://example.com/ggggg",
@@ -337,6 +348,7 @@ def test_create_ark():
     response = client.post(
         "/larkm",
         json={
+            "naan": "12345",
             "shoulder": "s1",
             "identifier": "2d24d07fed23",
             "target": "https://example.com/hhhhh",
@@ -349,6 +361,7 @@ def test_create_ark():
     response = client.post(
         "/larkm",
         json={
+            "naan": "99999",
             "shoulder": "s1",
             "identifier": "3dd364bdea7a",
             "target": "https://example.com/ggggg",
@@ -359,12 +372,12 @@ def test_create_ark():
 
 def test_search_arks():
     # Do a search that returns no ARKs.
-    response = client.get("/larkm/search?q=policy%3Axxxxxxxx")
+    response = client.get("/larkm/search?naan=99999&q=policy%3Axxxxxxxx")
     assert response.status_code == 200
     assert response.json() == {"num_results": 0, "page": 1, "page_size": 20, "arks": []}
 
     # Do a search using page size and page number parameters.
-    response = client.get("/larkm/search?q=policy%3Apolicy&page_size=2&page=2")
+    response = client.get("/larkm/search?naan=99999&q=policy%3Apolicy&page_size=2&page=2")
     assert response.status_code == 200
     assert response.json() == {
         "num_results": 7,
@@ -402,7 +415,7 @@ def test_search_arks():
 
     # Do a search with an invalid date in a range.
     response = client.get(
-        "/larkm/search?q=date_created%3A%5B2022-02-20%20TO%202022-02-29%5D"
+        "/larkm/search?naan=99999&q=date_created%3A%5B2022-02-20%20TO%202022-02-29%5D"
     )
     assert response.status_code == 422
     assert response.json() == {
@@ -411,13 +424,11 @@ def test_search_arks():
 
 
 def test_get_config():
-    response = client.get("/larkm/config")
+    response = client.get("/larkm/config/99999")
     assert response.status_code == 200
     assert response.json() == {
-        "default_naan": "99999",
-        "allowed_naans": ["99999", "11111", "22222", "33333"],
         "default_shoulder": "s1",
-        "allowed_shoulders": ["s1", "s2", "s3", "x9"],
+        "allowed_shoulders": ["s2", "s3", "x9"],
         "committment_statements": {
             "s1": "ACME University commits to maintain ARKs that have 's1' as a shoulder for a long time.",
             "s3": "ACME University commits to maintain ARKs that have 's3' as a shoulder until the end of 2025.",
@@ -430,12 +441,30 @@ def test_get_config():
         },
     }
 
+    response = client.get("/larkm/config/00000")
+    assert response.status_code == 200
+    assert response.json() == {
+        "default_shoulder": "v1",
+        "allowed_shoulders": ["v2", "v3"],
+        "committment_statements": {
+            "v1": "somerandomstring.",
+            "v3": "anotherrandomstring",
+            "default": "Default random committment statement."
+        },
+        "erc_metadata_defaults": {"who": ":at", "what": ":at", "when": ":at"},
+        "resolver_hosts": {
+            "global": "https://persist.acme.net/",
+            "local": "https://resolver.myorg.net",
+        },
+    }
+
 
 def test_update_ark():
     # Create an ARK to update.
     response = client.post(
         "/larkm",
         json={
+            "naan": "99999",
             "shoulder": "s2",
             "identifier": "cda60df9b468",
             "target": "https://example.com/nnnnn",
@@ -492,6 +521,7 @@ def test_update_ark():
     response = client.post(
         "/larkm",
         json={
+            "naan": "12345",
             "shoulder": "s2",
             "identifier": "aaed59b06ad6",
             "what": "New ARK with its own policy",
@@ -500,10 +530,10 @@ def test_update_ark():
     )
 
     response = client.put(
-        "/larkm/ark:99999/s2aaed59b06ad6",
+        "/larkm/ark:12345/s2aaed59b06ad6",
         json={
             "policy": "A test policy.",
-            "ark_string": "ark:99999/s2aaed59b06ad6",
+            "ark_string": "ark:12345/s2aaed59b06ad6",
         },
     )
     assert response.status_code == 200
@@ -511,17 +541,17 @@ def test_update_ark():
         "ark": {
             "shoulder": "s2",
             "identifier": "aaed59b06ad6",
-            "ark_string": "ark:99999/s2aaed59b06ad6",
+            "ark_string": "ark:12345/s2aaed59b06ad6",
             "target": "https://example.com/jjjjj",
             "who": ":at",
             "what": "New ARK with its own policy",
             "when": ":at",
-            "where": "ark:99999/s2aaed59b06ad6",
+            "where": "ark:12345/s2aaed59b06ad6",
             "policy": "A test policy.",
         },
         "urls": {
-            "local": "https://resolver.myorg.net/ark:99999/s2aaed59b06ad6",
-            "global": "https://n2t.net/ark:99999/s2aaed59b06ad6",
+            "local": "https://resolver.myorg.net/ark:12345/s2aaed59b06ad6",
+            "global": "https://n2t.net/ark:12345/s2aaed59b06ad6",
         },
     }
 
@@ -529,6 +559,7 @@ def test_update_ark():
     response = client.post(
         "/larkm",
         json={
+            "naan": "12345",
             "shoulder": "s2",
             "identifier": "3a8a9396baa8",
             "target": "https://foo.example.com/ttttt",
@@ -537,8 +568,8 @@ def test_update_ark():
     assert response.status_code == 201
 
     response = client.put(
-        "/larkm/ark:99999/s23a8a9396-baa8",
-        json={"ark_string": "ark:99999/s23a8a9396baa85bxxx"},
+        "/larkm/ark:12345/s23a8a9396-baa8",
+        json={"ark_string": "ark:12345/s23a8a9396baa85bxxx"},
     )
     assert response.status_code == 409
     assert response.json() == {
@@ -549,6 +580,7 @@ def test_update_ark():
     response = client.post(
         "/larkm",
         json={
+            "naan": "99999",
             "shoulder": "s2",
             "identifier": "292c07457b79",
             "target": "https://foo.example.com/wheretest",
@@ -584,6 +616,7 @@ def test_delete_ark():
     create_response = client.post(
         "/larkm",
         json={
+            "naan": "12345",
             "shoulder": "x9",
             "identifier": "5c6b0d2314e4",
             "target": "https://example.com",
@@ -591,7 +624,7 @@ def test_delete_ark():
     )
     assert create_response.status_code == 201
 
-    delete_response = client.delete("/larkm/ark:99999/x95c6b0d2314e4")
+    delete_response = client.delete("/larkm/ark:12345/x95c6b0d2314e4")
     assert delete_response.status_code == 204
 
 
@@ -599,6 +632,7 @@ def test_bad_api_key():
     create_response = client.post(
         "/larkm",
         json={
+            "naan": "99999",
             "shoulder": "x9",
             "identifier": "2d1237ef9f7f",
             "target": "https://example.com/deleteme",

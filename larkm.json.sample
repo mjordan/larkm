@@ -1,25 +1,121 @@
 {
-  "default_naan": "99999",
-  "allowed_naans": ["11111", "22222", "33333"],
-  "default_shoulder": "s1",
-  "allowed_shoulders": ["s2", "s3", "x9"],
-  "committment_statements": {
-       "s1": "ACME University commits to maintain ARKs that have 's1' as a shoulder for a long time.",
-       "s3": "ACME University commits to maintain ARKs that have 's3' as a shoulder until the end of 2025.",
-       "default": "Default committment statement."
+  "12345": {
+    "naan": "12345",
+    "default_shoulder": "s1",
+    "allowed_shoulders": [
+      "s2",
+      "s3",
+      "x9"
+    ],
+    "committment_statements": {
+      "s1": "ACME University commits to maintain ARKs that have 's1' as a shoulder for a long time.",
+      "s3": "ACME University commits to maintain ARKs that have 's3' as a shoulder until the end of 2025.",
+      "default": "Default committment statement."
+    },
+    "erc_metadata_defaults": {
+      "who": ":at",
+      "what": ":at",
+      "when": ":at"
+    },
+    "sqlite_db_path": "fixtures/larkmtest.db",
+    "log_file_path": "/tmp/larkm.log",
+    "resolver_hosts": {
+      "global": "https://n2t.net/",
+      "local": "https://resolver.myorg.net"
+    },
+    "whoosh_index_dir_path": "fixtures/index_dir",
+    "trusted_ips": [],
+    "api_keys": [
+      "myapikey"
+    ]
   },
-  "erc_metadata_defaults": {
-       "who": ":at",
-       "what": ":at",
-       "when": ":at"
+  "22222": {
+    "naan": "22222",
+    "default_shoulder": "s1",
+    "allowed_shoulders": [
+      "s2",
+      "s3",
+      "x9"
+    ],
+    "committment_statements": {
+      "s1": "ACME University commits to maintain ARKs that have 's1' as a shoulder for a long time.",
+      "s3": "ACME University commits to maintain ARKs that have 's3' as a shoulder until the end of 2025.",
+      "default": "Default committment statement."
+    },
+    "erc_metadata_defaults": {
+      "who": ":at",
+      "what": ":at",
+      "when": ":at"
+    },
+    "sqlite_db_path": "fixtures/larkmtest.db",
+    "log_file_path": "/tmp/larkm.log",
+    "resolver_hosts": {
+      "global": "https://n2t.net/",
+      "local": "https://resolver.myorg.net"
+    },
+    "whoosh_index_dir_path": "fixtures/index_dir",
+    "trusted_ips": [],
+    "api_keys": [
+      "myapikey"
+    ]
   },
-  "sqlite_db_path": "fixtures/larkmtest.db",
-  "log_file_path": "/tmp/larkm.log",
-  "resolver_hosts": {
-     "global": "https://n2t.net/",
-     "local": "https://resolver.myorg.net"
+  "99999": {
+    "naan": "99999",
+    "default_shoulder": "s1",
+    "allowed_shoulders": [
+      "s2",
+      "s3",
+      "x9"
+    ],
+    "committment_statements": {
+      "s1": "ACME University commits to maintain ARKs that have 's1' as a shoulder for a long time.",
+      "s3": "ACME University commits to maintain ARKs that have 's3' as a shoulder until the end of 2025.",
+      "default": "Default committment statement."
+    },
+    "erc_metadata_defaults": {
+      "who": ":at",
+      "what": ":at",
+      "when": ":at"
+    },
+    "sqlite_db_path": "fixtures/larkmtest.db",
+    "log_file_path": "/tmp/larkm.log",
+    "resolver_hosts": {
+      "global": "https://n2t.net/",
+      "local": "https://resolver.myorg.net"
+    },
+    "whoosh_index_dir_path": "fixtures/index_dir",
+    "trusted_ips": [],
+    "api_keys": [
+      "myapikey"
+    ]
   },
-  "whoosh_index_dir_path": "fixtures/index_dir",
-  "trusted_ips": [],
-  "api_keys": ["myapikey"]
+  "00000": {
+    "naan": "00000",
+    "default_shoulder": "v1",
+    "allowed_shoulders": [
+      "v2",
+      "v3"
+    ],
+    "committment_statements": {
+      "v1": "somerandomstring.",
+      "v3": "anotherrandomstring",
+      "default": "Default random committment statement."
+    },
+    "erc_metadata_defaults": {
+      "who": ":at",
+      "what": ":at",
+      "when": ":at"
+    },
+    "sqlite_db_path": "fixtures/larkmtest.db",
+    "log_file_path": "/tmp/larkm.log",
+    "resolver_hosts": {
+      "global": "https://persist.acme.net/",
+      "local": "https://resolver.myorg.net"
+    },
+    "whoosh_index_dir_path": "fixtures/index_dir",
+    "trusted_ips": [],
+    "api_keys": [
+      "myapikey"
+    ]
+  }
 }

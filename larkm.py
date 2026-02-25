@@ -58,8 +58,14 @@ def resolve_ark(
     """
     ark_string = f"ark:{naan}/{identifier}"
 
-    # WIP issue 18
-    config[naan]["allowed_shoulders"].insert(0, config[naan]["default_shoulder"])
+    if naan not in config.keys():
+        log_request(
+            "ERROR", request.client.host, ark_string, request.headers, "Resolution - invalid NAAN."
+        )
+        raise HTTPException(status_code=422, detail="Invalid NAAN.")
+
+    if config[naan]["default_shoulder"] not in config[naan]["allowed_shoulders"]:
+        config[naan]["allowed_shoulders"].insert(0, config[naan]["default_shoulder"])
 
     try:
         con = sqlite3.connect(config[naan]["sqlite_db_path"])
@@ -84,7 +90,7 @@ def resolve_ark(
         raise HTTPException(status_code=500)
 
     if info is None:
-        if config["log_file_path"]:
+        if config[naan]["log_file_path"]:
             log_request(
                 "INFO", request.client.host, ark_string, request.headers, "Resolution"
             )
@@ -221,6 +227,9 @@ def create_ark(
     """
     check_access(request, ark.naan, authorization)
 
+    if config[ark.naan]["default_shoulder"] not in config[ark.naan]["allowed_shoulders"]:
+        config[ark.naan]["allowed_shoulders"].insert(0, config[ark.naan]["default_shoulder"])
+
     if ark.target is None:
         raise HTTPException(status_code=422, detail="A 'target' value is required.")
 
@@ -229,7 +238,7 @@ def create_ark(
         if ark.shoulder not in config[ark.naan]["allowed_shoulders"]:
             raise HTTPException(status_code=422, detail="Provided shoulder is invalid.")
 
-    # Validate NAAN if provided.
+    # Validate NAAN.
     if ark.naan is not None:
         if ark.naan != config[ark.naan]["naan"]:
             raise HTTPException(status_code=422, detail="Provided NAAN is invalid.")
@@ -416,7 +425,7 @@ def update_ark(
             raise HTTPException(status_code=404, detail="ARK not found")
         con.close()
     except sqlite3.DatabaseError as e:
-        log_request("ERROR", request.client.host, ark_string, request.headers, str(e))
+        log_request("ERROR", request.client.host, ark_string, request.headers, str(e), naan = naan)
         raise HTTPException(status_code=500)
 
     old_ark = dict(zip(record.keys(), record))
@@ -487,9 +496,10 @@ def update_ark(
             ark_string,
             request.headers,
             f"ARK updated: {original_properties} updated to {updated_properties}",
+            naan = naan
         )
     except sqlite3.DatabaseError as e:
-        log_request("ERROR", request.client.host, ark_string, request.headers, str(e))
+        log_request("ERROR", request.client.host, ark_string, request.headers, str(e), naan = naan)
         raise HTTPException(status_code=500)
 
     urls = dict()
@@ -579,6 +589,7 @@ def search_arks(
     - **page_size**: the number of results to include in the page.
     """
     # WIP issue 18
+    request_args = dict(request.query_params)
     naan = request_args["naan"]
 
     check_access(request, naan, authorization)
@@ -587,7 +598,6 @@ def search_arks(
         raise HTTPException(status_code=204)
 
     # Validate values provided in date_created and date_modified fields.
-    request_args = dict(request.query_params)
     fields_to_validate = ["date_created", "date_modified"]
     if "q" in request_args:
         field_queries = request_args["q"].split("&")
@@ -691,8 +701,12 @@ def return_config(
     """
     check_access(request, naan, authorization)
 
+    if config[naan]["default_shoulder"] in config[naan]["allowed_shoulders"]:
+        config[naan]["allowed_shoulders"].remove(config[naan]["default_shoulder"])
+
     # Remove configuration data the client doesn't need to know.
     subset = copy.deepcopy(config[naan])
+    del subset["naan"]
     del subset["trusted_ips"]
     del subset["api_keys"]
     del subset["sqlite_db_path"]
@@ -701,10 +715,7 @@ def return_config(
     return subset
 
 
-def log_request(level, client_ip, ark_string, request_headers, event_type):
-
-    # todo WIP issuw 18: get naan
-
+def log_request(level, client_ip, ark_string, request_headers, event_details, naan = None):
     """
     Assembles a tab-delmited log entry and writes it to the log file.
 
@@ -713,19 +724,20 @@ def log_request(level, client_ip, ark_string, request_headers, event_type):
     - **ark_string**: the ARK string from the event being logged. When called from search_arks(),
       this is the request query string.
     - **request_headers**: the HTTP headers from the FastAPI Request object.
-    - **event_type**: a brief description of the event.
+    - **event_details**: a brief description of the event.
     """
     if "referer" in request_headers:
         referer = request_headers["referer"]
     else:
         referer = "null"
 
-    naan = get_naan_from_ark_string(ark_string)
+    if naan is None:
+        naan = get_naan_from_ark_string(ark_string)
 
     now = datetime.now()
     date_format = "%Y-%m-%d %H:%M:%S"
 
-    entry = f"{now.strftime(date_format)}\t{client_ip}\t{referer}\t{ark_string}\t{event_type}"
+    entry = f"{now.strftime(date_format)}\t{client_ip}\t{referer}\t{ark_string}\t{event_details}"
     logging.basicConfig(
         level=logging.INFO,
         filename=config[naan]["log_file_path"],
@@ -816,7 +828,7 @@ def check_access(request, naan, authorization):
     if naan not in registered_naans:
         message = f"Request using an unregistered NAAN."
         log_request(
-            "WARNING", request.client.host, str(request.url), request.headers, message
+            "WARNING", request.client.host, str(request.url), request.headers, message, naan
         )
         raise HTTPException(status_code=403)
 
@@ -827,7 +839,7 @@ def check_access(request, naan, authorization):
     ):
         message = f"Request from an untrusted IP address."
         log_request(
-            "WARNING", request.client.host, str(request.url), request.headers, message
+            "WARNING", request.client.host, str(request.url), request.headers, message, naan
         )
         raise HTTPException(status_code=403)
 
@@ -835,6 +847,6 @@ def check_access(request, naan, authorization):
     if authorization not in config[naan]["api_keys"]:
         message = f"API key {authorization} not configured."
         log_request(
-            "WARNING", request.client.host, str(request.url), request.headers, message
+            "WARNING", request.client.host, str(request.url), request.headers, message, naan
         )
         raise HTTPException(status_code=403)
