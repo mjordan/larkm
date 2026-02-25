@@ -14,6 +14,7 @@ larkm is a simple [ARK](https://arks.org/) manager that can:
 * allow fulltext indexing of ERC metadata
 * delete ARKs
 * log requests for ARK resolution
+* support multiple NAANs (organizations)
 
 ARK resolution is provided via requests to larkm's host followed by an ARK (e.g. `https://myhost.net/ark:12345/s1f4eca6e0a8ab`) and the other operations are provided through standard REST requests to larkm's management endpoint (`/larkm`). This REST interface allows creating, persisting, updating, and deleting ARKs, and can expose a subset of larkm's configuration data to trusted clients. Access to the REST endpoints can be controlled by registering the IP addresses of trused clients and using API keys, as explained in the "Configuration" section below. Even though larkm is designed to be REST-first, a [simple GUI application](https://github.com/mjordan/larkm_manager) for managing ARKs in larkm is under development.
 
@@ -48,8 +49,6 @@ If you want to put your configuration file in a different location, create an en
 
 The config settings are:
 
-* "default_naan": the Name Assigning Authority Number to use if none is supplied when an ARK is created.
-* "allowed_naans": a list of NAANS that are allowed in new ARKs provided by clients. If your default NAAN is the only one registered in your config file, provide an empty list for "allowed_naans" (e.g. `[]`).
 * "default_shoulder", the ARK shoulder applied to new ARKs if one is not provided.
 * "allowed_shoulders", a list of shoulders that are allowed in new ARKs provided by clients. If your default shoulder is the only one currently used by your NAAN, provide an empty list for "allowed_shoulders" (e.g. `[]`).
 * "committment_statement", a mapping from shoulders to text expressing your institution's committment to maintaining the ARKs.
@@ -62,29 +61,66 @@ The config settings are:
 
 ```json
 {
-  "default_naan": "99999",
-  "allowed_naans": ["11111", "22222", "33333"],
-  "default_shoulder": "s1",
-  "allowed_shoulders": ["s8", "s9", "x9", "z1"],
-  "committment_statement": {
-       "s1": "ACME University commits to maintain ARKs that have 's1' as a shoulder for a long time.",
-       "s8": "ACME University commits to maintain ARKs that have 's8' as a shoulder until the end of 2025.",
-       "default": "Default committment statement."
+  "99999": {
+    "naan": "99999",
+    "default_shoulder": "s1",
+    "allowed_shoulders": [
+      "s2",
+      "s3",
+      "x9"
+    ],
+    "committment_statements": {
+      "s1": "ACME University commits to maintain ARKs that have 's1' as a shoulder for a long time.",
+      "s3": "ACME University commits to maintain ARKs that have 's3' as a shoulder until the end of 2025.",
+      "default": "Default committment statement."
+    },
+    "erc_metadata_defaults": {
+      "who": ":at",
+      "what": ":at",
+      "when": ":at"
+    },
+    "sqlite_db_path": "fixtures/larkmtest.db",
+    "log_file_path": "/tmp/larkm.log",
+    "resolver_hosts": {
+      "global": "https://n2t.net/",
+      "local": "https://resolver.myorg.net"
+    },
+    "whoosh_index_dir_path": "fixtures/index_dir",
+    "trusted_ips": [],
+    "api_keys": [
+      "myapikey"
+    ]
   },
-  "erc_metadata_defaults": {
-       "who": ":at",
-       "what": ":at",
-       "when": ":at"
-  },
-  "sqlite_db_path": "fixtures/larkmtest.db",
-  "log_file_path": "/tmp/larkm.log",
-  "resolver_hosts": {
-     "global": "https://n2t.net/",
-     "local": "https://resolver.myorg.net"
-  },
-  "whoosh_index_dir_path": "index_dir",
-  "trusted_ips": ["144.5.723.213", "144.56.78.175"],
-  "api_keys": ["d9771c6c-b9d0-4dc3-8549-e17ddfc12826", "some__--random--string"]
+  "12345": {
+    "naan": "12345",
+    "default_shoulder": "s1",
+    "allowed_shoulders": [
+      "s2",
+      "s3",
+      "x9"
+    ],
+    "committment_statements": {
+      "s1": "ACME University commits to maintain ARKs that have 's1' as a shoulder for a long time.",
+      "s3": "ACME University commits to maintain ARKs that have 's3' as a shoulder until the end of 2025.",
+      "default": "Default committment statement."
+    },
+    "erc_metadata_defaults": {
+      "who": ":at",
+      "what": ":at",
+      "when": ":at"
+    },
+    "sqlite_db_path": "fixtures/larkmtest.db",
+    "log_file_path": "/tmp/larkm.log",
+    "resolver_hosts": {
+      "global": "https://n2t.net/",
+      "local": "https://resolver.myorg.net"
+    },
+    "whoosh_index_dir_path": "fixtures/index_dir",
+    "trusted_ips": [],
+    "api_keys": [
+      "myapikey"
+    ]
+  }
 }
 ```
 
@@ -114,7 +150,7 @@ To see the configured metadata and committment statement for the ARK instead of 
 REST clients can provide a `naan,` a `shoulder` and/or an `identifer` value in the requst body.
 
 * Clients must always provide a `target` value.
-* If a NAAN is not provided, larkm will use its default NAAN.
+* Clients must always provide a `naan` value.
 * If a shoulder is not provided, larkm will use its default shoulder.
 * If an identifier is not provided, larkm will generate one using the first 12 characters (minus the hypen at position 9) of a v4 UUID as the identifier.
 * If an identifier is provided, it must not contain a shoulder.
@@ -122,7 +158,7 @@ REST clients can provide a `naan,` a `shoulder` and/or an `identifer` value in t
 
 To add a new ARK (for example, to resolve to https://digital.lib.sfu.ca), issue the following request (the configured default NAAN is `12345`):
 
-`curl -v -X POST "http://127.0.0.1:8000/larkm" -H 'Content-Type: application/json' -d '{"shoulder": "s1", "identifier": "fde97fb3-634b-4232-b63e-e5128647efe7", "target": "https://digital.lib.sfu.ca"}'`
+`curl -v -X POST "http://127.0.0.1:8000/larkm" -H 'Content-Type: application/json' -d '{"naan": "12345", "shoulder": "s1", "identifier": "fde97fb3-634b-4232-b63e-e5128647efe7", "target": "https://digital.lib.sfu.ca"}'`
 
 If you now visit `http://127.0.0.1:8000/ark:12345/s1fde97fb3634b`, you will be redirected to https://digital.lib.sfu.ca. Larkm has used the first 12 characters from the UUID provided in the "identifer" field in the request body as the ID portion of the new ARK. You can also provide only the first 12 characters of a UUID v4 (with no hyphen) in the request's "identifier" field, instead of a full UUID, but in most cases it's simpler to provide a full UUID. If you provide a short ID, it will be validated as a truncated UUID v4.
 
@@ -130,11 +166,11 @@ If you omit the `shoulder`, the configured default shoulder will be used. If you
 
 If you provide a NAAN, and it is in the configured list of `allowed_naans`, it will be used instead of the NAAN configured as the `default_naan`:
 
-`curl -v -X POST "http://127.0.0.1:8000/larkm" -H 'Content-Type: application/json' -d '{"naan": "454545", "shoulder": "s1", "identifier": "fde97fb3-634b-4232-b63e-e5128647efe7", "target": "https://digital.lib.sfu.ca"}'`
+`curl -v -X POST "http://127.0.0.1:8000/larkm" -H 'Content-Type: application/json' -d '{"naan": "45454", "shoulder": "s1", "identifier": "fde97fb3-634b-4232-b63e-e5128647efe7", "target": "https://digital.lib.sfu.ca"}'`
 
 All responses to a POST will include in their body the values values provided in the POST request, plus any default values for missing body fields. The `where` value will be identical to the provided `ark_string` and cannot be populated on its own. Metadata values not provided will get the ERC ":at" ("the real value is at the given URL or identifier") value:
 
-`{"ark":{"shoulder": "s1", "identifier": "fde97fb3-634b-4232-b63e-e5128647efe7", "ark_string":"ark:12345/s1fde97fb3634b","target":"https://digital.lib.sfu.ca", "who":":at", "when":":at", "where":"ark:12345/s1fde97fb3634b", "what":":at"}, "urls":{"local":"https://resolver.myorg.net/ark:12345/s1fde97fb3634b","global":"https://n2t.net/ark:99999/s1fde97fb3634b"}}`
+`{"ark":{"shoulder": "s1", "identifier": "fde97fb3-634b-4232-b63e-e5128647efe7", "ark_string":"ark:45454/s1fde97fb3634b","target":"https://digital.lib.sfu.ca", "who":":at", "when":":at", "where":"ark:12345/s1fde97fb3634b", "what":":at"}, "urls":{"local":"https://resolver.myorg.net/ark:12345/s1fde97fb3634b","global":"https://n2t.net/ark:99999/s1fde97fb3634b"}}`
 
 Also included in the response are values for global and local `urls`.
 
@@ -170,9 +206,9 @@ As when  updating an ARK, when deleting, you cannot use an UUID identifier to de
 
 ### Getting larkm's configuration data
 
-`curl -v "http://127.0.0.1:8000/larkm/config"`
+`curl -v "http://127.0.0.1:8000/larkm/config/99999"`
 
-Note that larkm returns only the subset of configuration data that clients need to create new ARKs, specifically the "default_shoulder", "allowed_shoulders", "committment_statement", and "erc_metadata_defaults" configuration data. Only clients whose IP addresses are listed in the `trusted_ips` configuration option may request configuration data.
+The "99999" here is the NAAN's entry in the configuration file. This parameter is required since larkm only returns the configuration data for the specified NAAN, regardless of how many NAAN configurations are present in the configuration file. Note that larkm returns only the subset of configuration data that clients need to create new ARKs, specifically the "default_shoulder", "allowed_shoulders", "committment_statement", and "erc_metadata_defaults" configuration data. Only clients whose IP addresses are listed in the `trusted_ips` configuration option may request configuration data.
 
 ## Shoulders
 
@@ -189,9 +225,9 @@ larkm supports the [Electronic Resource Citation](https://www.dublincore.org/gro
 
 larkm supports fulltext indexing of ERC metadata and other ARK properties via the [Whoosh](https://pypi.org/project/Whoosh/) indexer. This feature is not intended as a general-purpose, end-user search interface but rather to be used for administrative purposes. Access to the `/larkm/search` endpoint is restricted to the IP addresses registered in the "trusted_ips" configuration setting and API keys.
 
-A simple example search is:
+A simple example search, including the required `naan` and `q` query parameters, is:
 
-`http://127.0.0.1:8000/larkm/search?q=erc_what:water`
+`http://127.0.0.1:8000/larkm/search?naan=99999&q=erc_what:water`
 
 If the search was successful, larkm returns a 200 HTTP status code. A successful result contains a JSON string with keys "num_results", "page", "page_size", and "arks".
 
@@ -285,6 +321,10 @@ If you run the indexer via cron, make sure the paths in `sqlite_db_path` and `wh
 If you have a registered NAAN that points to the server running larkm, you can use the Names to Things global ARK resolver's domain redirection feature by replacing the hostname of the server larkm is running on with `https://n2t.net/`. For example, if the local server larkm is running on is `https://ids.myorg.ca`, and your insitution's NAAN is registered to use that hostname, you can use a local instance of larkm to manage ARKs like `https://n2t.net/ark:12345/s1fde97fb3634b` (using your NAAN instead of `12345`) and they will resolve through your local larkm running on `https://ids.myorg.ca` to their target URLs.
 
 An advantage of doing this is that if your local resolver needs to be changed from `https://ids.myorg.ca/` to another host, assuming you update your NAAN record to use the new host, requests to `https://n2t.net/ark:12345/s1fde97fb3634b` will continue to resolve to their targets.
+
+## Support for multiple NAANs
+
+larkm supports using a single codebase and configuration file for managing ARKs that belong to multiple NAANs. It does this by looking for configured NAANs as top-level keys in the configuration file, and within each of those NAAN-specific configurations, allowing for independent configuration settings. All operations are restricted to the provided NAAN.
 
 ## API docs
 
