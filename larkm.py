@@ -588,18 +588,27 @@ def search_arks(
     - **page**: the page number to retrieve from the results.
     - **page_size**: the number of results to include in the page.
     """
-    # WIP issue 18
     request_args = dict(request.query_params)
     naan = request_args["naan"]
 
     check_access(request, naan, authorization)
 
+    if config[naan]["whoosh_index_dir_path"] == "":
+        log_request(
+            "ERROR", request.client.host, request_args, request.headers, f"whoosh_index_dir_path config setting for NAAN {naan} is empty", naan = naan
+        )
+        raise HTTPException(status_code=422)
+
     if not os.path.exists(config[naan]["whoosh_index_dir_path"]):
-        raise HTTPException(status_code=204)
+        message = f'Directory defined in whoosh_index_dir_path config setting {config[naan]["whoosh_index_dir_path"]} for NAAN {naan} not found'
+        log_request(
+            "ERROR", request.client.host, request_args, request.headers, message, naan = naan
+        )
+        raise HTTPException(status_code=422)
 
     # Validate values provided in date_created and date_modified fields.
     fields_to_validate = ["date_created", "date_modified"]
-    if "q" in request_args:
+    if "naan" in request_args and "q" in request_args:
         field_queries = request_args["q"].split("&")
         for field_query in field_queries:
             field_name = field_query.split(":")[0]
@@ -627,11 +636,16 @@ def search_arks(
                             + field_name
                             + " is not a valid date.",
                         )
+    else:
+        log_request(
+            "ERROR", request.client.host, request_args, request.headers, 'Bad request: both "naan" and "q" are required arguments.', naan = naan
+        )
+        raise HTTPException(status_code=400)
 
     idx = index.open_dir(config[naan]["whoosh_index_dir_path"])
 
     query_parser = QueryParser("identifier", schema=idx.schema)
-    query = query_parser.parse(q)
+    query = query_parser.parse(f"naan:{naan} AND ({q})")
     with idx.searcher() as searcher:
         results = searcher.search_page(query, int(page), pagelen=int(page_size))
         number_of_results = len(results)
@@ -665,7 +679,7 @@ def search_arks(
             con.close()
         except sqlite3.DatabaseError as e:
             log_request(
-                "ERROR", request.client.host, request_args, request.headers, str(e)
+                "ERROR", request.client.host, request_args, request.headers, str(e), naan = naan
             )
             raise HTTPException(status_code=500)
 

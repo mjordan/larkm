@@ -55,7 +55,7 @@ The config settings are:
 * "sqlite_db_path": absolute or relative (to larkm.py) path to larkm's sqlite3 database file. Must exist and be writable by the process running larkm.
 * "log_file_path": absolute or relative (to larkm.py) path to the log file. Must exist and be writable by the process running larkm.
 * "resolver_hosts": definition of the resolvers to include in the `urls` list returned to clients. Note that these are only returned in requests for `?info`; this setting has nothing to do with the resolution of an incoming ARK to its target URL.
-* "whoosh_index_dir_path": absolute or relative (to larkm.py) path to the Whoosh index data directory. Leave empty if you are not indexing ARK data. Must exist and be writable by the process running larkm.
+* "whoosh_index_dir_path": absolute or relative (to larkm.py) path to the Whoosh index data directory. Leave empty ("") if you are not indexing ARK data. Must exist and be writable by the process running larkm.
 * "trusted_ips": list of client IP addresses that can create, update, delete, and search ARKs; leave empty to allow access from all IPs (e.g. during testing).
 * "api_keys": list of strings used as API keys. Clients must pass their API key in a "Authorization" header, e.g. `Authorization: myapikey`.
 
@@ -277,6 +277,7 @@ If larkm cannot find the Whoosh index directory (or one is not configured), it r
 
 The request parameters for the `/larkm/search` endpoint are:
 
+* `naan`: the NAAN used to filter ARKs in the result set.
 * `q`: the Whoosh query (see examples below). Must be URL-encoded. Available fields, and the type of value they can have, to include in a search query are:
    * `erc_what`: free text
    * `erc_who`: free text
@@ -306,15 +307,17 @@ Searching uses the [default Whoosh query language](https://whoosh.readthedocs.io
 * q=`target:http://example.com`
 * q=`target:"https://example.com*"`
 
+Note that the `naan` is a separate request parameter and is not included as a keyword in the `q` parameter.
+
 ### Building the search index
 
 Updating the index is not done in realtime; instead, it is generated using the "index_arks.py" script provided in the "extras" directory, which indexes every row in the larkm sqlite3 database. This script would typically scheduled using cron but can be run manually. A typical cron entry looks like this:
 
 ```
-* * * * * /usr/bin/python3 /path/to/larkm/extras/index_arks.py /path/to/larkm/larkm.json
+* * * * * /usr/bin/python3 /path/to/larkm/extras/index_arks.py /path/to/larkm/larkm.json 99999
 ```
 
-If you run the indexer via cron, make sure the paths in `sqlite_db_path` and `whoosh_index_dir_path` configuration settings are absolute.
+where `99999` is the NAAN that defines the configuration used by the indexing script. Also note that ff you run the indexer via cron, make sure the paths in `sqlite_db_path` and `whoosh_index_dir_path` configuration settings are absolute.
 
 ## Using the Names to Things global resolver
 
@@ -324,7 +327,9 @@ An advantage of doing this is that if your local resolver needs to be changed fr
 
 ## Support for multiple NAANs
 
-larkm supports using a single codebase and configuration file for managing ARKs that belong to multiple NAANs. It does this by looking for configured NAANs as top-level keys in the configuration file, and within each of those NAAN-specific configurations, allowing for independent configuration settings. All operations are restricted to the provided NAAN.
+larkm supports using a single codebase and configuration file for managing ARKs that belong to multiple NAANs. It does this by looking for configured NAANs as top-level keys in the configuration file, and within each of those NAAN-specific configurations, allowing for independent configuration settings. All operations, including creating/updating/deleting ARKs, resolving ARKs, logging, and searching, are restricted to ARKs that contain the provided NAAN.
+
+This ability allows multiple organizations that each have their own NAAN use the same instance of larkm.
 
 ## API docs
 

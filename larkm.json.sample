@@ -112,7 +112,7 @@
       "global": "https://persist.acme.net/",
       "local": "https://resolver.myorg.net"
     },
-    "whoosh_index_dir_path": "fixtures/index_dir",
+    "whoosh_index_dir_path": "",
     "trusted_ips": [],
     "api_keys": [
       "myapikey"

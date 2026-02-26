@@ -8,6 +8,7 @@ import os
 import os.path
 import sqlite3
 import json
+import re
 import time
 from whoosh.fields import Schema, TEXT, ID, DATETIME
 from whoosh import index
@@ -15,10 +16,34 @@ from whoosh import index
 timer_start = time.perf_counter()
 
 larkm_config_file = sys.argv[1]
+naan = sys.argv[2]
+
 with open(larkm_config_file, "r") as config_file:
-    config = json.load(config_file)
+    entire_config = json.load(config_file)
+    if naan not in entire_config.keys():
+        sys.exit(f"Configuration for specified NAAN {naan} is not present in config file {larkm_config_file}.")
+    else:
+        config = entire_config[naan]
+
+
+def get_naan_from_ark_string(ark_string):
+    """
+    Extracts the NAAN from an ARK.
+
+    - **ark_string**: the ARK as a string, i.e., ark:{naan}/{identifier}
+    """
+
+    pattern = r"ark:/{0,1}(.+)/"
+    match = re.search(pattern, ark_string)
+    if match:
+        return match.group(1)
+    else:
+        # If there's no NAAN, return an empty string.
+        return ""
+
 
 schema = Schema(
+    naan=TEXT,
     identifier=ID(stored=True),
     date_created=DATETIME,
     date_modified=DATETIME,
@@ -56,6 +81,7 @@ while offset < num_rows:
     offset = offset + page_size
     for row in rows:
         writer.add_document(
+            naan=get_naan_from_ark_string(row["ark_string"]),
             identifier=row["identifier"],
             date_created=row["date_created"].split(" ")[0],
             date_modified=row["date_modified"].split(" ")[0],

@@ -25,7 +25,7 @@ def teardown_module(module):
 
 # Test the redirect functionality and other aspects of ARK resolution.
 def test_resolve_ark():
-    # Test basic resolution request by checking for a 307 response.
+    # Test basic resolution request by checking for a 307 response. To do this we create a fresh ARK.
     response = client.post(
         "/larkm",
         json={
@@ -375,6 +375,10 @@ def test_search_arks():
     response = client.get("/larkm/search?naan=99999&q=policy%3Axxxxxxxx")
     assert response.status_code == 200
     assert response.json() == {"num_results": 0, "page": 1, "page_size": 20, "arks": []}
+
+    # Do a search where searching is not enabled.
+    response = client.get("/larkm/search?naan=00000&q=foo")
+    assert response.status_code == 422
 
     # Do a search using page size and page number parameters.
     response = client.get("/larkm/search?naan=99999&q=policy%3Apolicy&page_size=2&page=2")
