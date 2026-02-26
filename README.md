@@ -16,14 +16,14 @@ larkm is a simple [ARK](https://arks.org/) manager that can:
 * log requests for ARK resolution
 * support multiple NAANs (organizations)
 
-ARK resolution is provided via requests to larkm's host followed by an ARK (e.g. `https://myhost.net/ark:12345/s1f4eca6e0a8ab`) and the other operations are provided through standard REST requests to larkm's management endpoint (`/larkm`). This REST interface allows creating, persisting, updating, and deleting ARKs, and can expose a subset of larkm's configuration data to trusted clients. Access to the REST endpoints can be controlled by registering the IP addresses of trused clients and using API keys, as explained in the "Configuration" section below. Even though larkm is designed to be REST-first, a [simple GUI application](https://github.com/mjordan/larkm_manager) for managing ARKs in larkm is under development.
+ARK resolution is provided via requests to larkm's host followed by an ARK (e.g. `https://myhost.net/ark:12345/s1f4eca6e0a8ab`). Other operations are provided through standard REST requests to larkm's management endpoint (`/larkm`). This REST interface allows creating, persisting, updating, and deleting ARKs, and can expose a subset of larkm's configuration data to trusted clients. Access to the REST endpoints can be controlled by registering the IP addresses of trused clients and using API keys, as explained in the "Configuration" section below. Even though larkm is designed to be REST-first, a [simple GUI application](https://github.com/mjordan/larkm_manager) for managing ARKs in larkm is under development.
 
 larkm is considered "lightweight" because it supports only a subset of ARK functionality, focusing on providing ways to manage ARKs locally and on using ARKs as persistent, resolvable identifiers. ARK features such as suffix passthrough and ARK qualifiers are currently out of scope.
 
 ## Requirements
 
 * Python 3.10+
-* sqlite3
+* sqlite3 (bundled with Python)
 * [FastAPI](https://fastapi.tiangolo.com/)
 * [Uvicorn](https://www.uvicorn.org/) or some other ASGI web server
 * [Whoosh](https://pypi.org/project/Whoosh/) for fulltext indexing of metadata
@@ -45,18 +45,20 @@ If you want to create your own, run the following commands:
 
 larkm uses a JSON configuration file in the same directory as `larkm.py` named `larkm.json`. Copy the sample configuration file, `larkm.json.sample`, to `larkm.json`, make any changes you need, and you are good to go.
 
-If you want to put your configuration file in a different location, create an environment variable `LARKM_CONFIG_FILE_PATH` that contains the abolute path to the config file. Larkm will check this environment variable first, and if it is not set or is set an is empty, will use the default location described above.
+If you want to put your configuration file in a different location, create an environment variable `LARKM_CONFIG_FILE_PATH` that contains the abolute path to the config file. larkm will check this environment variable first, and if it is not set or is set an is empty, will use the default location described above.
 
-The config settings are:
+larkm's configuration file groups configuration settings by NAAN. Within the configuration file, each top-level key contains the configuration settings for a single NAAN. Within each NAAN's configuration are the following key:value pairs:
 
-* "default_shoulder", the ARK shoulder applied to new ARKs if one is not provided.
-* "allowed_shoulders", a list of shoulders that are allowed in new ARKs provided by clients. If your default shoulder is the only one currently used by your NAAN, provide an empty list for "allowed_shoulders" (e.g. `[]`).
-* "committment_statement", a mapping from shoulders to text expressing your institution's committment to maintaining the ARKs.
+* "naan": the NAAN that serves as the key to the other configuration settings. This is identical to its parent NAAN key.
+* "default_shoulder": the ARK shoulder applied to new ARKs if one is not provided.
+* "allowed_shoulders": a list of shoulders that are allowed in new ARKs provided by clients. If your default shoulder is the only one currently used by your NAAN, provide an empty list for "allowed_shoulders" (e.g. `[]`).
+* "committment_statement": a mapping from shoulders to text expressing your institution's committment to maintaining the ARKs.
+* "erc_metadata_defaults": a definition of default values for ERC properties if the properties are not specified when the ARK is created.
 * "sqlite_db_path": absolute or relative (to larkm.py) path to larkm's sqlite3 database file. Must exist and be writable by the process running larkm.
 * "log_file_path": absolute or relative (to larkm.py) path to the log file. Must exist and be writable by the process running larkm.
 * "resolver_hosts": definition of the resolvers to include in the `urls` list returned to clients. Note that these are only returned in requests for `?info`; this setting has nothing to do with the resolution of an incoming ARK to its target URL.
 * "whoosh_index_dir_path": absolute or relative (to larkm.py) path to the Whoosh index data directory. Leave empty ("") if you are not indexing ARK data. Must exist and be writable by the process running larkm.
-* "trusted_ips": list of client IP addresses that can create, update, delete, and search ARKs; leave empty to allow access from all IPs (e.g. during testing).
+* "trusted_ips": list of client IP addresses that can create, update, delete, and search ARKs; leave empty to allow access from all IPs (e.g. during testing). Note that requests to resolve an ARK is open to all clients.
 * "api_keys": list of strings used as API keys. Clients must pass their API key in a "Authorization" header, e.g. `Authorization: myapikey`.
 
 ```json
@@ -221,9 +223,15 @@ larkm supports the [Electronic Resource Citation](https://www.dublincore.org/gro
 
 `target` is not an ERC property. It is used internally by larkm to simplify resolution to an HTTP[S] URL.
 
+## Support for multiple NAANs
+
+larkm supports using a single codebase and configuration file for managing ARKs that belong to multiple NAANs. It does this by looking for configured NAANs as top-level keys in the configuration file, and within each of those NAAN-specific configurations, allowing for independent configuration settings. All operations, including creating/updating/deleting ARKs, resolving ARKs, logging, and searching, are restricted to ARKs that contain the provided NAAN.
+
+This ability allows multiple organizations that each have their own NAAN use the same instance of larkm.
+
 ### Searching metadata
 
-larkm supports fulltext indexing of ERC metadata and other ARK properties via the [Whoosh](https://pypi.org/project/Whoosh/) indexer. This feature is not intended as a general-purpose, end-user search interface but rather to be used for administrative purposes. Access to the `/larkm/search` endpoint is restricted to the IP addresses registered in the "trusted_ips" configuration setting and API keys.
+larkm supports fulltext indexing of ERC metadata and other ARK properties via the [Whoosh](https://pypi.org/project/Whoosh/) indexer. This feature is not intended as a general-purpose, public search interface but rather to be used for administrative purposes. Access to the `/larkm/search` endpoint is restricted to the IP addresses registered in the "trusted_ips" configuration setting and API keys.Query strings must be URL-encoded.
 
 A simple example search, including the required `naan` and `q` query parameters, is:
 
@@ -273,7 +281,7 @@ If no results were found, larkm returns a 200 HTTP status code and the same JSON
 {"num_results":0,"page":1,"page_size":"20","arks":[]}
 ```
 
-If larkm cannot find the Whoosh index directory (or one is not configured), it returns a 204 (No content).
+If larkm cannot find the Whoosh index directory (or one is not configured), it returns a 204 (No content) to the requesting client.
 
 The request parameters for the `/larkm/search` endpoint are:
 
@@ -292,7 +300,7 @@ The request parameters for the `/larkm/search` endpoint are:
 * `page`: the page number. Optional; if omitted, the first page is returned.
 * `page_size`: the number of ARKs to include in the page of results. Optional; default is 20.
 
-Searching uses the [default Whoosh query language](https://whoosh.readthedocs.io/en/latest/querylang.html), which supports boolean operators "AND", "OR", and "NOT", phase searches, and wildcards. Some example queries (not URL-encoded for easy reading) are:
+Searching uses the [default Whoosh query language](https://whoosh.readthedocs.io/en/latest/querylang.html), which supports boolean operators "AND", "OR", and "NOT", phase searches, grouping, and wildcards. Some example queries (not URL-encoded for easy reading) are:
 
 * q=`erc_what:vancouver`
 * q=`erc_what:"Biggest trends in airliners"`
@@ -307,29 +315,23 @@ Searching uses the [default Whoosh query language](https://whoosh.readthedocs.io
 * q=`target:http://example.com`
 * q=`target:"https://example.com*"`
 
-Note that the `naan` is a separate request parameter and is not included as a keyword in the `q` parameter.
+Note that the `naan` is a separate request parameter and should not included as a keyword within the `q` parameter. Internaly, larkm adds it to the `q` query string, i.e., `naan:{naan} AND ({q})` to limit results to ARKs that contain the specified NAAN.
 
 ### Building the search index
 
-Updating the index is not done in realtime; instead, it is generated using the "index_arks.py" script provided in the "extras" directory, which indexes every row in the larkm sqlite3 database. This script would typically scheduled using cron but can be run manually. A typical cron entry looks like this:
+Updating the index is not done in realtime; instead, it is generated using the "index_arks.py" script provided in the "extras" directory, which indexes every row in the larkm sqlite3 database. This script would typically scheduled using cron but can be run manually. The script takes two command-line arguments, the path to the larkm configuration file, and the NAAN used to limit which ARKs are indexed. A typical cron entry looks like this:
 
 ```
 * * * * * /usr/bin/python3 /path/to/larkm/extras/index_arks.py /path/to/larkm/larkm.json 99999
 ```
 
-where `99999` is the NAAN that defines the configuration used by the indexing script. Also note that ff you run the indexer via cron, make sure the paths in `sqlite_db_path` and `whoosh_index_dir_path` configuration settings are absolute.
+where `/path/to/larkm/larkm.json` is the path to the configuration file and `99999` is the NAAN that defines the configuration used by the indexing script. Also note that ff you run the indexer via cron, make sure the paths in `sqlite_db_path` and `whoosh_index_dir_path` configuration settings are absolute.
 
 ## Using the Names to Things global resolver
 
 If you have a registered NAAN that points to the server running larkm, you can use the Names to Things global ARK resolver's domain redirection feature by replacing the hostname of the server larkm is running on with `https://n2t.net/`. For example, if the local server larkm is running on is `https://ids.myorg.ca`, and your insitution's NAAN is registered to use that hostname, you can use a local instance of larkm to manage ARKs like `https://n2t.net/ark:12345/s1fde97fb3634b` (using your NAAN instead of `12345`) and they will resolve through your local larkm running on `https://ids.myorg.ca` to their target URLs.
 
-An advantage of doing this is that if your local resolver needs to be changed from `https://ids.myorg.ca/` to another host, assuming you update your NAAN record to use the new host, requests to `https://n2t.net/ark:12345/s1fde97fb3634b` will continue to resolve to their targets.
-
-## Support for multiple NAANs
-
-larkm supports using a single codebase and configuration file for managing ARKs that belong to multiple NAANs. It does this by looking for configured NAANs as top-level keys in the configuration file, and within each of those NAAN-specific configurations, allowing for independent configuration settings. All operations, including creating/updating/deleting ARKs, resolving ARKs, logging, and searching, are restricted to ARKs that contain the provided NAAN.
-
-This ability allows multiple organizations that each have their own NAAN use the same instance of larkm.
+An advantage of doing this is that if your local resolver needs to be changed from `https://ids.myorg.ca/` to another host, assuming you update your NAAN record to use the new host, requests to `https://n2t.net/ark:12345/s1fde97fb3634b` will continue to resolve invisibly to their targets.
 
 ## API docs
 

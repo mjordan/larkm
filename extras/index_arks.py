@@ -1,6 +1,8 @@
 """Index all rows in the arks table within a larkm database.
 
-Usage: python index_arks.py path/to/larkm.json
+Usage: python index_arks.py path/to/larkm.json 99999
+
+See the "Building the search index" section of the larkm README for more information.
 """
 
 import sys
@@ -30,7 +32,7 @@ def get_naan_from_ark_string(ark_string):
     """
     Extracts the NAAN from an ARK.
 
-    - **ark_string**: the ARK as a string, i.e., ark:{naan}/{identifier}
+    - **ark_string**: the ARK as a string, i.e., ark:[naan]/[identifier]
     """
 
     pattern = r"ark:/{0,1}(.+)/"
