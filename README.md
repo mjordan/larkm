@@ -5,11 +5,11 @@
 larkm is a simple [ARK](https://arks.org/) manager that can:
 
 * resolve ARKs to their target URLs
-* support both "modern" ARKs with no trailing `/` (e.g. `ark:12345`) and "classic" ARKs with the trailing `/` (e.g. `ark:/12345`). New ARKs are created without the trailing `/`, following current practice.
+* support both "modern" ARKs with no trailing `/` after the "ark:" namespace (e.g. `ark:12345`) and "classic" ARKs with the trailing `/` (e.g. `ark:/12345`). New ARKs are created without the trailing `/`, following current practice.
 * mint ARKs using the first 12 alphanumeric characters from UUID (v4) strings
 * persist new ARKs to an sqlite database
-* validate NAANs and ARK shoulders
-* update the ERC/Kernel metadata and target URLs of existing ARKs
+* validate NAANs and ARK shoulders against configuration
+* update the ERC/Kernel metadata, target URLs, and committment statements of existing ARKs (but not change NAANs, shoulders) of existing ARKs
 * provide basic [committment statements](https://arks.org/about/best-practices/) that are specific to shoulders
 * allow fulltext indexing of ERC metadata
 * delete ARKs
@@ -53,13 +53,15 @@ larkm's configuration file groups configuration settings by NAAN. Within the con
 * "default_shoulder": the ARK shoulder applied to new ARKs if one is not provided.
 * "allowed_shoulders": a list of shoulders that are allowed in new ARKs provided by clients. If your default shoulder is the only one currently used by your NAAN, provide an empty list for "allowed_shoulders" (e.g. `[]`).
 * "committment_statement": a mapping from shoulders to text expressing your institution's committment to maintaining the ARKs.
-* "erc_metadata_defaults": a definition of default values for ERC properties if the properties are not specified when the ARK is created.
+* "erc_metadata_defaults": a definition of default values for [ERC properties](https://www.dublincore.org/groups/kernel/spec/) if the properties are not specified when the ARK is created.
 * "sqlite_db_path": absolute or relative (to larkm.py) path to larkm's sqlite3 database file. Must exist and be writable by the process running larkm.
 * "log_file_path": absolute or relative (to larkm.py) path to the log file. Must exist and be writable by the process running larkm.
 * "resolver_hosts": definition of the resolvers to include in the `urls` list returned to clients. Note that these are only returned in requests for `?info`; this setting has nothing to do with the resolution of an incoming ARK to its target URL.
 * "whoosh_index_dir_path": absolute or relative (to larkm.py) path to the Whoosh index data directory. Leave empty ("") if you are not indexing ARK data. Must exist and be writable by the process running larkm.
 * "trusted_ips": list of client IP addresses that can create, update, delete, and search ARKs; leave empty to allow access from all IPs (e.g. during testing). Note that requests to resolve an ARK is open to all clients.
 * "api_keys": list of strings used as API keys. Clients must pass their API key in a "Authorization" header, e.g. `Authorization: myapikey`.
+
+The following sample JSON file contains configuration for two NAANs, "99999" and "12345", each with their own configuration specifics:
 
 ```json
 {
@@ -74,7 +76,7 @@ larkm's configuration file groups configuration settings by NAAN. Within the con
     "committment_statements": {
       "s1": "ACME University commits to maintain ARKs that have 's1' as a shoulder for a long time.",
       "s3": "ACME University commits to maintain ARKs that have 's3' as a shoulder until the end of 2025.",
-      "default": "Default committment statement."
+      "default": "ACME University is providing access to this ARK."
     },
     "erc_metadata_defaults": {
       "who": ":at",
@@ -102,8 +104,8 @@ larkm's configuration file groups configuration settings by NAAN. Within the con
       "x9"
     ],
     "committment_statements": {
-      "s1": "ACME University commits to maintain ARKs that have 's1' as a shoulder for a long time.",
-      "s3": "ACME University commits to maintain ARKs that have 's3' as a shoulder until the end of 2025.",
+      "s1": "Awesome University commits to maintain ARKs that have 's1' as a shoulder in perpetuity.",
+      "s3": "Awesome University commits to maintain ARKs that have 's3' as a shoulder in perpetuity.",
       "default": "Default committment statement."
     },
     "erc_metadata_defaults": {
@@ -111,13 +113,13 @@ larkm's configuration file groups configuration settings by NAAN. Within the con
       "what": ":at",
       "when": ":at"
     },
-    "sqlite_db_path": "fixtures/larkmtest.db",
-    "log_file_path": "/tmp/larkm.log",
+    "sqlite_db_path": "/data/larkm.db",
+    "log_file_path": "/logs/larkm.log",
     "resolver_hosts": {
       "global": "https://n2t.net/",
       "local": "https://resolver.myorg.net"
     },
-    "whoosh_index_dir_path": "fixtures/index_dir",
+    "whoosh_index_dir_path": "whoosh/index_dir",
     "trusted_ips": [],
     "api_keys": [
       "myapikey"
