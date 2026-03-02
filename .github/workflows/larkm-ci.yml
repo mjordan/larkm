@@ -10,11 +10,6 @@ jobs:
       -
         name: Checkout
         uses: actions/checkout@v6
-
-      -
-        id: commit
-        uses: pr-mpt/actions-commit-hash@v6
-
       -
         name: Set up Python 3.10
         uses: actions/setup-python@v4
