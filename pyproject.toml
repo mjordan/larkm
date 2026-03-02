@@ -3,13 +3,17 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "larm"
+name = "larkm"
 version = "1.0.0"
 description = "A lightweight ARK manager"
 requires-python = ">=3.10"
 dependencies = [
     "fastapi",
     "uvicorn",
-    "Whoosh",
+    "Whoosh"
+]
+
+[project.optional-dependencies]
+dependencies = [
     "pytest"
 ]
