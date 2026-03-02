@@ -1,9 +1,6 @@
 name: larkm-ci
 
-on:
-  push:
-    paths:
-      - '/**'
+on: [push, pull_request]
 
 jobs:
   unit-tests:
