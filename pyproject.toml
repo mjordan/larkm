@@ -8,6 +8,7 @@ version = "1.0.0"
 description = "A lightweight ARK manager"
 requires-python = ">=3.10"
 dependencies = [
+    "httpx",
     "fastapi",
     "uvicorn",
     "Whoosh",
