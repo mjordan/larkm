@@ -23,7 +23,9 @@ naan = sys.argv[2]
 with open(larkm_config_file, "r") as config_file:
     entire_config = json.load(config_file)
     if naan not in entire_config.keys():
-        sys.exit(f"Configuration for specified NAAN {naan} is not present in config file {larkm_config_file}.")
+        sys.exit(
+            f"Configuration for specified NAAN {naan} is not present in config file {larkm_config_file}."
+        )
     else:
         config = entire_config[naan]
 
