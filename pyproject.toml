@@ -1,3 +1,7 @@
+[tool.setuptools.packages.find]
+exclude = ["extras", "fixtures"]
+namespaces = false
+
 [project]
 name = "larkm"
 version = "1.0.0"
