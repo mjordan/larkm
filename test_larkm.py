@@ -660,6 +660,12 @@ def test_bad_api_key():
     assert delete_response.status_code == 403
 
 
+def test_bad_trusted_host():
+    response = client.get("/larkm/config/11111")
+    # The FastAPI test client's IP address is "testclient".
+    assert response.status_code == 403
+
+
 def test_get_naan_from_ark():
     naans_to_get_from_arks = {
         "12345": "ark:12345/x9062cdde7f9d6",

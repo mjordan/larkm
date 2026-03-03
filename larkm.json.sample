@@ -117,5 +117,34 @@
     "api_keys": [
       "myapikey"
     ]
+  },
+  "11111": {
+    "naan": "11111",
+    "default_shoulder": "v1",
+    "allowed_shoulders": [
+      "v2",
+      "v3"
+    ],
+    "committment_statements": {
+      "v1": "somerandomstring.",
+      "v3": "anotherrandomstring",
+      "default": "Default random committment statement."
+    },
+    "erc_metadata_defaults": {
+      "who": ":at",
+      "what": ":at",
+      "when": ":at"
+    },
+    "sqlite_db_path": "fixtures/larkmtest.db",
+    "log_file_path": "/tmp/larkm.log",
+    "resolver_hosts": {
+      "global": "https://persist.acme.net/",
+      "local": "https://resolver.myorg.net"
+    },
+    "whoosh_index_dir_path": "",
+    "trusted_ips": ["testclientx"],
+    "api_keys": [
+      "myapikey"
+    ]
   }
 }
