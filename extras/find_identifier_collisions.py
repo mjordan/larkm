@@ -5,7 +5,6 @@ can be generated before a duplicate is generated.
 import uuid
 import logging
 
-
 identifiers = list()
 max_number_identifiers = 100000000
 identifier_length = 12
