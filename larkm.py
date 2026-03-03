@@ -60,7 +60,11 @@ def resolve_ark(
 
     if naan not in config.keys():
         log_request(
-            "ERROR", request.client.host, ark_string, request.headers, "Resolution - invalid NAAN."
+            "ERROR",
+            request.client.host,
+            ark_string,
+            request.headers,
+            "Resolution - invalid NAAN.",
         )
         raise HTTPException(status_code=422, detail="Invalid NAAN.")
 
@@ -227,8 +231,13 @@ def create_ark(
     """
     check_access(request, ark.naan, authorization)
 
-    if config[ark.naan]["default_shoulder"] not in config[ark.naan]["allowed_shoulders"]:
-        config[ark.naan]["allowed_shoulders"].insert(0, config[ark.naan]["default_shoulder"])
+    if (
+        config[ark.naan]["default_shoulder"]
+        not in config[ark.naan]["allowed_shoulders"]
+    ):
+        config[ark.naan]["allowed_shoulders"].insert(
+            0, config[ark.naan]["default_shoulder"]
+        )
 
     if ark.target is None:
         raise HTTPException(status_code=422, detail="A 'target' value is required.")
@@ -425,7 +434,9 @@ def update_ark(
             raise HTTPException(status_code=404, detail="ARK not found")
         con.close()
     except sqlite3.DatabaseError as e:
-        log_request("ERROR", request.client.host, ark_string, request.headers, str(e), naan = naan)
+        log_request(
+            "ERROR", request.client.host, ark_string, request.headers, str(e), naan=naan
+        )
         raise HTTPException(status_code=500)
 
     old_ark = dict(zip(record.keys(), record))
@@ -496,10 +507,12 @@ def update_ark(
             ark_string,
             request.headers,
             f"ARK updated: {original_properties} updated to {updated_properties}",
-            naan = naan
+            naan=naan,
         )
     except sqlite3.DatabaseError as e:
-        log_request("ERROR", request.client.host, ark_string, request.headers, str(e), naan = naan)
+        log_request(
+            "ERROR", request.client.host, ark_string, request.headers, str(e), naan=naan
+        )
         raise HTTPException(status_code=500)
 
     urls = dict()
@@ -595,14 +608,24 @@ def search_arks(
 
     if config[naan]["whoosh_index_dir_path"] == "":
         log_request(
-            "ERROR", request.client.host, request_args, request.headers, f"whoosh_index_dir_path config setting for NAAN {naan} is empty", naan = naan
+            "ERROR",
+            request.client.host,
+            request_args,
+            request.headers,
+            f"whoosh_index_dir_path config setting for NAAN {naan} is empty",
+            naan=naan,
         )
         raise HTTPException(status_code=422)
 
     if not os.path.exists(config[naan]["whoosh_index_dir_path"]):
         message = f'Directory defined in whoosh_index_dir_path config setting {config[naan]["whoosh_index_dir_path"]} for NAAN {naan} not found'
         log_request(
-            "ERROR", request.client.host, request_args, request.headers, message, naan = naan
+            "ERROR",
+            request.client.host,
+            request_args,
+            request.headers,
+            message,
+            naan=naan,
         )
         raise HTTPException(status_code=422)
 
@@ -638,7 +661,12 @@ def search_arks(
                         )
     else:
         log_request(
-            "ERROR", request.client.host, request_args, request.headers, 'Bad request: both "naan" and "q" are required arguments.', naan = naan
+            "ERROR",
+            request.client.host,
+            request_args,
+            request.headers,
+            'Bad request: both "naan" and "q" are required arguments.',
+            naan=naan,
         )
         raise HTTPException(status_code=400)
 
@@ -679,7 +707,12 @@ def search_arks(
             con.close()
         except sqlite3.DatabaseError as e:
             log_request(
-                "ERROR", request.client.host, request_args, request.headers, str(e), naan = naan
+                "ERROR",
+                request.client.host,
+                request_args,
+                request.headers,
+                str(e),
+                naan=naan,
             )
             raise HTTPException(status_code=500)
 
@@ -729,7 +762,9 @@ def return_config(
     return subset
 
 
-def log_request(level, client_ip, ark_string, request_headers, event_details, naan = None):
+def log_request(
+    level, client_ip, ark_string, request_headers, event_details, naan=None
+):
     """
     Assembles a tab-delmited log entry and writes it to the log file.
 
@@ -842,7 +877,12 @@ def check_access(request, naan, authorization):
     if naan not in registered_naans:
         message = f"Request using an unregistered NAAN."
         log_request(
-            "WARNING", request.client.host, str(request.url), request.headers, message, naan
+            "WARNING",
+            request.client.host,
+            str(request.url),
+            request.headers,
+            message,
+            naan,
         )
         raise HTTPException(status_code=403)
 
@@ -853,7 +893,12 @@ def check_access(request, naan, authorization):
     ):
         message = f"Request from an untrusted IP address."
         log_request(
-            "WARNING", request.client.host, str(request.url), request.headers, message, naan
+            "WARNING",
+            request.client.host,
+            str(request.url),
+            request.headers,
+            message,
+            naan,
         )
         raise HTTPException(status_code=403)
 
@@ -861,6 +906,11 @@ def check_access(request, naan, authorization):
     if authorization not in config[naan]["api_keys"]:
         message = f"API key {authorization} not configured."
         log_request(
-            "WARNING", request.client.host, str(request.url), request.headers, message, naan
+            "WARNING",
+            request.client.host,
+            str(request.url),
+            request.headers,
+            message,
+            naan,
         )
         raise HTTPException(status_code=403)

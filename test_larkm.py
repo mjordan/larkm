@@ -381,7 +381,9 @@ def test_search_arks():
     assert response.status_code == 422
 
     # Do a search using page size and page number parameters.
-    response = client.get("/larkm/search?naan=99999&q=policy%3Apolicy&page_size=2&page=2")
+    response = client.get(
+        "/larkm/search?naan=99999&q=policy%3Apolicy&page_size=2&page=2"
+    )
     assert response.status_code == 200
     assert response.json() == {
         "num_results": 7,
@@ -453,7 +455,7 @@ def test_get_config():
         "committment_statements": {
             "v1": "somerandomstring.",
             "v3": "anotherrandomstring",
-            "default": "Default random committment statement."
+            "default": "Default random committment statement.",
         },
         "erc_metadata_defaults": {"who": ":at", "what": ":at", "when": ":at"},
         "resolver_hosts": {
