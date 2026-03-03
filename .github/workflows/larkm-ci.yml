@@ -24,4 +24,6 @@ jobs:
           python -m pip install .[dev]
 
       - name: Run Pytest
-        run: pytest
+        run: |
+          cp larkm.json.sample larkm.json
+          pytest
