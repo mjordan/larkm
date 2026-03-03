@@ -11,7 +11,7 @@ larkm is a simple [ARK](https://arks.org/) manager that can:
 * validate NAANs and ARK shoulders against configuration
 * update the ERC/Kernel metadata, target URLs, and committment statements of existing ARKs (but not change NAANs, shoulders) of existing ARKs
 * provide basic [committment statements](https://arks.org/about/best-practices/) that are specific to shoulders
-* allow fulltext indexing of ERC metadata
+* allow fulltext indexing of ERC metadata, committment statements, shoulders, targets, and other ARK properties
 * delete ARKs
 * log requests for ARK resolution
 * support multiple NAANs (organizations)
