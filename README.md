@@ -23,7 +23,6 @@ larkm is considered "lightweight" because it supports only a subset of ARK funct
 ## Requirements
 
 * Python 3.10+ (tested on Python 3.10-3.14)
-* sqlite3 (bundled with Python)
 * [FastAPI](https://fastapi.tiangolo.com/)
 * [Uvicorn](https://www.uvicorn.org/) or some other ASGI web server
 * [Whoosh](https://pypi.org/project/Whoosh/) for fulltext indexing of metadata
@@ -233,7 +232,7 @@ This ability allows multiple organizations that each have their own NAAN use the
 
 ### Searching metadata
 
-larkm supports fulltext indexing of ERC metadata and other ARK properties via the [Whoosh](https://pypi.org/project/Whoosh/) indexer. This feature is not intended as a general-purpose, public search interface but rather to be used for administrative purposes. Access to the `/larkm/search` endpoint is restricted to the IP addresses registered in the "trusted_ips" configuration setting and API keys.Query strings must be URL-encoded.
+larkm supports fulltext indexing of ERC metadata and other ARK properties via the [Whoosh](https://pypi.org/project/Whoosh/) indexer. This feature is not intended as a general-purpose, public search interface but rather to be used for administrative purposes. Access to the `/larkm/search` endpoint is restricted to the IP addresses registered in the "trusted_ips" configuration setting and API keys. Query strings must be URL-encoded.
 
 A simple example search, including the required `naan` and `q` query parameters, is:
 

@@ -17,8 +17,8 @@ output_filename = "output.csv"
 larkm_host = "http://localhost:8000/"
 # Leave shoulder empty if you want to use larkm's default shoulder.
 shoulder = ""
-# Leave naan empty if you want to use larkm's default naan.
-naan = ""
+# You must provide a NAAN.
+naan = "99999"
 # Leave api_key empty if larkm is not configured to use API keys.
 api_key = "myapikey"
 
