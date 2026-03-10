@@ -17,13 +17,13 @@ present in larkm's "trusted_ips" configuration option. 2) Change the six
 variables below to your own values. 3) Run python mint_arks_from_csv.py.
 """
 
-input_filename = "input.csv"
-output_filename = "output.csv"
+input_filename = "monday_input.csv"
+output_filename = "monday_output.csv"
 larkm_host = "http://localhost:8000/"
 # Leave shoulder empty if you want to use larkm's default shoulder.
 shoulder = ""
 # You must provide a NAAN.
-naan = "99999"
+naan = "12345"
 # Leave api_key empty if larkm is not configured to use API keys.
 api_key = "myapikey"
 

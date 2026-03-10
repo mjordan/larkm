@@ -64,6 +64,7 @@ def resolve_ark(
             request.client.host,
             ark_string,
             request.headers,
+            None,
             "Resolution - invalid NAAN.",
         )
         raise HTTPException(status_code=422, detail="Invalid NAAN.")
@@ -85,18 +86,26 @@ def resolve_ark(
                     request.client.host,
                     ark_string,
                     request.headers,
+                    None,
                     "ARK not found",
                 )
             raise HTTPException(status_code=404, detail="ARK not found")
         con.close()
     except sqlite3.DatabaseError as e:
-        log_request("ERROR", request.client.host, ark_string, request.headers, str(e))
+        log_request(
+            "ERROR", request.client.host, ark_string, request.headers, None, str(e)
+        )
         raise HTTPException(status_code=500)
 
     if info is None:
         if config[naan]["log_file_path"]:
             log_request(
-                "INFO", request.client.host, ark_string, request.headers, "Resolution"
+                "INFO",
+                request.client.host,
+                ark_string,
+                request.headers,
+                None,
+                "Resolution",
             )
         return RedirectResponse(record["target"])
     else:
@@ -113,7 +122,7 @@ def resolve_ark(
                     )
         if config[naan]["log_file_path"]:
             log_request(
-                "INFO", request.client.host, ark_string, request.headers, "?info"
+                "INFO", request.client.host, ark_string, request.headers, None, "?info"
             )
         return Response(content=erc + policy + "\n\n", media_type="text/plain")
 
@@ -153,13 +162,21 @@ def get_ark(
                     request.client.host,
                     ark_string,
                     request.headers,
+                    authorization,
                     "ARK not found",
                 )
             raise HTTPException(status_code=404, detail="ARK not found")
         con.close()
         ark = record
     except sqlite3.DatabaseError as e:
-        log_request("ERROR", request.client.host, ark_string, request.headers, str(e))
+        log_request(
+            "ERROR",
+            request.client.host,
+            ark_string,
+            request.headers,
+            authorization,
+            str(e),
+        )
         raise HTTPException(status_code=500)
 
     if config[naan]["log_file_path"]:
@@ -168,8 +185,10 @@ def get_ark(
             request.client.host,
             ark_string,
             request.headers,
-            "Retrieve ARK data",
+            authorization,
+            "ARK data retrieved.",
         )
+
     return record
 
 
@@ -293,7 +312,12 @@ def create_ark(
         con.close()
     except sqlite3.DatabaseError as e:
         log_request(
-            "ERROR", request.client.host, ark.ark_string, request.headers, str(e)
+            "ERROR",
+            request.client.host,
+            ark.ark_string,
+            request.headers,
+            authorization,
+            str(e),
         )
         raise HTTPException(status_code=500)
 
@@ -313,7 +337,12 @@ def create_ark(
     except sqlite3.DatabaseError as e:
         # We don't have the ark_string at this point so we use the ark.identifier in our log entry.
         log_request(
-            "ERROR", request.client.host, ark.identifier, request.headers, str(e)
+            "ERROR",
+            request.client.host,
+            ark.identifier,
+            request.headers,
+            authorization,
+            str(e),
         )
         raise HTTPException(status_code=500)
 
@@ -363,7 +392,12 @@ def create_ark(
         con.close()
     except sqlite3.DatabaseError as e:
         log_request(
-            "ERROR", request.client.host, ark.ark_string, request.headers, str(e)
+            "ERROR",
+            request.client.host,
+            ark.ark_string,
+            request.headers,
+            authorization,
+            str(e),
         )
         raise HTTPException(status_code=500)
 
@@ -376,6 +410,15 @@ def create_ark(
         urls["global"] = (
             f'{config[ark.naan]["resolver_hosts"]["global"].rstrip("/")}/{ark.ark_string}'
         )
+
+    log_request(
+        "INFO",
+        request.client.host,
+        ark.ark_string,
+        request.headers,
+        authorization,
+        "ARK created.",
+    )
 
     del ark.naan
     return {"ark": ark, "urls": urls}
@@ -435,7 +478,13 @@ def update_ark(
         con.close()
     except sqlite3.DatabaseError as e:
         log_request(
-            "ERROR", request.client.host, ark_string, request.headers, str(e), naan=naan
+            "ERROR",
+            request.client.host,
+            ark_string,
+            request.headers,
+            authorization,
+            str(e),
+            naan=naan,
         )
         raise HTTPException(status_code=500)
 
@@ -506,12 +555,19 @@ def update_ark(
             request.client.host,
             ark_string,
             request.headers,
+            authorization,
             f"ARK updated: {original_properties} updated to {updated_properties}",
             naan=naan,
         )
     except sqlite3.DatabaseError as e:
         log_request(
-            "ERROR", request.client.host, ark_string, request.headers, str(e), naan=naan
+            "ERROR",
+            request.client.host,
+            ark_string,
+            request.headers,
+            authorization,
+            str(e),
+            naan=naan,
         )
         raise HTTPException(status_code=500)
 
@@ -524,6 +580,15 @@ def update_ark(
         urls["global"] = (
             f'{config[naan]["resolver_hosts"]["global"].rstrip("/")}/{ark.ark_string}'
         )
+
+    log_request(
+        "INFO",
+        request.client.host,
+        ark.ark_string,
+        request.headers,
+        authorization,
+        "ARK updated.",
+    )
 
     # Delete the NAAN because we do not return it to the requesting client.
     del ark.naan
@@ -561,7 +626,14 @@ def delete_ark(
             raise HTTPException(status_code=404, detail="ARK not found")
         con.close()
     except sqlite3.DatabaseError as e:
-        log_request("ERROR", request.client.host, ark_string, request.headers, str(e))
+        log_request(
+            "ERROR",
+            request.client.host,
+            ark_string,
+            request.headers,
+            authorization,
+            str(e),
+        )
         raise HTTPException(status_code=500)
 
     # If ARK found, delete it.
@@ -573,13 +645,32 @@ def delete_ark(
             con.commit()
             con.close()
             log_request(
-                "INFO", request.client.host, ark_string, request.headers, "ARK deleted."
+                "INFO",
+                request.client.host,
+                ark_string,
+                request.headers,
+                authorization,
+                "ARK deleted.",
             )
         except sqlite3.DatabaseError as e:
             log_request(
-                "ERROR", request.client.host, ark_string, request.headers, str(e)
+                "ERROR",
+                request.client.host,
+                ark_string,
+                request.headers,
+                authorization,
+                str(e),
             )
             raise HTTPException(status_code=500)
+
+    log_request(
+        "INFO",
+        request.client.host,
+        ark_string,
+        request.headers,
+        authorization,
+        "ARK deleted.",
+    )
 
 
 @app.get("/larkm/search")
@@ -610,8 +701,9 @@ def search_arks(
         log_request(
             "ERROR",
             request.client.host,
-            request_args,
+            q,
             request.headers,
+            authorization,
             f"whoosh_index_dir_path config setting for NAAN {naan} is empty",
             naan=naan,
         )
@@ -622,8 +714,9 @@ def search_arks(
         log_request(
             "ERROR",
             request.client.host,
-            request_args,
+            q,
             request.headers,
+            authorization,
             message,
             naan=naan,
         )
@@ -663,8 +756,9 @@ def search_arks(
         log_request(
             "ERROR",
             request.client.host,
-            request_args,
+            q,
             request.headers,
+            authorization,
             'Bad request: both "naan" and "q" are required arguments.',
             naan=naan,
         )
@@ -709,12 +803,23 @@ def search_arks(
             log_request(
                 "ERROR",
                 request.client.host,
-                request_args,
+                q,
                 request.headers,
+                authorization,
                 str(e),
                 naan=naan,
             )
             raise HTTPException(status_code=500)
+
+    log_request(
+        "INFO",
+        request.client.host,
+        q,
+        request.headers,
+        authorization,
+        f"ARK data for NAAN {naan} searched ({number_of_results} results).",
+        naan=naan,
+    )
 
     if len(arks) == 0:
         return {
@@ -759,11 +864,22 @@ def return_config(
     del subset["sqlite_db_path"]
     del subset["log_file_path"]
     del subset["whoosh_index_dir_path"]
+
+    log_request(
+        "INFO",
+        request.client.host,
+        f"/larkm/config/{naan}",
+        request.headers,
+        authorization,
+        f"Config requested for NAAN {naan}.",
+        naan=naan,
+    )
+
     return subset
 
 
 def log_request(
-    level, client_ip, ark_string, request_headers, event_details, naan=None
+    level, client_ip, ark_string, request_headers, auth_key, event_details, naan=None
 ):
     """
     Assembles a tab-delmited log entry and writes it to the log file.
@@ -771,14 +887,21 @@ def log_request(
     - **level**: INFO, WARNING, or ERROR from the standard Python logging levels.
     - **client_ip**: the IP address of the client triggering the event.
     - **ark_string**: the ARK string from the event being logged. When called from search_arks(),
-      this is the request query string.
+      this is the request "q" query parameter.
     - **request_headers**: the HTTP headers from the FastAPI Request object.
+    - **auth_key**: The "Authorization" header, Annotated[str | None, Header()]
     - **event_details**: a brief description of the event.
+    - **naan**: the NAAN.
     """
     if "referer" in request_headers:
         referer = request_headers["referer"]
     else:
         referer = "null"
+
+    if auth_key is None:
+        api_key_suffix = "null"
+    else:
+        api_key_suffix = auth_key[-4:]
 
     if naan is None:
         naan = get_naan_from_ark_string(ark_string)
@@ -786,12 +909,12 @@ def log_request(
     now = datetime.now()
     date_format = "%Y-%m-%d %H:%M:%S"
 
-    entry = f"{now.strftime(date_format)}\t{client_ip}\t{referer}\t{ark_string}\t{event_details}"
+    entry = f"{now.strftime(date_format)}\t{client_ip}\t{api_key_suffix}\t{referer}\t{ark_string}\t{event_details}"
     logging.basicConfig(
         level=logging.INFO,
         filename=config[naan]["log_file_path"],
         filemode="a",
-        format="%(lineno)d - %(message)s",
+        format="%(message)s",
     )
     if level == "ERROR":
         logging.error(entry)
@@ -881,6 +1004,7 @@ def check_access(request, naan, authorization):
             request.client.host,
             str(request.url),
             request.headers,
+            authorization,
             message,
             naan,
         )
@@ -897,6 +1021,7 @@ def check_access(request, naan, authorization):
             request.client.host,
             str(request.url),
             request.headers,
+            authorization,
             message,
             naan,
         )
@@ -910,6 +1035,7 @@ def check_access(request, naan, authorization):
             request.client.host,
             str(request.url),
             request.headers,
+            authorization,
             message,
             naan,
         )
