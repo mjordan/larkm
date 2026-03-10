@@ -78,7 +78,7 @@ for row in input_csv_reader:
 
         if confirm_arks is True:
             cr = requests.get(row["ark_local_resolver"], allow_redirects=False)
-            if cr.headers.get('location') == row["target"]:
+            if cr.headers.get("location") == row["target"]:
                 row["test_resolution"] = "confirmed"
             else:
                 row["test_resolution"] = "ARK not resolving"
