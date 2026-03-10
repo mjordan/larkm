@@ -585,6 +585,7 @@ def delete_ark(
 @app.get("/larkm/search")
 def search_arks(
     request: Request,
+    naan: Optional[str] = "",
     q: Optional[str] = "",
     page=1,
     page_size=20,
@@ -602,7 +603,6 @@ def search_arks(
     - **page_size**: the number of results to include in the page.
     """
     request_args = dict(request.query_params)
-    naan = request_args["naan"]
 
     check_access(request, naan, authorization)
 
