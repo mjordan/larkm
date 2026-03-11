@@ -65,7 +65,7 @@ def resolve_ark(
             ark_string,
             request.headers,
             None,
-            "Resolution - invalid NAAN.",
+            "Resolution attempt - invalid NAAN.",
         )
         raise HTTPException(status_code=422, detail="Invalid NAAN.")
 
@@ -105,7 +105,7 @@ def resolve_ark(
                 ark_string,
                 request.headers,
                 None,
-                "Resolution",
+                f'Resolution to {record["target"]}',
             )
         return RedirectResponse(record["target"])
     else:

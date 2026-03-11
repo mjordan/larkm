@@ -340,7 +340,7 @@ Thanks to [OpenAPI](https://github.com/OAI/OpenAPI-Specification), you can see l
 
 ## Logging
 
-larkm provides basic logging of requests to its resolver endpoint (i.e., `/ark:foo/bar`). The path to the log is set in the "log_file_path" configuration option. To disable logging, use `false` as the value of this option. The log is a tab-delimited file containing a datestamp, the client's IP address, the requested ARK string, the corresponding target URL (or "ARK not found" if the requested ARK was not found, or "info" if the request was for the ARK's metadata), and the HTTP referer. If the referer is not available, the value in the TSV entry is "null".
+larkm provides logging of requests to its resolver endpoint (i.e., `/ark:foo/bar`). The path to the log is set in the "log_file_path" configuration option. To disable logging, use `false` as the value of this option. The log is a tab-delimited file containing a datestamp, the client's IP address, the last four characters of the API key that performed the operation ("null" if there was not API key), and the HTTP referer (or "null" if none is available), the requested ARK string (or other URL path/query string), and a description of the event being logged.
 
 Updates to ARKs are also logged, showing the original version of the updated properties and the new versions. ARK deletions are also logged.
 
@@ -348,7 +348,7 @@ Errors and warnings are also logged.
 
 ## Scripts
 
-The "extras" directory contains two sample scripts:
+The "extras" directory contains three utility scripts:
 
 1. a script to test larkm's performance
 1. a script to mint ARKs from a CSV file
