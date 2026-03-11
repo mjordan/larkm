@@ -47,7 +47,7 @@ If you want to create your own, run the following commands:
 
 ### Configuration
 
-larkm uses a JSON configuration file in the same directory as `larkm.py` named `larkm.json`. Copy the sample configuration file, `larkm.json.sample`, to `larkm.json`, make any changes you need, and you are good to go.
+larkm uses a JSON configuration file in the same directory as `larkm.py` named `larkm.json`. Copy the sample configuration file, `larkm.json.sample`, to `larkm.json`, make any changes you need, and restart larkm to load the new configuration.
 
 If you want to put your configuration file in a different location, create an environment variable `LARKM_CONFIG_FILE_PATH` that contains the abolute path to the config file. larkm will check this environment variable first, and if it is not set or is set an is empty, will use the default location described above.
 
@@ -141,7 +141,7 @@ Requests to larkm's REST interface at `/larkm` are allowed if:
 
 Both of these conditions must be met (unless `trusted_ips` is empty, e.g. during testing). If both conditions are not met, clients will receive a `403` response.
 
-Requests for simple ARK resolution, including requests that contain `?info`, are not restricted. For all other operations that require an API key, the last four characters of the API key are logged.
+Requests for simple ARK resolution, including requests that contain `?info`, are not restricted. For all operations that require an API key, the last four characters of the API key are logged.
 
 ### Starting larkm
 
@@ -157,15 +157,15 @@ To see the configured metadata and committment statement for the ARK instead of 
 
 REST clients creating ARKs:
 
-* Must provide a `target` value.
-* Must provide a `naan` value.
-* May provide a `shoulder` value.
+* Must provide a `target` value in the JSON request body.
+* Must provide a `naan` value in the JSON request body.
+* May provide a `shoulder` value in the JSON request body.
    * If a shoulder is not provided, larkm will use its default shoulder.
-* May provide a UUIDv4 identifier value.
+* May provide a UUIDv4 identifier value in the JSON request body.
    * If an identifier is not provided, larkm will generate one using the first 12 characters (minus the hypen at position 9) of a v4 UUID as the identifier.
    * If an identifier is provided, it must not contain a shoulder.
    * If the identifier that is provided is already in use, larkm will respond to the `POST` request with an `409` status code acommpanied by the body `{"detail":"Identifier <identifier> already in use."}`.
-* May provide simple ERC metadata (see below for more info).
+* May provide simple ERC metadata (see below for more info) in the JSON request body.
 
 To add a new ARK (for example, to resolve to https://digital.lib.sfu.ca), issue the following request (the configured default NAAN is `12345`):
 
