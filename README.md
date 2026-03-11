@@ -188,9 +188,9 @@ You can update an existing ARK's ERC metadata and target. However, an ARK's `naa
 
 Some sample queries:
 
-`curl -v -X PUT "http://127.0.0.1:8000/larkm/ark:12345/s1fde97fb3634b" -H 'Content-Type: application/json' -d '{"ark_string": "ark:12345/s1fde97fb3634b", "target": "https://summit.sfu.ca"}'`
+`curl -v -X PATCH "http://127.0.0.1:8000/larkm/ark:12345/s1fde97fb3634b" -H 'Content-Type: application/json' -d '{"ark_string": "ark:12345/s1fde97fb3634b", "target": "https://summit.sfu.ca"}'`
 
-`curl -v -X PUT "http://127.0.0.1:8000/larkm/ark:12345/s1fde97fb3634b" -H 'Content-Type: application/json' -d '{"ark_string": "ark:12345/s1fde97fb3634b", "who": "Jordan, Mark", "when": "2020", "policy": "We will maintain this ARK for a long time."}'`
+`curl -v -X PATCH "http://127.0.0.1:8000/larkm/ark:12345/s1fde97fb3634b" -H 'Content-Type: application/json' -d '{"ark_string": "ark:12345/s1fde97fb3634b", "who": "Jordan, Mark", "when": "2020", "policy": "We will maintain this ARK for a long time."}'`
 
 Including `where` in the request body will result in an HTTP `409` response with the message `'where' is automatically assigned the value of the ark string and cannot be updated.`
 

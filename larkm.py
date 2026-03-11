@@ -424,7 +424,7 @@ def create_ark(
     return {"ark": ark, "urls": urls}
 
 
-@app.put("/larkm/ark:{naan}/{identifier}")
+@app.patch("/larkm/ark:{naan}/{identifier}")
 def update_ark(
     request: Request,
     naan: str,

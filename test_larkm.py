@@ -496,7 +496,7 @@ def test_update_ark():
     }
 
     # Then update the when and what body fields.
-    response = client.put(
+    response = client.patch(
         "/larkm/ark:99999/s2cda60df9b468",
         json={
             "when": "2020",
@@ -535,7 +535,7 @@ def test_update_ark():
         },
     )
 
-    response = client.put(
+    response = client.patch(
         "/larkm/ark:12345/s2aaed59b06ad6",
         json={
             "policy": "A test policy.",
@@ -573,7 +573,7 @@ def test_update_ark():
     )
     assert response.status_code == 201
 
-    response = client.put(
+    response = client.patch(
         "/larkm/ark:12345/s23a8a9396-baa8",
         json={"ark_string": "ark:12345/s23a8a9396baa85bxxx"},
     )
@@ -594,7 +594,7 @@ def test_update_ark():
     )
     assert response.status_code == 201
 
-    response = client.put(
+    response = client.patch(
         "/larkm/ark:99999/s2292c07457b79",
         json={
             "ark_string": "ark:99999/s2292c07457b79",
@@ -608,7 +608,7 @@ def test_update_ark():
     }
 
     # Intentionally trigger a 422 by not providing an ark_string in the body.
-    response = client.put(
+    response = client.patch(
         "/larkm/ark:99999/s2292c07457b79",
         json={"erc_when": "2022"},
     )
