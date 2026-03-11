@@ -155,14 +155,17 @@ To see the configured metadata and committment statement for the ARK instead of 
 
 ### Creating a new ARK
 
-REST clients can provide a `naan,` a `shoulder` and/or an `identifer` value in the requst body.
+REST clients creating ARKs:
 
-* Clients must always provide a `target` value.
-* Clients must always provide a `naan` value.
-* If a shoulder is not provided, larkm will use its default shoulder.
-* If an identifier is not provided, larkm will generate one using the first 12 characters (minus the hypen at position 9) of a v4 UUID as the identifier.
-* If an identifier is provided, it must not contain a shoulder.
-* If the identifier that is provided is already in use, larkm will respond to the `POST` request with an `409` status code acommpanied by the body `{"detail":"Identifier <identifier> already in use."}`.
+* Must provide a `target` value.
+* Must provide a `naan` value.
+* May provide a `shoulder` value.
+   * If a shoulder is not provided, larkm will use its default shoulder.
+* May provide a UUIDv4 identifier value.
+   * If an identifier is not provided, larkm will generate one using the first 12 characters (minus the hypen at position 9) of a v4 UUID as the identifier.
+   * If an identifier is provided, it must not contain a shoulder.
+   * If the identifier that is provided is already in use, larkm will respond to the `POST` request with an `409` status code acommpanied by the body `{"detail":"Identifier <identifier> already in use."}`.
+* May provide simple ERC metadata (see below for more info).
 
 To add a new ARK (for example, to resolve to https://digital.lib.sfu.ca), issue the following request (the configured default NAAN is `12345`):
 
