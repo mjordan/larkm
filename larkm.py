@@ -420,6 +420,7 @@ def create_ark(
         "ARK created.",
     )
 
+    # Delete the NAAN because we do not return it to the requesting client.
     del ark.naan
     return {"ark": ark, "urls": urls}
 
@@ -437,7 +438,7 @@ def update_ark(
     identifiers, and ark_strings cannot be updated. ark_string is a required
     body field. 'where' always gets the value of ark_string. Sample query:
 
-    curl -v -X PUT "http://127.0.0.1:8000/larkm/ark:12345/x931fd9bec0bb6" \
+    curl -v -X PATCH "http://127.0.0.1:8000/larkm/ark:12345/x931fd9bec0bb6" \
         -H 'Content-Type: application/json' \
         -d '{"ark_string": "ark:12345/x931fd9bec0bb6", "target": "https://example.com/foo"}'
 
@@ -580,15 +581,6 @@ def update_ark(
         urls["global"] = (
             f'{config[naan]["resolver_hosts"]["global"].rstrip("/")}/{ark.ark_string}'
         )
-
-    log_request(
-        "INFO",
-        request.client.host,
-        ark.ark_string,
-        request.headers,
-        authorization,
-        "ARK updated.",
-    )
 
     # Delete the NAAN because we do not return it to the requesting client.
     del ark.naan

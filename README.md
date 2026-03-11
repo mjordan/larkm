@@ -28,6 +28,11 @@ larkm is considered "lightweight" because it supports only a subset of ARK funct
 * [Whoosh](https://pypi.org/project/Whoosh/) for fulltext indexing of metadata
 * To have your ARKs resolve from [N2T](http://n2t.net/), you will to register a NAAN (Name Assigning Authority Number) using [this form](https://forms.gle/2a8HQUNJRAcvq5UGA).
 
+For running tests locally, you will also need:
+
+* [pytest](https://pypi.org/project/pytest/)
+* [httpx](https://pypi.org/project/httpx/)
+
 ## Usage
 
 ### Creating the database
@@ -184,7 +189,7 @@ The `?info` parameter returns an ERC record, but it is possible to return all of
 
 ### Updating an ARK's properties
 
-You can update an existing ARK's ERC metadata and target. However, an ARK's `naan`, `shoulder`, `identifier`, `ark_string`, and commitment policay statement are immutable and cannot be updated. `ark_string` is the only required body field, and the ARK NAAN, shoulder, and identifier provided in the PUT request URL must match those in the "ark_string" body field. Properties included in the request body will be updated.
+You can update an existing ARK's ERC metadata and target. However, an ARK's `naan`, `shoulder`, `identifier`, `ark_string`, and commitment policay statement are immutable and cannot be updated. `ark_string` is the only required body field, and the ARK NAAN, shoulder, and identifier provided in the PATCH request URL must match those in the "ark_string" body field. Properties included in the request body will be updated.
 
 Some sample queries:
 
