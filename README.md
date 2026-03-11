@@ -139,9 +139,9 @@ Requests to larkm's REST interface at `/larkm` are allowed if:
 1. The client's IP address is registered in the `trusted_ips` configuration setting, and
 1. The client provides an "Authorization" request header containing an API key registered in the `api_keys` configuration setting.
 
-Both of these conditions must be met (unless `trusted_ips` is empty, e.g. during testing). If both conditions are not met, clients will receive a `403` response. During production, it is highly recommended that you register the IP addresses of authorized clients.
+Both of these conditions must be met (unless `trusted_ips` is empty, e.g. during testing). If both conditions are not met, clients will receive a `403` response.
 
-Requests for simple ARK resolution, including requests that contain `?info`, are not restricted.
+Requests for simple ARK resolution, including requests that contain `?info`, are not restricted. For all other operations that require an API key, the last four characters of the API key are logged.
 
 ### Starting larkm
 
@@ -345,7 +345,7 @@ Thanks to [OpenAPI](https://github.com/OAI/OpenAPI-Specification), you can see l
 
 ## Logging
 
-larkm provides logging of requests to its resolver endpoint (i.e., `/ark:foo/bar`). The path to the log is set in the "log_file_path" configuration option. To disable logging, use `false` as the value of this option. The log is a tab-delimited file containing a datestamp, the client's IP address, the last four characters of the API key that performed the operation ("null" if there was not API key), and the HTTP referer (or "null" if none is available), the requested ARK string (or other URL path/query string), and a description of the event being logged.
+larkm provides logging of requests to its resolver endpoint (i.e., `/ark:foo/bar`). The path to the log is set in the "log_file_path" configuration option. To disable logging, use `false` as the value of this option. The log is a tab-delimited file containing a datestamp, the client's IP address, the last four characters of the API key that performed the operation ("null" if there was no API key), and the HTTP referer (or "null" if none is available), the requested ARK string (or other URL path/query string), and a description of the event being logged.
 
 Updates to ARKs are also logged, showing the original version of the updated properties and the new versions. ARK deletions are also logged.
 
