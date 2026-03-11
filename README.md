@@ -192,17 +192,17 @@ The `?info` parameter returns an ERC record, but it is possible to return all of
 
 ### Updating an ARK's properties
 
-You can update an existing ARK's ERC metadata and target. However, an ARK's `naan`, `shoulder`, `identifier`, `ark_string`, and commitment policay statement are immutable and cannot be updated. `ark_string` is the only required body field, and the ARK NAAN, shoulder, and identifier provided in the PATCH request URL must match those in the "ark_string" body field. Properties included in the request body will be updated.
+You can update an existing ARK's ERC metadata and target. However, an ARK's `naan`, `shoulder`, `identifier`, `ark_string`, and commitment policay statement are immutable and cannot be updated, as is the `where` ERC property (see below). Note that `ark_string` is a required body field and must be identical to the ARK string used in the `/larkm/` REST endpoint. Other ARK oroperties included in the request body will be updated. The old and new values for updated properties are logged, creating a simple audit trail.
 
 Some sample queries:
 
-`curl -v -X PATCH "http://127.0.0.1:8000/larkm/ark:12345/s1fde97fb3634b" -H 'Content-Type: application/json' -d '{"ark_string": "ark:12345/s1fde97fb3634b", "target": "https://summit.sfu.ca"}'`
+`curl -v -X PATCH "http://127.0.0.1:8000/larkm/ark:12345/s1fde97fb3634b" -H 'Content-Type: application/json' -d '{"ark_string": "ark:12345/s1fde97fb3634b", "target": "https://summit.sfu.ca/item/982674"}'`
 
 `curl -v -X PATCH "http://127.0.0.1:8000/larkm/ark:12345/s1fde97fb3634b" -H 'Content-Type: application/json' -d '{"ark_string": "ark:12345/s1fde97fb3634b", "who": "Jordan, Mark", "when": "2020", "policy": "We will maintain this ARK for a long time."}'`
 
 Including `where` in the request body will result in an HTTP `409` response with the message `'where' is automatically assigned the value of the ark string and cannot be updated.`
 
-Note that while you can provide a full UUID as the "identifier" when you create an ARK, you cannot use the same UUID identifier to update that ARK. You must use the exact ARK string.
+Note that while you can provide a full 32-character UUID as the "identifier" when you create an ARK, you cannot use the same UUID identifier in the request URL to update that ARK. You can only use the exact ARK string to update an ARK.
 
 
 ### Deleting an ARK
