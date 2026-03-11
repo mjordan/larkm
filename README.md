@@ -51,14 +51,14 @@ larkm's configuration file groups configuration settings by NAAN. Within the con
 * "naan": the NAAN that serves as the key to the other configuration settings. This is identical to its parent NAAN key.
 * "default_shoulder": the ARK shoulder applied to new ARKs if one is not provided.
 * "allowed_shoulders": a list of shoulders that are allowed in new ARKs provided by clients. If your default shoulder is the only one currently used by your NAAN, provide an empty list for "allowed_shoulders" (e.g. `[]`).
-* "committment_statement": a mapping from shoulders to text expressing your institution's committment to maintaining the ARKs.
+* "committment_statements": a mapping from shoulders to text expressing your institution's committment to maintaining the ARKs.
 * "erc_metadata_defaults": a definition of default values for [ERC properties](https://www.dublincore.org/groups/kernel/spec/) if the properties are not specified when the ARK is created.
 * "sqlite_db_path": absolute or relative (to larkm.py) path to larkm's sqlite3 database file. Must exist and be writable by the process running larkm.
 * "log_file_path": absolute or relative (to larkm.py) path to the log file. Must exist and be writable by the process running larkm.
 * "resolver_hosts": definition of the resolvers to include in the `urls` list returned to clients. Note that these are only returned in requests for `?info`; this setting has nothing to do with the resolution of an incoming ARK to its target URL.
 * "whoosh_index_dir_path": absolute or relative (to larkm.py) path to the Whoosh index data directory. Leave empty ("") if you are not indexing ARK data. Must exist and be writable by the process running larkm.
-* "trusted_ips": list of client IP addresses that can create, update, delete, and search ARKs; leave empty to allow access from all IPs (e.g. during testing). Note that requests to resolve an ARK is open to all clients.
-* "api_keys": list of strings used as API keys. Clients must pass their API key in a "Authorization" header, e.g. `Authorization: myapikey`.
+* "trusted_ips": list of client IP addresses that can create, update, delete, and search ARKs; leave empty to allow access from all IPs (e.g. during testing). Note that requests to resolve an ARK is open to all clients. Entries must be specific IP addresses; ranges are not supported.
+* "api_keys": list of strings used as API keys. Clients must pass their API key in a "Authorization" header, e.g. `Authorization: myapikey`. API keys can be any length or can contain any characters other than spaces.
 
 The following sample JSON file contains configuration for two NAANs, "99999" and "12345", each with their own configuration specifics:
 
