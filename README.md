@@ -33,9 +33,11 @@ For running tests locally, you will also need:
 * [pytest](https://pypi.org/project/pytest/)
 * [httpx](https://pypi.org/project/httpx/)
 
-## Usage
+## Installation
 
-### Creating the database
+1. `git clone https://github.com/mjordan/larkm.git`
+2. `pip install .` (alternatively, using your preferred `pip` options)
+3. copy the database template to the desired location or create a database from scratch
 
 larkm provides an empty sqlite database that you can use, `larkm_template.db` in the extras directory.
 
@@ -44,6 +46,8 @@ If you want to create your own, run the following commands:
 1. `sqlite3 path/to/mydb.db`
 1. within sqlite, run `CREATE TABLE arks(date_created TEXT NOT NULL, date_modified TEXT NOT NULL, shoulder TEXT NOT NULL, identifier TEXT NOT NULL, ark_string TEXT NOT NULL, target TEXT NOT NULL, erc_who TEXT NOT NULL, erc_what TEXT NOT NULL, erc_when TEXT NOT NULL, erc_where TEXT NOT NULL, policy TEXT NOT NULL);`
 1. `.quit`
+
+## Usage
 
 ### Configuration
 
