@@ -197,7 +197,7 @@ def create_ark(
     request: Request, ark: Ark, authorization: Annotated[str | None, Header()] = None
 ):
     """
-    Create/mint a new ARK. Clients must provide a NAAN, and can provide an identifier
+    Create/mint a new ARK. Clients must provide a NAAN, and may provide an identifier
     string and/or a shoulder. If either of these is not provided, larkm will provide
     one. If an identifier (first 12 characters of a UUIDv4 with dashes removed)
     is provided, it should not contain a shoulder, since larkm will always add
@@ -208,30 +208,29 @@ def create_ark(
     If the identifier that is provided is already in use, larkm will respond to the POST
     request with an HTTP `409` with the body `{"detail":"Identifier <identifier> already in use."}`.
 
-    Sample request with an provided ID/name and shoulder:
+    Sample request with an provided identifier and shoulder:
 
     curl -v -X POST "http://127.0.0.1:8000/larkm" \
         -H 'Content-Type: application/json' \
         -d '{"shoulder": "x1", "naan": "99999", "identifier": "fde97fb3634b", "target": "https://digital.lib.sfu.ca"}'
 
-    Sample request with only a 'where', an identifier and a name, which asks larkm to
-    generate an ARK string based on the default shoulder, and the provided ID/name:
+    Sample request with only a target and a identifier, which asks larkm to
+    generate an ARK string based on the default shoulder:
 
     curl -v -X POST "http://127.0.0.1:8000/larkm" \
         -H 'Content-Type: application/json' \
         -d '{"naan": "99999", "identifier": "fde97fb3-634b4232", "target": "https://digital.lib.sfu.ca"}'
 
-    Sample request with only a 'where' and a shoulder, which asks larkm to generate an ARK
-    string based on the supplied NAAN and the supplied shoulder. If the ID/name is not provided,
+    Sample request with only a target and a shoulder, which asks larkm to generate an ARK
+    string based on the supplied NAAN and the supplied shoulder. If the identifier is not provided,
     larkm will provide one in the form of the first 12 characters of a UUIDv4 with dashes removed:
 
     curl -v -X POST "http://127.0.0.1:8000/larkm" \
         -H 'Content-Type: application/json' \
         -d '{"shoulder": "x1", "naan": "99999", "target": "https://digital.lib.sfu.ca"}'
 
-    Sample request with no 'where' or shoulder. larkm will generate an ARK using
-    the provided NAAN, the default shoulder, and a identifier (first 12 characters of a
-    UUIDv4 with dashes removed).
+    Sample request with no shoulder. larkm will generate an ARK using the provided NAAN,
+    the default shoulder, and a identifier (first 12 characters of a UUIDv4 with dashes removed).
 
     curl -v -X POST "http://127.0.0.1:8000/larkm" \
         -H 'Content-Type: application/json' \
@@ -244,7 +243,8 @@ def create_ark(
         -H 'Content-Type: application/json' \
         -d '{"naan": "99999", "who": "Jordan, Mark", "what": "GitBags", "when": "2014", "target": "https://github.com/mjordan/GitBags"}'
 
-    "where" always gets the value of ark_string, regardless of whether it is provided in the request body.
+    As per the ARK specification, the ERC property "where" always gets the
+    value of ark_string, regardless of whether it is provided in the request body.
 
     - **ark**: the ARK to create.
     """
@@ -434,9 +434,9 @@ def update_ark(
     authorization: Annotated[str | None, Header()] = None,
 ):
     """
-    Update an ARK with new metadata, or policy statement. Shoulders, NAANs,
+    Update an ARK with new ERC metadata, or policy statement. Shoulders, NAANs,
     identifiers, and ark_strings cannot be updated. ark_string is a required
-    body field. 'where' always gets the value of ark_string. Sample query:
+    body field. 'where' always gets the value of ark_string. Sample request:
 
     curl -v -X PATCH "http://127.0.0.1:8000/larkm/ark:12345/x931fd9bec0bb6" \
         -H 'Content-Type: application/json' \
