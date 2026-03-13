@@ -109,22 +109,12 @@ def resolve_ark(
             )
         return RedirectResponse(record["target"])
     else:
-        erc = f"erc:\nwho: {record['erc_who']}\nwhat: {record['erc_what']}\nwhen: {record['erc_when']}\nwhere: {record['erc_where']}\n"
-        if len(record["policy"]) > 0:
-            policy = "policy: " + record["policy"]
-        else:
-            for sh in config[naan]["allowed_shoulders"]:
-                if ark_string.startswith(sh):
-                    policy = "policy: " + config[naan]["committment_statements"][sh]
-                else:
-                    policy = (
-                        "policy: " + config[naan]["committment_statements"]["default"]
-                    )
+        info_content = get_info_content(naan, record)
         if config[naan]["log_file_path"]:
             log_request(
                 "INFO", request.client.host, ark_string, request.headers, None, "?info"
             )
-        return Response(content=erc + policy + "\n\n", media_type="text/plain")
+        return Response(info_content, media_type="text/plain")
 
 
 @app.get("/larkm/ark:{naan}/{identifier}")
@@ -868,6 +858,26 @@ def return_config(
     )
 
     return subset
+
+
+def get_info_content(naan, record):
+    """
+    Assembles the content to return in response to a ?info request.
+
+    - **naan**: the NAAN.
+    - **record**: the ARK's record from the database.
+    """
+    erc = f"erc:\nwho: {record['erc_who']}\nwhat: {record['erc_what']}\nwhen: {record['erc_when']}\nwhere: {record['erc_where']}\n"
+    if len(record["policy"]) > 0:
+        policy = "policy: " + record["policy"]
+    else:
+        for sh in config[naan]["allowed_shoulders"]:
+            if record["ark_string"].startswith(sh):
+                policy = "policy: " + config[naan]["committment_statements"][sh]
+            else:
+                policy = "policy: " + config[naan]["committment_statements"]["default"]
+
+    return erc + policy + "\n\n"
 
 
 def log_request(
