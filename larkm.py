@@ -97,6 +97,19 @@ def resolve_ark(
         )
         raise HTTPException(status_code=500)
 
+    if len(record["target"]) == 0:
+        info_content = get_info_content(naan, record)
+        if config[naan]["log_file_path"]:
+            log_request(
+                "INFO",
+                request.client.host,
+                ark_string,
+                request.headers,
+                None,
+                "ARK has no target",
+            )
+        return Response(info_content, media_type="text/plain")
+
     if info is None:
         if config[naan]["log_file_path"]:
             log_request(
@@ -192,8 +205,7 @@ def create_ark(
     one. If an identifier (first 12 characters of a UUIDv4 with dashes removed)
     is provided, it should not contain a shoulder, since larkm will always add
     a shoulder to new ARKs either based on the configured default shoulder or
-    using the one provided in the "shoulder" key in the request body. Clients
-    must always provide a "target" value.
+    using the one provided in the "shoulder" key in the request body.
 
     If the identifier that is provided is already in use, larkm will respond to the POST
     request with an HTTP `409` with the body `{"detail":"Identifier <identifier> already in use."}`.
@@ -247,9 +259,6 @@ def create_ark(
         config[ark.naan]["allowed_shoulders"].insert(
             0, config[ark.naan]["default_shoulder"]
         )
-
-    if ark.target is None:
-        raise HTTPException(status_code=422, detail="A 'target' value is required.")
 
     # Validate shoulder if provided.
     if ark.shoulder is not None:
@@ -312,29 +321,10 @@ def create_ark(
         raise HTTPException(status_code=500)
 
     # See if provided 'target' value is already being used.
-    try:
-        con = sqlite3.connect(config[ark.naan]["sqlite_db_path"])
-        con.row_factory = sqlite3.Row
-        cur = con.cursor()
-        cur.execute("select * from arks where target = :a_s", {"a_s": ark.target})
-        record = cur.fetchone()
-        if record is not None:
-            con.close()
-            raise HTTPException(
-                status_code=409, detail=f"'target' value {ark.target} already in use."
-            )
-        con.close()
-    except sqlite3.DatabaseError as e:
-        # We don't have the ark_string at this point so we use the ark.identifier in our log entry.
-        log_request(
-            "ERROR",
-            request.client.host,
-            ark.identifier,
-            request.headers,
-            authorization,
-            str(e),
-        )
-        raise HTTPException(status_code=500)
+    if ark.target is None:
+        ark.target = ""
+    else:
+        check_target_already_registered(ark, request, authorization)
 
     # Assemble the ARK. Generate parts the client didn't provide.
     if ark.naan is None:
@@ -481,7 +471,8 @@ def update_ark(
 
     old_ark = dict(zip(record.keys(), record))
 
-    # shoulder, identifier, and ark_string cannot be updated.
+    # naan, shoulder, identifier, and ark_string cannot be updated.
+    ark.naan = naan
     ark.shoulder = old_ark["shoulder"]
     ark.identifier = old_ark["identifier"]
     ark.ark_string = old_ark["ark_string"]
@@ -496,6 +487,7 @@ def update_ark(
     else:
         original_properties["target"] = old_ark["target"]
         updated_properties["target"] = ark.target
+    check_target_already_registered(ark, request, authorization)
     if ark.who is None:
         ark.who = old_ark["erc_who"]
     else:
@@ -858,6 +850,43 @@ def return_config(
     )
 
     return subset
+
+
+def check_target_already_registered(ark, request, authorization):
+    # We allow empty targets.
+    if ark.target is None or len(ark.target) == 0:
+        return
+    try:
+        con = sqlite3.connect(config[ark.naan]["sqlite_db_path"])
+        con.row_factory = sqlite3.Row
+        cur = con.cursor()
+        cur.execute("select * from arks where target = :a_s", {"a_s": ark.target})
+        records = cur.fetchall()
+        con.close()
+        # We allow the current ARK to use that target, but only the current ARK.
+        # So we need to see if there are any others before thowing the exception.
+        if len(records) > 0:
+            ark_strings = []
+            for record in records:
+                ark_strings.append(record["ark_string"])
+            if len(ark_strings) == 1 and ark.ark_string in ark_strings:
+                pass
+            else:
+                raise HTTPException(
+                    status_code=409,
+                    detail=f"'target' value {ark.target} already in use.",
+                )
+    except sqlite3.DatabaseError as e:
+        # We don't have the ark_string at this point so we use the ark.identifier in our log entry.
+        log_request(
+            "ERROR",
+            request.client.host,
+            ark.identifier,
+            request.headers,
+            authorization,
+            str(e),
+        )
+        raise HTTPException(status_code=500)
 
 
 def get_info_content(naan, record):

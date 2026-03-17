@@ -70,12 +70,45 @@ def test_resolve_ark():
     assert response.status_code == 404
     assert response.text == '{"detail":"Not Found"}'
 
+    # Resolve an ARK with no target.
+    response = client.post(
+        "/larkm",
+        json={
+            "naan": "99999",
+            "shoulder": "s1",
+            "identifier": "e6aca090-4cc6-4459-b87d-3c3e358f1f62",
+        },
+    )
+    assert response.status_code == 201
+    assert response.json() == {
+        "ark": {
+            "shoulder": "s1",
+            "identifier": "e6aca0904cc6",
+            "ark_string": "ark:99999/s1e6aca0904cc6",
+            "target": "",
+            "who": ":at",
+            "what": ":at",
+            "when": ":at",
+            "where": "ark:99999/s1e6aca0904cc6",
+            "policy": "ACME University commits to maintain ARKs that have 's1' as a shoulder for a long time.",
+        },
+        "urls": {
+            "local": "https://resolver.myorg.net/ark:99999/s1e6aca0904cc6",
+            "global": "https://n2t.net/ark:99999/s1e6aca0904cc6",
+        },
+    }
+    response = client.get("/ark:99999/s1e6aca0904cc6")
+    assert response.status_code == 200
+    assert (
+        response.text
+        == "erc:\nwho: :at\nwhat: :at\nwhen: :at\nwhere: ark:99999/s1e6aca0904cc6\npolicy: ACME University commits to maintain ARKs that have 's1' as a shoulder for a long time.\n\n"
+    )
+
 
 # Test the "get ARK" functionality.
 def test_get_ark():
     response = client.get("/larkm/ark:/99999/s1cea8e7f31c84")
     assert response.status_code == 200
-
     assert response.json() == {
         "date_created": "2022-06-23 03:00:45",
         "date_modified": "2022-06-23 03:00:45",
@@ -92,10 +125,17 @@ def test_get_ark():
 
 
 def test_create_ark():
-    # Check the HTTP response code.
+    # Create an ARK using all available defaults.
     response = client.post(
         "/larkm",
         json={"naan": "99999", "target": "https://example.com/ppppp"},
+    )
+    assert response.status_code == 201
+
+    # Create an ARK with no target.
+    response = client.post(
+        "/larkm",
+        json={"naan": "99999"},
     )
     assert response.status_code == 201
 
@@ -192,7 +232,7 @@ def test_create_ark():
     )
     assert response.status_code == 422
 
-    # Provide a malformed identifier (invalide letter)
+    # Provide a malformed identifier (invalid letter).
     response = client.post(
         "/larkm",
         json={
@@ -357,6 +397,48 @@ def test_create_ark():
     assert response.status_code == 409
     assert response.json() == {"detail": "Identifier 2d24d07fed23 already in use."}
 
+    # Create an ARK that has a target already in the database.
+    # First, create an ARK to test against.
+    response = client.post(
+        "/larkm",
+        json={
+            "naan": "12345",
+            "target": "https://example.com/testingforexistingtarget",
+        },
+    )
+    assert response.status_code == 201
+
+    # Then create another ARK with the same identifier.
+    response = client.post(
+        "/larkm",
+        json={
+            "naan": "12345",
+            "target": "https://example.com/testingforexistingtarget",
+        },
+    )
+    assert response.status_code == 409
+    assert response.json() == {
+        "detail": "'target' value https://example.com/testingforexistingtarget already in use."
+    }
+
+    # Create multiple ARKs that have an empty or missing target.
+    # First, create an ARK to test against.
+    response = client.post(
+        "/larkm",
+        json={"naan": "12345"},
+    )
+    assert response.status_code == 201
+
+    # Then create another ARK with the same identifier.
+    response = client.post(
+        "/larkm",
+        json={
+            "naan": "12345",
+            # "target": "",
+        },
+    )
+    assert response.status_code == 201
+
     # Create an ARK that uses an erc_where value already in the database.
     response = client.post(
         "/larkm",
@@ -368,6 +450,236 @@ def test_create_ark():
         },
     )
     assert response.status_code == 409
+
+
+def test_update_ark():
+    # Create an ARK to update.
+    response = client.post(
+        "/larkm",
+        json={
+            "naan": "99999",
+            "shoulder": "s2",
+            "identifier": "cda60df9b468",
+            "target": "https://example.com/x8ui8i",
+        },
+    )
+    assert response.status_code == 201
+    assert response.json() == {
+        "ark": {
+            "shoulder": "s2",
+            "identifier": "cda60df9b468",
+            "ark_string": "ark:99999/s2cda60df9b468",
+            "target": "https://example.com/x8ui8i",
+            "who": ":at",
+            "what": ":at",
+            "when": ":at",
+            "where": "ark:99999/s2cda60df9b468",
+            "policy": "Default committment statement.",
+        },
+        "urls": {
+            "local": "https://resolver.myorg.net/ark:99999/s2cda60df9b468",
+            "global": "https://n2t.net/ark:99999/s2cda60df9b468",
+        },
+    }
+
+    # Then update the when and what body fields.
+    response = client.patch(
+        "/larkm/ark:99999/s2cda60df9b468",
+        json={
+            "when": "2020",
+            "what": "A test",
+            "ark_string": "ark:99999/s2cda60df9b468",
+        },
+    )
+    assert response.status_code == 200
+    assert response.json() == {
+        "ark": {
+            "shoulder": "s2",
+            "identifier": "cda60df9b468",
+            "ark_string": "ark:99999/s2cda60df9b468",
+            "target": "https://example.com/x8ui8i",
+            "who": ":at",
+            "what": "A test",
+            "when": "2020",
+            "where": "ark:99999/s2cda60df9b468",
+            "policy": "Default committment statement.",
+        },
+        "urls": {
+            "local": "https://resolver.myorg.net/ark:99999/s2cda60df9b468",
+            "global": "https://n2t.net/ark:99999/s2cda60df9b468",
+        },
+    }
+
+    # Update the policy field.
+    response = client.post(
+        "/larkm",
+        json={
+            "naan": "12345",
+            "shoulder": "s2",
+            "identifier": "aaed59b06ad6",
+            "what": "New ARK with its own policy",
+            "target": "https://example.com/jjjjj",
+        },
+    )
+
+    response = client.patch(
+        "/larkm/ark:12345/s2aaed59b06ad6",
+        json={
+            "policy": "A test policy.",
+            "ark_string": "ark:12345/s2aaed59b06ad6",
+        },
+    )
+    assert response.status_code == 200
+    assert response.json() == {
+        "ark": {
+            "shoulder": "s2",
+            "identifier": "aaed59b06ad6",
+            "ark_string": "ark:12345/s2aaed59b06ad6",
+            "target": "https://example.com/jjjjj",
+            "who": ":at",
+            "what": "New ARK with its own policy",
+            "when": ":at",
+            "where": "ark:12345/s2aaed59b06ad6",
+            "policy": "A test policy.",
+        },
+        "urls": {
+            "local": "https://resolver.myorg.net/ark:12345/s2aaed59b06ad6",
+            "global": "https://n2t.net/ark:12345/s2aaed59b06ad6",
+        },
+    }
+
+    # Test updating the target to be empty.
+    response = client.post(
+        "/larkm",
+        json={
+            "naan": "12345",
+            "shoulder": "s2",
+            "identifier": "fd3d3febf720",
+            "what": "New ARK with its own policy",
+            "target": "https://example.com/jzjzjzjz",
+        },
+    )
+    assert response.status_code == 201
+    response = client.patch(
+        "/larkm/ark:12345/s2fd3d3febf720",
+        json={
+            "policy": "A test policy.",
+            "target": "",
+            "ark_string": "ark:12345/s2fd3d3febf720",
+        },
+    )
+    assert response.status_code == 200
+    assert response.json() == {
+        "ark": {
+            "shoulder": "s2",
+            "identifier": "fd3d3febf720",
+            "ark_string": "ark:12345/s2fd3d3febf720",
+            "target": "",
+            "who": ":at",
+            "what": "New ARK with its own policy",
+            "when": ":at",
+            "where": "ark:12345/s2fd3d3febf720",
+            "policy": "A test policy.",
+        },
+        "urls": {
+            "local": "https://resolver.myorg.net/ark:12345/s2fd3d3febf720",
+            "global": "https://n2t.net/ark:12345/s2fd3d3febf720",
+        },
+    }
+
+    # Test updating an ARK so that is uses a target that is already registered.
+    response = client.post(
+        "/larkm",
+        json={
+            "naan": "99999",
+            "shoulder": "s2",
+            "identifier": "62cf2b0488a8",
+            "target": "https://example.com/62cf2b04xxx",
+        },
+    )
+    assert response.status_code == 201
+
+    # Then update the target (http://example.com/10 exists in the larkmtest.db).
+    response = client.patch(
+        "/larkm/ark:99999/s262cf2b0488a8",
+        json={
+            "target": "http://example.com/10",
+            "ark_string": "ark:99999/s262cf2b0488a8",
+        },
+    )
+    assert response.status_code == 409
+
+    # Intentionally trigger a 409 by mismatching the URL parameters and the ark_string body field.
+    response = client.post(
+        "/larkm",
+        json={
+            "naan": "12345",
+            "shoulder": "s2",
+            "identifier": "3a8a9396baa8",
+            "target": "https://foo.example.com/ttttt",
+        },
+    )
+    assert response.status_code == 201
+
+    response = client.patch(
+        "/larkm/ark:12345/s23a8a9396-baa8",
+        json={"ark_string": "ark:12345/s23a8a9396baa85bxxx"},
+    )
+    assert response.status_code == 409
+    assert response.json() == {
+        "detail": "NAAN/identifier combination and ark_string do not match."
+    }
+
+    # Intentionally trigger a 409 by trying to update the erc_where property.
+    response = client.post(
+        "/larkm",
+        json={
+            "naan": "99999",
+            "shoulder": "s2",
+            "identifier": "292c07457b79",
+            "target": "https://foo.example.com/wheretest",
+        },
+    )
+    assert response.status_code == 201
+
+    response = client.patch(
+        "/larkm/ark:99999/s2292c07457b79",
+        json={
+            "ark_string": "ark:99999/s2292c07457b79",
+            "target": "http://example.com/15",
+            "where": "asdkf",
+        },
+    )
+    assert response.status_code == 409
+    assert response.json() == {
+        "detail": "'where' is automatically assigned the value of the ark string and cannot be updated."
+    }
+
+    # Intentionally trigger a 422 by not providing an ark_string in the body.
+    response = client.patch(
+        "/larkm/ark:99999/s2292c07457b79",
+        json={"erc_when": "2022"},
+    )
+    assert response.status_code == 422
+    assert response.json() == {
+        "detail": "When updatating ARKs, the ark_string must be provided in the request body."
+    }
+
+
+def test_delete_ark():
+    create_response = client.post(
+        "/larkm",
+        json={
+            "naan": "12345",
+            "shoulder": "x9",
+            "identifier": "5c6b0d2314e4",
+            "target": "https://example.com",
+        },
+    )
+    assert create_response.status_code == 201
+
+    delete_response = client.delete("/larkm/ark:12345/x95c6b0d2314e4")
+    assert delete_response.status_code == 204
 
 
 def test_search_arks():
@@ -463,175 +775,6 @@ def test_get_config():
             "local": "https://resolver.myorg.net",
         },
     }
-
-
-def test_update_ark():
-    # Create an ARK to update.
-    response = client.post(
-        "/larkm",
-        json={
-            "naan": "99999",
-            "shoulder": "s2",
-            "identifier": "cda60df9b468",
-            "target": "https://example.com/nnnnn",
-        },
-    )
-    assert response.status_code == 201
-    assert response.json() == {
-        "ark": {
-            "shoulder": "s2",
-            "identifier": "cda60df9b468",
-            "ark_string": "ark:99999/s2cda60df9b468",
-            "target": "https://example.com/nnnnn",
-            "who": ":at",
-            "what": ":at",
-            "when": ":at",
-            "where": "ark:99999/s2cda60df9b468",
-            "policy": "Default committment statement.",
-        },
-        "urls": {
-            "local": "https://resolver.myorg.net/ark:99999/s2cda60df9b468",
-            "global": "https://n2t.net/ark:99999/s2cda60df9b468",
-        },
-    }
-
-    # Then update the when and what body fields.
-    response = client.patch(
-        "/larkm/ark:99999/s2cda60df9b468",
-        json={
-            "when": "2020",
-            "what": "A test",
-            "ark_string": "ark:99999/s2cda60df9b468",
-        },
-    )
-    assert response.status_code == 200
-    assert response.json() == {
-        "ark": {
-            "shoulder": "s2",
-            "identifier": "cda60df9b468",
-            "ark_string": "ark:99999/s2cda60df9b468",
-            "target": "https://example.com/nnnnn",
-            "who": ":at",
-            "what": "A test",
-            "when": "2020",
-            "where": "ark:99999/s2cda60df9b468",
-            "policy": "Default committment statement.",
-        },
-        "urls": {
-            "local": "https://resolver.myorg.net/ark:99999/s2cda60df9b468",
-            "global": "https://n2t.net/ark:99999/s2cda60df9b468",
-        },
-    }
-
-    # Update the policy body field.
-    response = client.post(
-        "/larkm",
-        json={
-            "naan": "12345",
-            "shoulder": "s2",
-            "identifier": "aaed59b06ad6",
-            "what": "New ARK with its own policy",
-            "target": "https://example.com/jjjjj",
-        },
-    )
-
-    response = client.patch(
-        "/larkm/ark:12345/s2aaed59b06ad6",
-        json={
-            "policy": "A test policy.",
-            "ark_string": "ark:12345/s2aaed59b06ad6",
-        },
-    )
-    assert response.status_code == 200
-    assert response.json() == {
-        "ark": {
-            "shoulder": "s2",
-            "identifier": "aaed59b06ad6",
-            "ark_string": "ark:12345/s2aaed59b06ad6",
-            "target": "https://example.com/jjjjj",
-            "who": ":at",
-            "what": "New ARK with its own policy",
-            "when": ":at",
-            "where": "ark:12345/s2aaed59b06ad6",
-            "policy": "A test policy.",
-        },
-        "urls": {
-            "local": "https://resolver.myorg.net/ark:12345/s2aaed59b06ad6",
-            "global": "https://n2t.net/ark:12345/s2aaed59b06ad6",
-        },
-    }
-
-    # Intentionally trigger a 409 by mismatching the URL parameters and the ark_string body field.
-    response = client.post(
-        "/larkm",
-        json={
-            "naan": "12345",
-            "shoulder": "s2",
-            "identifier": "3a8a9396baa8",
-            "target": "https://foo.example.com/ttttt",
-        },
-    )
-    assert response.status_code == 201
-
-    response = client.patch(
-        "/larkm/ark:12345/s23a8a9396-baa8",
-        json={"ark_string": "ark:12345/s23a8a9396baa85bxxx"},
-    )
-    assert response.status_code == 409
-    assert response.json() == {
-        "detail": "NAAN/identifier combination and ark_string do not match."
-    }
-
-    # Intentionally trigger a 409 by trying to update the erc_where property.
-    response = client.post(
-        "/larkm",
-        json={
-            "naan": "99999",
-            "shoulder": "s2",
-            "identifier": "292c07457b79",
-            "target": "https://foo.example.com/wheretest",
-        },
-    )
-    assert response.status_code == 201
-
-    response = client.patch(
-        "/larkm/ark:99999/s2292c07457b79",
-        json={
-            "ark_string": "ark:99999/s2292c07457b79",
-            "target": "http://example.com/15",
-            "where": "asdkf",
-        },
-    )
-    assert response.status_code == 409
-    assert response.json() == {
-        "detail": "'where' is automatically assigned the value of the ark string and cannot be updated."
-    }
-
-    # Intentionally trigger a 422 by not providing an ark_string in the body.
-    response = client.patch(
-        "/larkm/ark:99999/s2292c07457b79",
-        json={"erc_when": "2022"},
-    )
-    assert response.status_code == 422
-    assert response.json() == {
-        "detail": "When updatating ARKs, the ark_string must be provided in the request body."
-    }
-
-
-def test_delete_ark():
-    create_response = client.post(
-        "/larkm",
-        json={
-            "naan": "12345",
-            "shoulder": "x9",
-            "identifier": "5c6b0d2314e4",
-            "target": "https://example.com",
-        },
-    )
-    assert create_response.status_code == 201
-
-    delete_response = client.delete("/larkm/ark:12345/x95c6b0d2314e4")
-    assert delete_response.status_code == 204
 
 
 def test_bad_api_key():

@@ -161,7 +161,7 @@ To see the configured metadata and committment statement for the ARK instead of 
 
 REST clients creating ARKs:
 
-* Must provide a `target` value in the JSON request body.
+* Normally provide a `target` value in the JSON request body (for the exception, see "ARKs with no resolvable URL target" below).
 * Must provide a `naan` value in the JSON request body.
 * May provide a `shoulder` value in the JSON request body.
    * If a shoulder is not provided, larkm will use its default shoulder.
@@ -235,6 +235,12 @@ Following ARK best practice, larkm requires the use of [shoulders](https://wiki.
 larkm supports the [Electronic Resource Citation](https://www.dublincore.org/groups/kernel/spec/) (ERC) metadata format expressed in ANVL syntax. Note that larkm accepts the raw values provided by the client and does not validate or format the values against any schema.
 
 `target` is not an ERC property. It is used internally by larkm to simplify resolution to an HTTP[S] URL.
+
+## ARKs with no resolvable URL target
+
+Not all things that an ARK can identify live on the Web. For example, you may want to create an ARK that identifies a concept or idea, in effect creating a durable identifier for that concept or idea.
+
+To do this using larkm, all you need to do is not give an ARK a target. When clients request an ARK of this type, larkm returns the ERC metadata, equivalent to the data it returns when a client requests an ARK with a target but appends `?info` to the end of the ARK URL.
 
 ## Support for multiple NAANs
 
