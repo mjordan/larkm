@@ -190,9 +190,25 @@ All responses to a POST will include in their body the values values provided in
 Also included in the response are values for global and local `urls`.
 
 
-### Retrieving an entire ARK
+### Retrieving all of an ARK's properties
 
-The `?info` parameter returns an ERC record, but it is possible to return all of the data associated with an ARK. The most obvious use case for this ability is to populate a CRUD form in an external management tool.
+While the presence of the `?info` parameter returns an ARK's ERC metadata, but it is possible to return all of the data associated with an ARK. The most obvious use case for this ability is to populate a CRUD form in an external management tool. To do this, authenticated clients can issue a GET request to the `/larkm/` endpoint specifying the ARK string, e.g., `/larkm/ark:/99999/s1cea8e7f31c84`. The JSON response will contain all of the ARK's properties:
+
+```json
+{
+  "date_created": "2022-06-23 03:00:45",
+  "date_modified": "2022-06-23 03:00:45",
+  "shoulder": "s1",
+  "identifier": "cea8e7f31c84",
+  "ark_string": "ark:99999/s1cea8e7f31c84",
+  "target": "http://example.com/15",
+  "erc_who": "Derex Godfry",
+  "erc_what": "5 Ways to Immediately Start Selling WATER",
+  "erc_when": ":at",
+  "erc_where": "ark:99999/s1cea8e7f31c84",
+  "policy": "ACME University commits to maintain ARKs that have 's1' as a shoulder indefinitely."
+}
+```
 
 ### Updating an ARK's properties
 
