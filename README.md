@@ -179,10 +179,6 @@ If you now visit `http://127.0.0.1:8000/ark:12345/s1fde97fb3634b`, you will be r
 
 If you omit the `shoulder`, the configured default shoulder will be used. If you omit the `identifier`, larkm will mint one using the first 12 characters (minus the hypen at position 9) of a v4 UUID it generates.
 
-If you provide a NAAN, and it is in the configured list of `allowed_naans`, it will be used instead of the NAAN configured as the `default_naan`:
-
-`curl -v -X POST "http://127.0.0.1:8000/larkm" -H 'Content-Type: application/json' -d '{"naan": "45454", "shoulder": "s1", "identifier": "fde97fb3-634b-4232-b63e-e5128647efe7", "target": "https://digital.lib.sfu.ca"}'`
-
 All responses to a POST will include in their body the values values provided in the POST request, plus any default values for missing body fields. The `where` value will be identical to the provided `ark_string` and cannot be populated on its own. Metadata values not provided will get the ERC ":at" ("the real value is at the given URL or identifier") value:
 
 `{"ark":{"shoulder": "s1", "identifier": "fde97fb3-634b-4232-b63e-e5128647efe7", "ark_string":"ark:45454/s1fde97fb3634b","target":"https://digital.lib.sfu.ca", "who":":at", "when":":at", "where":"ark:12345/s1fde97fb3634b", "what":":at"}, "urls":{"local":"https://resolver.myorg.net/ark:12345/s1fde97fb3634b","global":"https://n2t.net/ark:99999/s1fde97fb3634b"}}`
