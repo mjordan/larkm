@@ -192,7 +192,28 @@ def get_ark(
             "ARK data retrieved.",
         )
 
-    return record
+    # Row objects aren't subscriptable so we need to convert it into a dict.
+    record_to_return = dict()
+    columns = [
+        "date_created",
+        "date_modified",
+        "shoulder",
+        "identifier",
+        "ark_string",
+        "target",
+        "erc_who",
+        "erc_what",
+        "erc_when",
+        "erc_where",
+        "policy",
+    ]
+    for col, val in zip(columns, record):
+        if col == "erc_where":
+            record_to_return["erc_where"] = get_erc_where_value(naan, ark_string)
+        else:
+            record_to_return[col] = val
+
+    return record_to_return
 
 
 @app.post("/larkm", status_code=201)
@@ -400,6 +421,7 @@ def create_ark(
         "ARK created.",
     )
 
+    ark.where = get_erc_where_value(ark.naan, ark.ark_string)
     # Delete the NAAN because we do not return it to the requesting client.
     del ark.naan
     return {"ark": ark, "urls": urls}
@@ -564,6 +586,7 @@ def update_ark(
             f'{config[naan]["resolver_hosts"]["global"].rstrip("/")}/{ark.ark_string}'
         )
 
+    ark.where = get_erc_where_value(ark.naan, ark.ark_string)
     # Delete the NAAN because we do not return it to the requesting client.
     del ark.naan
     return {"ark": ark, "urls": urls}
@@ -889,19 +912,33 @@ def check_target_already_registered(ark, request, authorization):
         raise HTTPException(status_code=500)
 
 
-def get_info_content(naan, record):
+def get_info_content(naan, row):
     """
     Assembles the content to return in response to a ?info request.
 
     - **naan**: the NAAN.
-    - **record**: the ARK's record from the database.
+    - **row**: the ARK's SQLite Row from the database.
     """
-    erc = f"erc:\nwho: {record['erc_who']}\nwhat: {record['erc_what']}\nwhen: {record['erc_when']}\nwhere: {record['erc_where']}\n"
-    if len(record["policy"]) > 0:
-        policy = "policy: " + record["policy"]
+    # Row objects aren't subscriptable so we convert values to strings.
+    (
+        date_created,
+        date_modified,
+        shoulder,
+        identifier,
+        ark_string,
+        target,
+        erc_who,
+        erc_what,
+        erc_when,
+        erc_where,
+        policy,
+    ) = row
+    erc = f"erc:\nwho: {erc_who}\nwhat: {erc_what}\nwhen: {erc_when}\nwhere: {get_erc_where_value(naan, erc_where)}\n"
+    if len(policy) > 0:
+        policy = f"policy: {policy}"
     else:
         for sh in config[naan]["allowed_shoulders"]:
-            if record["ark_string"].startswith(sh):
+            if ark_string.startswith(sh):
                 policy = "policy: " + config[naan]["committment_statements"][sh]
             else:
                 policy = "policy: " + config[naan]["committment_statements"]["default"]
@@ -1017,6 +1054,14 @@ def get_naan_from_ark_string(ark_string):
     else:
         # If there's no NAAN, return None.
         return None
+
+
+def get_erc_where_value(naan, ark_string):
+    """An ARK's "where" property is stored in the db as the ARK string, but clients
+    expect it to be a fully resolvable durable URL. This function assembles the
+    value to return to clients.
+    """
+    return f'{config[naan]["resolver_hosts"]["erc_where"].rstrip("/")}/{ark_string}'
 
 
 def check_access(request, naan, authorization):

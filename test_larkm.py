@@ -49,7 +49,7 @@ def test_resolve_ark():
     assert response.status_code == 200
     assert (
         response.text
-        == "erc:\nwho: :at\nwhat: :at\nwhen: :at\nwhere: ark:12345/x9062cdde7f9d6\npolicy: Default committment statement.\n\n"
+        == "erc:\nwho: :at\nwhat: :at\nwhen: :at\nwhere: https://resolver.myorg.net/ark:12345/x9062cdde7f9d6\npolicy: Default committment statement.\n\n"
     )
 
     # Same ARK but with optional /.
@@ -57,7 +57,7 @@ def test_resolve_ark():
     assert response.status_code == 200
     assert (
         response.text
-        == "erc:\nwho: :at\nwhat: :at\nwhen: :at\nwhere: ark:12345/x9062cdde7f9d6\npolicy: Default committment statement.\n\n"
+        == "erc:\nwho: :at\nwhat: :at\nwhen: :at\nwhere: https://resolver.myorg.net/ark:12345/x9062cdde7f9d6\npolicy: Default committment statement.\n\n"
     )
 
     # Ark not found.
@@ -89,7 +89,7 @@ def test_resolve_ark():
             "who": ":at",
             "what": ":at",
             "when": ":at",
-            "where": "ark:99999/s1e6aca0904cc6",
+            "where": "https://resolver.myorg.net/ark:99999/s1e6aca0904cc6",
             "policy": "ACME University commits to maintain ARKs that have 's1' as a shoulder for a long time.",
         },
         "urls": {
@@ -101,7 +101,7 @@ def test_resolve_ark():
     assert response.status_code == 200
     assert (
         response.text
-        == "erc:\nwho: :at\nwhat: :at\nwhen: :at\nwhere: ark:99999/s1e6aca0904cc6\npolicy: ACME University commits to maintain ARKs that have 's1' as a shoulder for a long time.\n\n"
+        == "erc:\nwho: :at\nwhat: :at\nwhen: :at\nwhere: https://resolver.myorg.net/ark:99999/s1e6aca0904cc6\npolicy: ACME University commits to maintain ARKs that have 's1' as a shoulder for a long time.\n\n"
     )
 
 
@@ -119,7 +119,7 @@ def test_get_ark():
         "erc_who": "Derex Godfry",
         "erc_what": "5 Ways to Immediately Start Selling WATER",
         "erc_when": ":at",
-        "erc_where": "ark:99999/s1cea8e7f31c84",
+        "erc_where": "https://resolver.myorg.net/ark:99999/s1cea8e7f31c84",
         "policy": "Random policy generators generally suck.",
     }
 
@@ -170,7 +170,7 @@ def test_create_ark():
             "who": ":at",
             "what": ":at",
             "when": ":at",
-            "where": "ark:99999/s1586ef08cb2a0",
+            "where": "https://resolver.myorg.net/ark:99999/s1586ef08cb2a0",
             "policy": "ACME University commits to maintain ARKs that have 's1' as a shoulder for a long time.",
         },
         "urls": {
@@ -211,7 +211,7 @@ def test_create_ark():
             "who": ":at",
             "what": ":at",
             "when": ":at",
-            "where": "ark:99999/s114b7f127b358",
+            "where": "https://resolver.myorg.net/ark:99999/s114b7f127b358",
             "policy": "ACME University commits to maintain ARKs that have 's1' as a shoulder for a long time.",
         },
         "urls": {
@@ -276,7 +276,7 @@ def test_create_ark():
             "who": ":at",
             "what": ":at",
             "when": ":at",
-            "where": "ark:12345/s19e2e12759dfc",
+            "where": "https://resolver.myorg.net/ark:12345/s19e2e12759dfc",
             "policy": "ACME University commits to maintain ARKs that have 's1' as a shoulder for a long time.",
         },
         "urls": {
@@ -306,7 +306,7 @@ def test_create_ark():
             "who": ":at",
             "what": "A new ARK",
             "when": ":at",
-            "where": "ark:99999/x920578b9eba6e",
+            "where": "https://resolver.myorg.net/ark:99999/x920578b9eba6e",
             "policy": "Default committment statement.",
         },
         "urls": {
@@ -321,7 +321,7 @@ def test_create_ark():
     response_text = "erc:\nwho: :at\nwhat: A new ARK\nwhen: :at\n"
     response_text = (
         response_text
-        + "where: ark:99999/x920578b9eba6e\npolicy: Default committment statement.\n\n"
+        + "where: https://resolver.myorg.net/ark:99999/x920578b9eba6e\npolicy: Default committment statement.\n\n"
     )
     assert response.text == response_text
 
@@ -346,7 +346,7 @@ def test_create_ark():
             "who": ":at",
             "when": ":at",
             "what": "A test ARK with some 'special' characters (`%&) in its metadata",
-            "where": "ark:99999/x947321e027df6",
+            "where": "https://resolver.myorg.net/ark:99999/x947321e027df6",
             "policy": "Default committment statement.",
         },
         "urls": {
@@ -473,7 +473,7 @@ def test_update_ark():
             "who": ":at",
             "what": ":at",
             "when": ":at",
-            "where": "ark:99999/s2cda60df9b468",
+            "where": "https://resolver.myorg.net/ark:99999/s2cda60df9b468",
             "policy": "Default committment statement.",
         },
         "urls": {
@@ -501,7 +501,7 @@ def test_update_ark():
             "who": ":at",
             "what": "A test",
             "when": "2020",
-            "where": "ark:99999/s2cda60df9b468",
+            "where": "https://resolver.myorg.net/ark:99999/s2cda60df9b468",
             "policy": "Default committment statement.",
         },
         "urls": {
@@ -539,7 +539,7 @@ def test_update_ark():
             "who": ":at",
             "what": "New ARK with its own policy",
             "when": ":at",
-            "where": "ark:12345/s2aaed59b06ad6",
+            "where": "https://resolver.myorg.net/ark:12345/s2aaed59b06ad6",
             "policy": "A test policy.",
         },
         "urls": {
@@ -578,7 +578,7 @@ def test_update_ark():
             "who": ":at",
             "what": "New ARK with its own policy",
             "when": ":at",
-            "where": "ark:12345/s2fd3d3febf720",
+            "where": "https://resolver.myorg.net/ark:12345/s2fd3d3febf720",
             "policy": "A test policy.",
         },
         "urls": {
@@ -756,6 +756,7 @@ def test_get_config():
         "resolver_hosts": {
             "global": "https://n2t.net/",
             "local": "https://resolver.myorg.net",
+            "erc_where": "https://resolver.myorg.net",
         },
     }
 
@@ -773,6 +774,7 @@ def test_get_config():
         "resolver_hosts": {
             "global": "https://persist.acme.net/",
             "local": "https://resolver.myorg.net",
+            "erc_where": "https://resolver.myorg.net",
         },
     }
 

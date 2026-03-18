@@ -64,10 +64,10 @@ larkm's configuration file groups configuration settings by NAAN. Within the con
 * "erc_metadata_defaults": a definition of default values for [ERC properties](https://www.dublincore.org/groups/kernel/spec/) if the properties are not specified when the ARK is created.
 * "sqlite_db_path": absolute or relative (to larkm.py) path to larkm's sqlite3 database file. Must exist and be writable by the process running larkm.
 * "log_file_path": absolute or relative (to larkm.py) path to the log file. Must exist and be writable by the process running larkm.
-* "resolver_hosts": definition of the resolvers to include in the `urls` list returned to clients. Note that these are only returned in requests for `?info`; this setting has nothing to do with the resolution of an incoming ARK to its target URL.
+* "resolver_hosts": definition of the resolvers to return to clients in requests for `/larkm/config` and in the JSON response body when creating or updating ARKs. This setting has nothing to do with the resolution of an incoming ARK to its target URL. Configurations should specify three separate resolver hosts: a "global" host, a "local" host, and a "erc_where" host, which is the one used in the ARK's "where" property (this one should duplicate either the "global" or "local" host).
 * "whoosh_index_dir_path": absolute or relative (to larkm.py) path to the Whoosh index data directory. Leave empty ("") if you are not indexing ARK data. Must exist and be writable by the process running larkm.
 * "trusted_ips": list of client IP addresses that can create, update, delete, and search ARKs; leave empty to allow access from all IPs (e.g. during testing). Note that requests to resolve an ARK is open to all clients. Entries must be specific IP addresses; ranges are not supported.
-* "api_keys": list of strings used as API keys. Clients must pass their API key in a "Authorization" header, e.g. `Authorization: myapikey`. API keys can be any length or can contain any characters other than spaces.
+* "api_keys": list of strings used as API keys. Clients must pass their API key in a "Authorization" header, e.g. `Authorization: myapikey`. API keys can be any length or can contain any characters other than spaces. The last four characters of API keys are logged in events that require keys, so it's important that the last four characters of all keys are unique.
 
 The following sample JSON file contains configuration for two NAANs, "99999" and "12345", each with their own configuration specifics:
 
@@ -95,12 +95,14 @@ The following sample JSON file contains configuration for two NAANs, "99999" and
     "log_file_path": "/tmp/larkm.log",
     "resolver_hosts": {
       "global": "https://n2t.net/",
-      "local": "https://resolver.myorg.net"
+      "local": "https://resolver.myorg.net",
+      "erc_where": "https://n2t.net/",
     },
     "whoosh_index_dir_path": "fixtures/index_dir",
     "trusted_ips": [],
     "api_keys": [
-      "myapikey"
+      "myapikey",
+      "the-other-api-Key"
     ]
   },
   "12345": {
@@ -125,7 +127,8 @@ The following sample JSON file contains configuration for two NAANs, "99999" and
     "log_file_path": "/logs/larkm.log",
     "resolver_hosts": {
       "global": "https://n2t.net/",
-      "local": "https://resolver.myorg.net"
+      "local": "https://resolver.myorg.org",
+      "erc_where": "https://resolver.myorg.org",
     },
     "whoosh_index_dir_path": "whoosh/index_dir",
     "trusted_ips": [],
@@ -161,7 +164,7 @@ To see the configured metadata and committment statement for the ARK instead of 
 
 REST clients creating ARKs:
 
-* Normally provide a `target` value in the JSON request body (for the exception, see "ARKs with no resolvable URL target" below).
+* May (and normally do) provide a `target` value in the JSON request body (for the exception, see "ARKs with no resolvable URL target" below).
 * Must provide a `naan` value in the JSON request body.
 * May provide a `shoulder` value in the JSON request body.
    * If a shoulder is not provided, larkm will use its default shoulder.
@@ -179,16 +182,16 @@ If you now visit `http://127.0.0.1:8000/ark:12345/s1fde97fb3634b`, you will be r
 
 If you omit the `shoulder`, the configured default shoulder will be used. If you omit the `identifier`, larkm will mint one using the first 12 characters (minus the hypen at position 9) of a v4 UUID it generates.
 
-All responses to a POST will include in their body the values values provided in the POST request, plus any default values for missing body fields. The `where` value will be identical to the provided `ark_string` and cannot be populated on its own. Metadata values not provided will get the ERC ":at" ("the real value is at the given URL or identifier") value:
+All responses to a POST will include in their body the values values provided in the POST request, plus any default values for missing body fields. The `where` value will be populuated with the "erc_where" resolver hostname plus the provided `ark_string` (in other words, a fully resolvable version of the ARK) and cannot be populated directly. Metadata values not provided will get the ERC ":at" (signifying "the real value is at the given URL or identifier") value:
 
-`{"ark":{"shoulder": "s1", "identifier": "fde97fb3-634b-4232-b63e-e5128647efe7", "ark_string":"ark:45454/s1fde97fb3634b","target":"https://digital.lib.sfu.ca", "who":":at", "when":":at", "where":"ark:12345/s1fde97fb3634b", "what":":at"}, "urls":{"local":"https://resolver.myorg.net/ark:12345/s1fde97fb3634b","global":"https://n2t.net/ark:99999/s1fde97fb3634b"}}`
+`{"ark":{"shoulder": "s1", "identifier": "fde97fb3-634b-4232-b63e-e5128647efe7", "ark_string":"ark:45454/s1fde97fb3634b","target":"https://digital.lib.sfu.ca", "who":":at", "when":":at", "where":"https://resolver.myorg.net/ark:12345/s1fde97fb3634b", "what":":at"}, "urls":{"local":"https://resolver.myorg.net/ark:12345/s1fde97fb3634b","global":"https://n2t.net/ark:99999/s1fde97fb3634b"}}`
 
-Also included in the response are values for global and local `urls`.
+Also included in the response are values for global and local `urls`, but not the erc_where URL since it is available in the `where` property in the ERC metadata.
 
 
 ### Retrieving all of an ARK's properties
 
-The presence of the `?info` parameter returns only an ARK's ERC metadata, but it is possible to return all of the data associated with an ARK. The most common use case for this ability is to populate a CRUD form in an external management tool.
+The presence of the `?info` parameter returns only an ARK's ERC metadata, but it is possible for authenticated clients to request all of the data associated with an ARK. The most common use case for this ability is to populate a CRUD form in an external management tool.
 
 To get all of the data associated with an ARK, authenticated clients can issue a GET request to the `/larkm/` endpoint specifying the ARK string, e.g., `/larkm/ark:/99999/s1cea8e7f31c84`. The JSON response will contain all of the ARK's properties:
 
@@ -203,7 +206,7 @@ To get all of the data associated with an ARK, authenticated clients can issue a
   "erc_who": "Derex Godfry",
   "erc_what": "5 Ways to Immediately Start Selling WATER",
   "erc_when": ":at",
-  "erc_where": "ark:99999/s1cea8e7f31c84",
+  "erc_where": "https://resolver.myorg.net/ark:99999/s1cea8e7f31c84",
   "policy": "ACME University commits to maintain ARKs that have 's1' as a shoulder indefinitely."
 }
 ```
@@ -218,7 +221,7 @@ Some sample queries:
 
 `curl -v -X PATCH "http://127.0.0.1:8000/larkm/ark:12345/s1fde97fb3634b" -H 'Content-Type: application/json' -d '{"ark_string": "ark:12345/s1fde97fb3634b", "who": "Jordan, Mark", "when": "2020", "policy": "We will maintain this ARK for a long time."}'`
 
-Including `where` in the request body will result in an HTTP `409` response with the message `'where' is automatically assigned the value of the ark string and cannot be updated.`
+Including `where` in the request body will result in an HTTP `409` response with the message `where` is automatically assigned the value of the resolvable ARK and cannot be updated directly.
 
 Note that while you can provide a full 32-character UUID as the "identifier" when you create an ARK, you cannot use the same UUID identifier in the request URL to update that ARK. You can only use the exact ARK string to update an ARK.
 
@@ -237,7 +240,7 @@ As when  updating an ARK, when deleting, you cannot use an UUID identifier to de
 
 `curl -v "http://127.0.0.1:8000/larkm/config/99999"`
 
-The "99999" here is the NAAN's entry in the configuration file. This parameter is required since larkm only returns the configuration data for the specified NAAN, regardless of how many NAAN configurations are present in the configuration file. Note that larkm returns only the subset of configuration data that clients need to create new ARKs, specifically the "default_shoulder", "allowed_shoulders", "committment_statement", and "erc_metadata_defaults" configuration data. Only clients whose IP addresses are listed in the `trusted_ips` configuration option may request configuration data.
+The "99999" here represents that NAAN's entry in the configuration file. This parameter is required since larkm only returns the configuration data for the specified NAAN, regardless of how many NAAN configurations are present in the configuration file. Note that larkm returns only the subset of configuration data that clients need to create new ARKs, specifically the "default_shoulder", "allowed_shoulders", "committment_statement", and "erc_metadata_defaults" configuration data. Only clients whose IP addresses are listed in the `trusted_ips` configuration option may request configuration data, but that data will never include potentially sensitive configuration settings such as file paths, etc.
 
 ## Shoulders
 
@@ -246,13 +249,13 @@ Following ARK best practice, larkm requires the use of [shoulders](https://wiki.
 
 ## Metadata support
 
-larkm supports the [Electronic Resource Citation](https://www.dublincore.org/groups/kernel/spec/) (ERC) metadata format expressed in ANVL syntax. Note that larkm accepts the raw values provided by the client and does not validate or format the values against any schema.
+larkm supports the [Electronic Resource Citation](https://www.dublincore.org/groups/kernel/spec/) (ERC) metadata format expressed in ANVL syntax. Note that larkm accepts the raw values provided by the client and does not validate or format the values against any schema. larkm also does not explicitly support multiple values in its implementation of ERC metadata; each property has a cardinality of one so if multiple values are required, larm implementors should establish local conventions on how to represent multiple values.
 
 `target` is not an ERC property. It is used internally by larkm to simplify resolution to an HTTP[S] URL.
 
 ## ARKs with no resolvable URL target
 
-Not all things that an ARK can identify live on the Web. For example, you may want to create an ARK that identifies a concept or idea, in effect creating a durable identifier for that concept or idea.
+Not all things that an ARK can identify live on the Web. For example, you may want to create an ARK that identifies a concept or idea, in effect creating a durable HTTP-addressable identifier for that concept or idea.
 
 To do this using larkm, all you need to do is not give an ARK a target. When clients request an ARK of this type, larkm returns the ERC metadata, equivalent to the data it returns when a client requests an ARK with a target but appends `?info` to the end of the ARK URL.
 
@@ -264,7 +267,7 @@ This ability allows multiple organizations that each have their own NAAN use the
 
 ### Searching metadata
 
-larkm supports fulltext indexing of ERC metadata and other ARK properties via the [Whoosh](https://pypi.org/project/Whoosh/) indexer. This feature is not intended as a general-purpose, public search interface but rather to be used for administrative purposes. Access to the `/larkm/search` endpoint is restricted to the IP addresses registered in the "trusted_ips" configuration setting and API keys. Query strings must be URL-encoded.
+larkm supports fulltext indexing of ERC metadata and other ARK properties via the [Whoosh](https://pypi.org/project/Whoosh/) indexer. This feature is not intended as a general-purpose, public search interface but rather to be used for administrative purposes. Access to the `/larkm/search` endpoint is restricted to the IP addresses registered in the "trusted_ips" configuration setting and requires an API key. Query strings must be URL-encoded.
 
 A simple example search, including the required `naan` and `q` query parameters, is:
 
@@ -348,7 +351,7 @@ Searching uses the [default Whoosh query language](https://whoosh.readthedocs.io
 * q=`target:http://example.com`
 * q=`target:"https://example.com*"`
 
-Note that the `naan` is a separate request parameter and should not included as a keyword within the `q` parameter. Internaly, larkm adds it to the `q` query string, i.e., `naan:{naan} AND ({q})` to limit results to ARKs that contain the specified NAAN.
+Note that the `naan` is a separate request parameter and should not included as a keyword within the `q` parameter. Internaly, larkm adds it to the `q` query string, i.e., `naan:{naan} AND ({q})` to limit results to ARKs that contain the specified NAAN. Also note that the `erc_where` value in returned records contain the ARK string only, not a resolver hostname.
 
 ### Building the search index
 
