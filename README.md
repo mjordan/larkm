@@ -9,8 +9,8 @@ larkm is a simple [ARK](https://arks.org/) manager that can:
 * mint ARKs using the first 12 alphanumeric characters from UUID (v4) strings
 * persist new ARKs to an sqlite database
 * validate NAANs and ARK shoulders against configuration
-* update the ERC/Kernel metadata, target URLs, and committment statements of existing ARKs (but not change NAANs, shoulders) of existing ARKs
-* provide basic [committment statements](https://arks.org/about/best-practices/) that are specific to shoulders
+* provide [committment statements](https://arks.org/about/best-practices/) that are specific to shoulders
+* update the ERC/Kernel metadata and target URLs of existing ARKs (but not change NAANs, shoulders, or commitment statements) of existing ARKs
 * allow fulltext indexing of ERC metadata, committment statements, shoulders, targets, and other ARK properties
 * delete ARKs
 * log requests for ARK resolution
