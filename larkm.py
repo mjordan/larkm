@@ -54,7 +54,7 @@ def resolve_ark(
     - **identifier**: the identifier portion of the ARK. The first 12 characters of a
       v4 UUID (with dashes removed) prepended with a 2-character shoulder (in this example, "x9").
     - **info**: As described in the ARK specification, '?info' appended
-      to the ARK string should return a committment statement and resource metadata.
+      to the ARK string should return a commitment statement and resource metadata.
     """
     ark_string = f"ark:{naan}/{identifier}"
 
@@ -291,6 +291,14 @@ def create_ark(
         if ark.naan != config[ark.naan]["naan"]:
             raise HTTPException(status_code=422, detail="Provided NAAN is invalid.")
 
+    if (
+        ark.policy is not None
+        and config[ark.naan]["constrain_commitment_statements"] == "yes"
+    ):
+        raise HTTPException(
+            status_code=422, detail="Providing a policy is not allowed."
+        )
+
     # Validate identifer if provided.
     if ark.identifier is not None and len(ark.identifier) == 36:
         if validate_uuid(ark.identifier) is True:
@@ -364,10 +372,10 @@ def create_ark(
     if ark.when is None:
         ark.when = config[ark.naan]["erc_metadata_defaults"]["when"]
     if ark.policy is None:
-        if ark.shoulder in config[ark.naan]["committment_statements"].keys():
-            ark.policy = config[ark.naan]["committment_statements"][ark.shoulder]
+        if ark.shoulder in config[ark.naan]["commitment_statements"].keys():
+            ark.policy = config[ark.naan]["commitment_statements"][ark.shoulder]
         else:
-            ark.policy = config[ark.naan]["committment_statements"]["default"]
+            ark.policy = config[ark.naan]["commitment_statements"]["default"]
 
     ark.where = ark.ark_string
 
@@ -461,6 +469,12 @@ def update_ark(
             status_code=409,
             detail="NAAN/identifier combination and ark_string do not match.",
         )
+
+    if (
+        ark.policy is not None
+        and config[naan]["constrain_commitment_statements"] == "yes"
+    ):
+        raise HTTPException(status_code=409, detail="Policy cannot be updated.")
 
     # 'where' cannot be updated.
     if ark.where is not None:
@@ -939,9 +953,9 @@ def get_info_content(naan, row):
     else:
         for sh in config[naan]["allowed_shoulders"]:
             if ark_string.startswith(sh):
-                policy = "policy: " + config[naan]["committment_statements"][sh]
+                policy = "policy: " + config[naan]["commitment_statements"][sh]
             else:
-                policy = "policy: " + config[naan]["committment_statements"]["default"]
+                policy = "policy: " + config[naan]["commitment_statements"]["default"]
 
     return erc + policy + "\n\n"
 

@@ -9,9 +9,9 @@ larkm is a simple [ARK](https://arks.org/) manager that can:
 * mint ARKs using the first 12 alphanumeric characters from UUID (v4) strings
 * persist new ARKs to an sqlite database
 * validate NAANs and ARK shoulders against configuration
-* provide [committment statements](https://arks.org/about/best-practices/) that are specific to shoulders
+* provide [commitment statements](https://arks.org/about/best-practices/) with defaults (optionally) configured per shoulder
 * update the ERC/Kernel metadata and target URLs of existing ARKs (but not change NAANs, shoulders, or commitment statements) of existing ARKs
-* allow fulltext indexing of ERC metadata, committment statements, shoulders, targets, and other ARK properties
+* allow fulltext indexing of ERC metadata, commitment statements, shoulders, targets, and other ARK properties
 * delete ARKs
 * log requests for ARK resolution
 * support multiple NAANs (organizations)
@@ -60,7 +60,8 @@ larkm's configuration file groups configuration settings by NAAN. Within the con
 * "naan": the NAAN that serves as the key to the other configuration settings. This is identical to its parent NAAN key.
 * "default_shoulder": the ARK shoulder applied to new ARKs if one is not provided.
 * "allowed_shoulders": a list of shoulders that are allowed in new ARKs provided by clients. If your default shoulder is the only one currently used by your NAAN, provide an empty list for "allowed_shoulders" (e.g. `[]`).
-* "committment_statements": a mapping from shoulders to text expressing your institution's committment to maintaining the ARKs.
+* "commitment_statements": a mapping from shoulders to text expressing your institution's commitment to maintaining the ARKs.
+* "constrain_commitment_statements": either "yes" or "no", indicating whether ARKs are allowed to use commitment statements other than those defined in the "commitment_statements" list.
 * "erc_metadata_defaults": a definition of default values for [ERC properties](https://www.dublincore.org/groups/kernel/spec/) if the properties are not specified when the ARK is created.
 * "sqlite_db_path": absolute or relative (to larkm.py) path to larkm's sqlite3 database file. Must exist and be writable by the process running larkm.
 * "log_file_path": absolute or relative (to larkm.py) path to the log file. Must exist and be writable by the process running larkm.
@@ -81,11 +82,12 @@ The following sample JSON file contains configuration for two NAANs, "99999" and
       "s3",
       "x9"
     ],
-    "committment_statements": {
+    "commitment_statements": {
       "s1": "ACME University commits to maintain ARKs that have 's1' as a shoulder for a long time.",
       "s3": "ACME University commits to maintain ARKs that have 's3' as a shoulder until the end of 2025.",
       "default": "ACME University is providing access to this ARK."
     },
+    "constrain_commitment_statements": "no",
     "erc_metadata_defaults": {
       "who": ":at",
       "what": ":at",
@@ -113,11 +115,12 @@ The following sample JSON file contains configuration for two NAANs, "99999" and
       "s3",
       "x9"
     ],
-    "committment_statements": {
+    "commitment_statements": {
       "s1": "Awesome University commits to maintain ARKs that have 's1' as a shoulder in perpetuity.",
       "s3": "Awesome University commits to maintain ARKs that have 's3' as a shoulder in perpetuity.",
-      "default": "Default committment statement."
+      "default": "Default commitment statement."
     },
+    "constrain_commitment_statements": "yes",
     "erc_metadata_defaults": {
       "who": ":at",
       "what": ":at",
@@ -158,7 +161,7 @@ To start larkm with the local Uvicorn web server, in a terminal run `python3 -m 
 
 Visit `http://127.0.0.1:8000/ark:12345/x9062cdde7f9d6` using `curl -Lv`. You will see a redirect to `https://example.com/foo`.
 
-To see the configured metadata and committment statement for the ARK instead of resolving to its target, append `?info` to the end of the ARK, e.g., `http://127.0.0.1:8000/ark:12345/x9062cdde7f9d6?info`.
+To see the configured metadata and commitment statement for the ARK instead of resolving to its target, append `?info` to the end of the ARK, e.g., `http://127.0.0.1:8000/ark:12345/x9062cdde7f9d6?info`.
 
 ### Creating a new ARK
 
@@ -168,6 +171,9 @@ REST clients creating ARKs:
 * Must provide a `naan` value in the JSON request body.
 * May provide a `shoulder` value in the JSON request body.
    * If a shoulder is not provided, larkm will use its default shoulder.
+* May provide a `policy` (commitment statement) value in the JSON request body.
+   * If a commitment statement is not provided, larkm will use the commitment statement configured to correspond to the provided shoulder or to a configured default commitment statement.
+   * If "constrain_commitment_statements" is configured to be "yes", only configured committment statements may be used.
 * May provide a UUIDv4 identifier value in the JSON request body.
    * If an identifier is not provided, larkm will generate one using the first 12 characters (minus the hypen at position 9) of a v4 UUID as the identifier.
    * If an identifier is provided, it must not contain a shoulder.
@@ -240,7 +246,7 @@ As when  updating an ARK, when deleting, you cannot use an UUID identifier to de
 
 `curl -v "http://127.0.0.1:8000/larkm/config/99999"`
 
-The "99999" here represents that NAAN's entry in the configuration file. This parameter is required since larkm only returns the configuration data for the specified NAAN, regardless of how many NAAN configurations are present in the configuration file. Note that larkm returns only the subset of configuration data that clients need to create new ARKs, specifically the "default_shoulder", "allowed_shoulders", "committment_statement", and "erc_metadata_defaults" configuration data. Only clients whose IP addresses are listed in the `trusted_ips` configuration option may request configuration data, but that data will never include potentially sensitive configuration settings such as file paths, etc.
+The "99999" here represents that NAAN's entry in the configuration file. This parameter is required since larkm only returns the configuration data for the specified NAAN, regardless of how many NAAN configurations are present in the configuration file. Note that larkm returns only the subset of configuration data that clients need to create new ARKs, specifically the "default_shoulder", "allowed_shoulders", "commitment_statement", and "erc_metadata_defaults" configuration data. Only clients whose IP addresses are listed in the `trusted_ips` configuration option may request configuration data, but that data will never include potentially sensitive configuration settings such as file paths, etc.
 
 ## Shoulders
 

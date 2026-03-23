@@ -49,7 +49,7 @@ def test_resolve_ark():
     assert response.status_code == 200
     assert (
         response.text
-        == "erc:\nwho: :at\nwhat: :at\nwhen: :at\nwhere: https://resolver.myorg.net/ark:12345/x9062cdde7f9d6\npolicy: Default committment statement.\n\n"
+        == "erc:\nwho: :at\nwhat: :at\nwhen: :at\nwhere: https://resolver.myorg.net/ark:12345/x9062cdde7f9d6\npolicy: Default commitment statement.\n\n"
     )
 
     # Same ARK but with optional /.
@@ -57,7 +57,7 @@ def test_resolve_ark():
     assert response.status_code == 200
     assert (
         response.text
-        == "erc:\nwho: :at\nwhat: :at\nwhen: :at\nwhere: https://resolver.myorg.net/ark:12345/x9062cdde7f9d6\npolicy: Default committment statement.\n\n"
+        == "erc:\nwho: :at\nwhat: :at\nwhen: :at\nwhere: https://resolver.myorg.net/ark:12345/x9062cdde7f9d6\npolicy: Default commitment statement.\n\n"
     )
 
     # Ark not found.
@@ -307,7 +307,7 @@ def test_create_ark():
             "what": "A new ARK",
             "when": ":at",
             "where": "https://resolver.myorg.net/ark:99999/x920578b9eba6e",
-            "policy": "Default committment statement.",
+            "policy": "Default commitment statement.",
         },
         "urls": {
             "local": "https://resolver.myorg.net/ark:99999/x920578b9eba6e",
@@ -321,7 +321,7 @@ def test_create_ark():
     response_text = "erc:\nwho: :at\nwhat: A new ARK\nwhen: :at\n"
     response_text = (
         response_text
-        + "where: https://resolver.myorg.net/ark:99999/x920578b9eba6e\npolicy: Default committment statement.\n\n"
+        + "where: https://resolver.myorg.net/ark:99999/x920578b9eba6e\npolicy: Default commitment statement.\n\n"
     )
     assert response.text == response_text
 
@@ -347,7 +347,7 @@ def test_create_ark():
             "when": ":at",
             "what": "A test ARK with some 'special' characters (`%&) in its metadata",
             "where": "https://resolver.myorg.net/ark:99999/x947321e027df6",
-            "policy": "Default committment statement.",
+            "policy": "Default commitment statement.",
         },
         "urls": {
             "local": "https://resolver.myorg.net/ark:99999/x947321e027df6",
@@ -474,7 +474,7 @@ def test_update_ark():
             "what": ":at",
             "when": ":at",
             "where": "https://resolver.myorg.net/ark:99999/s2cda60df9b468",
-            "policy": "Default committment statement.",
+            "policy": "Default commitment statement.",
         },
         "urls": {
             "local": "https://resolver.myorg.net/ark:99999/s2cda60df9b468",
@@ -502,7 +502,7 @@ def test_update_ark():
             "what": "A test",
             "when": "2020",
             "where": "https://resolver.myorg.net/ark:99999/s2cda60df9b468",
-            "policy": "Default committment statement.",
+            "policy": "Default commitment statement.",
         },
         "urls": {
             "local": "https://resolver.myorg.net/ark:99999/s2cda60df9b468",
@@ -604,6 +604,16 @@ def test_update_ark():
         "/larkm/ark:99999/s262cf2b0488a8",
         json={
             "target": "http://example.com/10",
+            "ark_string": "ark:99999/s262cf2b0488a8",
+        },
+    )
+    assert response.status_code == 409
+
+    # Intentionally trigger a 409 by attempting to update the policy statement.
+    response = client.patch(
+        "/larkm/ark:99999/s262cf2b0488a8",
+        json={
+            "policy": "A new policy",
             "ark_string": "ark:99999/s262cf2b0488a8",
         },
     )
@@ -747,11 +757,12 @@ def test_get_config():
     assert response.json() == {
         "default_shoulder": "s1",
         "allowed_shoulders": ["s2", "s3", "x9"],
-        "committment_statements": {
+        "commitment_statements": {
             "s1": "ACME University commits to maintain ARKs that have 's1' as a shoulder for a long time.",
             "s3": "ACME University commits to maintain ARKs that have 's3' as a shoulder until the end of 2025.",
-            "default": "Default committment statement.",
+            "default": "Default commitment statement.",
         },
+        "constrain_commitment_statements": "yes",
         "erc_metadata_defaults": {"who": ":at", "what": ":at", "when": ":at"},
         "resolver_hosts": {
             "global": "https://n2t.net/",
@@ -765,11 +776,12 @@ def test_get_config():
     assert response.json() == {
         "default_shoulder": "v1",
         "allowed_shoulders": ["v2", "v3"],
-        "committment_statements": {
+        "commitment_statements": {
             "v1": "somerandomstring.",
             "v3": "anotherrandomstring",
-            "default": "Default random committment statement.",
+            "default": "Default random commitment statement.",
         },
+        "constrain_commitment_statements": "no",
         "erc_metadata_defaults": {"who": ":at", "what": ":at", "when": ":at"},
         "resolver_hosts": {
             "global": "https://persist.acme.net/",

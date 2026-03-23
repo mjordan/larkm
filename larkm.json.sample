@@ -7,11 +7,12 @@
       "s3",
       "x9"
     ],
-    "committment_statements": {
+    "commitment_statements": {
       "s1": "ACME University commits to maintain ARKs that have 's1' as a shoulder for a long time.",
       "s3": "ACME University commits to maintain ARKs that have 's3' as a shoulder until the end of 2025.",
-      "default": "Default committment statement."
+      "default": "Default commitment statement."
     },
+    "constrain_commitment_statements": "no",
     "erc_metadata_defaults": {
       "who": ":at",
       "what": ":at",
@@ -38,11 +39,12 @@
       "s3",
       "x9"
     ],
-    "committment_statements": {
+    "commitment_statements": {
       "s1": "ACME University commits to maintain ARKs that have 's1' as a shoulder for a long time.",
       "s3": "ACME University commits to maintain ARKs that have 's3' as a shoulder until the end of 2025.",
-      "default": "Default committment statement."
+      "default": "Default commitment statement."
     },
+    "constrain_commitment_statements": "no",
     "erc_metadata_defaults": {
       "who": ":at",
       "what": ":at",
@@ -69,11 +71,12 @@
       "s3",
       "x9"
     ],
-    "committment_statements": {
+    "commitment_statements": {
       "s1": "ACME University commits to maintain ARKs that have 's1' as a shoulder for a long time.",
       "s3": "ACME University commits to maintain ARKs that have 's3' as a shoulder until the end of 2025.",
-      "default": "Default committment statement."
+      "default": "Default commitment statement."
     },
+    "constrain_commitment_statements": "yes",
     "erc_metadata_defaults": {
       "who": ":at",
       "what": ":at",
@@ -99,11 +102,12 @@
       "v2",
       "v3"
     ],
-    "committment_statements": {
+    "commitment_statements": {
       "v1": "somerandomstring.",
       "v3": "anotherrandomstring",
-      "default": "Default random committment statement."
+      "default": "Default random commitment statement."
     },
+    "constrain_commitment_statements": "no",
     "erc_metadata_defaults": {
       "who": ":at",
       "what": ":at",
@@ -129,11 +133,12 @@
       "v2",
       "v3"
     ],
-    "committment_statements": {
+    "commitment_statements": {
       "v1": "somerandomstring.",
       "v3": "anotherrandomstring",
-      "default": "Default random committment statement."
+      "default": "Default random commitment statement."
     },
+    "constrain_commitment_statements": "no",
     "erc_metadata_defaults": {
       "who": ":at",
       "what": ":at",
