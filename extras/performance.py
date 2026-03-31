@@ -25,7 +25,8 @@ variable below. You will probably need to wipe your larkm database between runs 
 """
 
 number_requests = int(sys.argv[1])
-larkm_url = "http://localhost:8000/larkm"
+# This is the hostname without any path information, not the URL to the /larkm endpoint.
+larkm_url = "http://localhost:8000"
 naan = "12345"
 api_key = "myapikey"
 
@@ -40,7 +41,7 @@ for create in range(number_requests):
         "target": f"https://example.com/{rand_string}",
         "policy": "cheers",
     }
-    r = requests.post(larkm_url, json=data, headers=headers)
+    r = requests.post(f"{larkm_url.rstrip('/')}/larkm", json=data, headers=headers)
     if r.status_code == 201:
         body = json.loads(r.text)
         ark_strings.append(body["ark"]["ark_string"])
@@ -57,7 +58,7 @@ print(
 start_resolve_timer = time.perf_counter()
 
 for ark_string in ark_strings:
-    url = f"http://localhost:8000/{ark_string}"
+    url = f"{larkm_url.rstrip('/')}/{ark_string}"
     r = requests.get(url, allow_redirects=False)
 
 stop_resolve_timer = time.perf_counter()
@@ -70,7 +71,7 @@ print(
 start_update_timer = time.perf_counter()
 
 for ark_string in ark_strings:
-    url = f"http://localhost:8000/larkm/{ark_string}"
+    url = f"{larkm_url.rstrip('/')}/larkm/{ark_string}"
     headers = {"Content-Type": "application/json", "Authorization": api_key}
     data = {"ark_string": ark_string, "policy": "foo"}
     r = requests.patch(url, json=data, headers=headers)
