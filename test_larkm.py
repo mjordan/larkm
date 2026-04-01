@@ -1,13 +1,14 @@
 from fastapi.testclient import TestClient
 from larkm import app, get_naan_from_ark_string
 import shutil
+import os
 import re
 
 client = TestClient(app)
 client.headers = {"Authorization": "myapikey"}
 
 
-# Replace Woosh index data with backups to ensure reliable test data.
+# Replace data files with backups to ensure reliable test data.
 def setup_module(module):
     shutil.copyfile(
         "fixtures/index_dir/_MAIN_1.toc.bak", "fixtures/index_dir/_MAIN_1.toc"
@@ -16,11 +17,12 @@ def setup_module(module):
         "fixtures/index_dir/MAIN_6ydemc1f3h6z75lb.seg.bak",
         "fixtures/index_dir/MAIN_6ydemc1f3h6z75lb.seg",
     )
-
-
-# Replace SQLite db with backup since testing will have altered the db.
-def teardown_module(module):
     shutil.copyfile("fixtures/larkmtest.db.bak", "fixtures/larkmtest.db")
+
+
+# Remove SQLite db that will have been altered during testing.
+def teardown_module(module):
+    os.remove("fixtures/larkmtest.db")
 
 
 # Test the redirect functionality and other aspects of ARK resolution.
