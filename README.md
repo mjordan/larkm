@@ -44,7 +44,7 @@ larkm provides an empty sqlite database that you can use, `larkm_template.db` in
 If you want to create your own, run the following commands:
 
 1. `sqlite3 path/to/mydb.db`
-1. within sqlite, run `CREATE TABLE arks(date_created TEXT NOT NULL, date_modified TEXT NOT NULL, shoulder TEXT NOT NULL, identifier TEXT NOT NULL, ark_string TEXT NOT NULL, target TEXT NOT NULL, erc_who TEXT NOT NULL, erc_what TEXT NOT NULL, erc_when TEXT NOT NULL, erc_where TEXT NOT NULL, policy TEXT NOT NULL);`
+1. within sqlite, run `CREATE TABLE arks(date_created TEXT NOT NULL, date_modified TEXT NOT NULL, shoulder TEXT NOT NULL, identifier TEXT NOT NULL, ark_string TEXT NOT NULL, target TEXT NOT NULL, erc_who TEXT NOT NULL, erc_what TEXT NOT NULL, erc_when TEXT NOT NULL, erc_where TEXT NOT NULL, policy TEXT NOT NULL); create index ark_string_idx on arks(ark_string);`
 1. `.quit`
 
 ## Usage
