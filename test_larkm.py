@@ -63,6 +63,11 @@ def test_resolve_ark():
     )
 
     # Ark not found.
+    response = client.get("/ark:/12345/x9062cdde7f111")
+    assert response.status_code == 404
+    assert response.text == '{"detail":"ARK not found"}'
+
+    # Ark with ?info not found.
     response = client.get("/ark:/12345/x9062cdde7f111?info")
     assert response.status_code == 404
     assert response.text == '{"detail":"ARK not found"}'

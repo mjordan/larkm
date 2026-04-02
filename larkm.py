@@ -76,7 +76,9 @@ def resolve_ark(
         con = sqlite3.connect(config[naan]["sqlite_db_path"])
         con.row_factory = sqlite3.Row
         cur = con.cursor()
-        cur.execute("select * from arks where ark_string = :a_s", {"a_s": ark_string})
+        cur.execute(
+            "select target from arks where ark_string = :a_s", {"a_s": ark_string}
+        )
         record = cur.fetchone()
         if record is None:
             con.close()
@@ -97,8 +99,20 @@ def resolve_ark(
         )
         raise HTTPException(status_code=500)
 
-    if len(record["target"]) == 0:
-        info_content = get_info_content(naan, record)
+    # No target.
+    if len(record[0]) == 0:
+        info_content = get_info_content(ark_string)
+
+        if info_content is None:
+            raise HTTPException(status_code=404, detail="ARK not found")
+
+        # get_info_content() can also return an exception.
+        if isinstance(info_content, Exception):
+            log_request(
+                "ERROR", request.client.host, ark_string, request.headers, None, str(e)
+            )
+            raise HTTPException(status_code=500)
+
         if config[naan]["log_file_path"]:
             log_request(
                 "INFO",
@@ -122,7 +136,18 @@ def resolve_ark(
             )
         return RedirectResponse(record["target"])
     else:
-        info_content = get_info_content(naan, record)
+        info_content = get_info_content(ark_string)
+
+        if info_content is None:
+            raise HTTPException(status_code=404, detail="ARK not found")
+
+        # get_info_content() can also return an exception.
+        if isinstance(info_content, Exception):
+            log_request(
+                "ERROR", request.client.host, ark_string, request.headers, None, str(e)
+            )
+            raise HTTPException(status_code=500)
+
         if config[naan]["log_file_path"]:
             log_request(
                 "INFO", request.client.host, ark_string, request.headers, None, "?info"
@@ -926,30 +951,32 @@ def check_target_already_registered(ark, request, authorization):
         raise HTTPException(status_code=500)
 
 
-def get_info_content(naan, row):
+def get_info_content(ark_string):
     """
     Assembles the content to return in response to a ?info request.
 
-    - **naan**: the NAAN.
-    - **row**: the ARK's SQLite Row from the database.
+    - **ark_string**: the ARK as a string, i.e., ark:{naan}/{identifier}
     """
-    # Row objects aren't subscriptable so we convert values to strings.
-    (
-        date_created,
-        date_modified,
-        shoulder,
-        identifier,
-        ark_string,
-        target,
-        erc_who,
-        erc_what,
-        erc_when,
-        erc_where,
-        policy,
-    ) = row
-    erc = f"erc:\nwho: {erc_who}\nwhat: {erc_what}\nwhen: {erc_when}\nwhere: {get_erc_where_value(naan, erc_where)}\n"
-    if len(policy) > 0:
-        policy = f"policy: {policy}"
+    naan = get_naan_from_ark_string(ark_string)
+
+    try:
+        con = sqlite3.connect(config[naan]["sqlite_db_path"])
+        con.row_factory = sqlite3.Row
+        cur = con.cursor()
+        cur.execute(
+            "select erc_who, erc_what, erc_when, erc_where, policy from arks where ark_string = :a_s",
+            {"a_s": ark_string},
+        )
+        record = cur.fetchone()
+        if record is None:
+            return None
+        con.close()
+    except sqlite3.DatabaseError as e:
+        return e
+
+    erc = f"erc:\nwho: {record[0]}\nwhat: {record[1]}\nwhen: {record[2]}\nwhere: {get_erc_where_value(naan, record[3])}\n"
+    if len(record[4]) > 0:
+        policy = f"policy: {record[4]}"
     else:
         for sh in config[naan]["allowed_shoulders"]:
             if ark_string.startswith(sh):
