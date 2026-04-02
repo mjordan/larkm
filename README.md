@@ -51,7 +51,7 @@ If you want to create your own, run the following commands:
 
 ### Configuration
 
-larkm uses a JSON configuration file in the same directory as `larkm.py` named `larkm.json`. Copy the sample configuration file, `larkm.json.sample`, to `larkm.json`, make any changes you need, and restart larkm to load the new configuration.
+larkm uses a JSON configuration file in the same directory as `larkm.py` named `larkm.json`. Copy the sample configuration file, `extreas/larkm.json.sample`, to `larkm.json` in the `larkm` base directory, make any changes you need, and restart larkm to load the new configuration.
 
 If you want to put your configuration file in a different location, create an environment variable `LARKM_CONFIG_FILE_PATH` that contains the abolute path to the config file. larkm will check this environment variable first, and if it is not set or is set an is empty, will use the default location described above.
 
