@@ -247,11 +247,11 @@ def create_ark(
 ):
     """
     Create/mint a new ARK. Clients must provide a NAAN, and may provide an identifier
-    string and/or a shoulder. If either of these is not provided, larkm will provide
-    one. If an identifier (first 12 characters of a UUIDv4 with dashes removed)
-    is provided, it should not contain a shoulder, since larkm will always add
-    a shoulder to new ARKs either based on the configured default shoulder or
-    using the one provided in the "shoulder" key in the request body.
+    string and/or a shoulder. If either of these is not provided, larkm will provide one.
+    If an identifier (either a full UUIDv4s or the first 12 characters of a UUIDv4 with
+    dashes removed) is provided, it should not contain a shoulder, since larkm will always
+    add a shoulder to new ARKs either based on the configured default shoulder or using
+    the one provided in the "shoulder" key in the request body.
 
     If the identifier that is provided is already in use, larkm will respond to the POST
     request with an HTTP `409` with the body `{"detail":"Identifier <identifier> already in use."}`.

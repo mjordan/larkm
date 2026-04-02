@@ -174,7 +174,7 @@ REST clients creating ARKs:
 * May provide a `policy` (commitment statement) value in the JSON request body.
    * If a commitment statement is not provided, larkm will use the commitment statement configured to correspond to the provided shoulder or to a configured default commitment statement.
    * If "constrain_commitment_statements" is configured to be "yes", only configured committment statements may be used.
-* May provide a UUIDv4 identifier value in the JSON request body.
+* May provide in the JSON request body either 1) a UUIDv4 identifier value or 2) the first 12 characters (minus the hypen at position 9) of a v4 UUID.
    * If an identifier is not provided, larkm will generate one using the first 12 characters (minus the hypen at position 9) of a v4 UUID as the identifier.
    * If an identifier is provided, it must not contain a shoulder.
    * If the identifier that is provided is already in use, larkm will respond to the `POST` request with an `409` status code acommpanied by the body `{"detail":"Identifier <identifier> already in use."}`.
