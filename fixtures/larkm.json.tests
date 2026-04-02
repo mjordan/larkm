@@ -1,0 +1,160 @@
+{
+  "12345": {
+    "naan": "12345",
+    "default_shoulder": "s1",
+    "allowed_shoulders": [
+      "s2",
+      "s3",
+      "x9"
+    ],
+    "commitment_statements": {
+      "s1": "ACME University commits to maintain ARKs that have 's1' as a shoulder for a long time.",
+      "s3": "ACME University commits to maintain ARKs that have 's3' as a shoulder until the end of 2025.",
+      "default": "Default commitment statement."
+    },
+    "constrain_commitment_statements": "no",
+    "erc_metadata_defaults": {
+      "who": ":at",
+      "what": ":at",
+      "when": ":at"
+    },
+    "sqlite_db_path": "fixtures/larkmtest.db",
+    "log_file_path": "/tmp/larkm.log",
+    "resolver_hosts": {
+      "global": "https://n2t.net/",
+      "local": "https://resolver.myorg.net",
+      "erc_where": "https://resolver.myorg.net"
+    },
+    "whoosh_index_dir_path": "fixtures/index_dir",
+    "trusted_ips": [],
+    "api_keys": [
+      "myapikey"
+    ]
+  },
+  "22222": {
+    "naan": "22222",
+    "default_shoulder": "s1",
+    "allowed_shoulders": [
+      "s2",
+      "s3",
+      "x9"
+    ],
+    "commitment_statements": {
+      "s1": "ACME University commits to maintain ARKs that have 's1' as a shoulder for a long time.",
+      "s3": "ACME University commits to maintain ARKs that have 's3' as a shoulder until the end of 2025.",
+      "default": "Default commitment statement."
+    },
+    "constrain_commitment_statements": "no",
+    "erc_metadata_defaults": {
+      "who": ":at",
+      "what": ":at",
+      "when": ":at"
+    },
+    "sqlite_db_path": "fixtures/larkmtest.db",
+    "log_file_path": "/tmp/larkm.log",
+    "resolver_hosts": {
+      "global": "https://n2t.net/",
+      "local": "https://resolver.myorg.net",
+      "erc_where": "https://resolver.myorg.net"
+    },
+    "whoosh_index_dir_path": "fixtures/index_dir",
+    "trusted_ips": [],
+    "api_keys": [
+      "myapikey"
+    ]
+  },
+  "99999": {
+    "naan": "99999",
+    "default_shoulder": "s1",
+    "allowed_shoulders": [
+      "s2",
+      "s3",
+      "x9"
+    ],
+    "commitment_statements": {
+      "s1": "ACME University commits to maintain ARKs that have 's1' as a shoulder for a long time.",
+      "s3": "ACME University commits to maintain ARKs that have 's3' as a shoulder until the end of 2025.",
+      "default": "Default commitment statement."
+    },
+    "constrain_commitment_statements": "yes",
+    "erc_metadata_defaults": {
+      "who": ":at",
+      "what": ":at",
+      "when": ":at"
+    },
+    "sqlite_db_path": "fixtures/larkmtest.db",
+    "log_file_path": "/tmp/larkm.log",
+    "resolver_hosts": {
+      "global": "https://n2t.net/",
+      "local": "https://resolver.myorg.net",
+      "erc_where": "https://resolver.myorg.net"
+    },
+    "whoosh_index_dir_path": "fixtures/index_dir",
+    "trusted_ips": [],
+    "api_keys": [
+      "myapikey"
+    ]
+  },
+  "00000": {
+    "naan": "00000",
+    "default_shoulder": "v1",
+    "allowed_shoulders": [
+      "v2",
+      "v3"
+    ],
+    "commitment_statements": {
+      "v1": "somerandomstring.",
+      "v3": "anotherrandomstring",
+      "default": "Default random commitment statement."
+    },
+    "constrain_commitment_statements": "no",
+    "erc_metadata_defaults": {
+      "who": ":at",
+      "what": ":at",
+      "when": ":at"
+    },
+    "sqlite_db_path": "fixtures/larkmtest.db",
+    "log_file_path": "/tmp/larkm.log",
+    "resolver_hosts": {
+      "global": "https://persist.acme.net/",
+      "local": "https://resolver.myorg.net",
+      "erc_where": "https://resolver.myorg.net"
+    },
+    "whoosh_index_dir_path": "",
+    "trusted_ips": [],
+    "api_keys": [
+      "myapikey"
+    ]
+  },
+  "11111": {
+    "naan": "11111",
+    "default_shoulder": "v1",
+    "allowed_shoulders": [
+      "v2",
+      "v3"
+    ],
+    "commitment_statements": {
+      "v1": "somerandomstring.",
+      "v3": "anotherrandomstring",
+      "default": "Default random commitment statement."
+    },
+    "constrain_commitment_statements": "no",
+    "erc_metadata_defaults": {
+      "who": ":at",
+      "what": ":at",
+      "when": ":at"
+    },
+    "sqlite_db_path": "fixtures/larkmtest.db",
+    "log_file_path": "/tmp/larkm.log",
+    "resolver_hosts": {
+      "global": "https://persist.acme.net/",
+      "local": "https://resolver.myorg.net",
+      "erc_where": "https://resolver.myorg.net"
+    },
+    "whoosh_index_dir_path": "",
+    "trusted_ips": ["testclientx"],
+    "api_keys": [
+      "myapikey"
+    ]
+  }
+}

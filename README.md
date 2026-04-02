@@ -402,8 +402,7 @@ Instructions are at the top of each file.
 * Run `larkm.py` and `test_larkm.py` through `black`.
 * To run tests:
    * you don't need to start the web server or create a database
-   * within the larkm directory, copy `larkm.json.sample` to `larkm.json` (back up `larkm.json` first if you have custom values in it)
-   * execute `pytest`.
+   * within the larkm directory, execute `LARKM_CONFIG_FILE_PATH="fixtures/larkm.json.tests" pytest`
 
 ## License
 
