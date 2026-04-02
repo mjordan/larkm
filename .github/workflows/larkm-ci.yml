@@ -25,5 +25,4 @@ jobs:
 
       - name: Run Pytest
         run: |
-          cp larkm.json.sample larkm.json
-          pytest
+          LARKM_CONFIG_FILE_PATH="fixtures/larkm.json.tests" pytest
