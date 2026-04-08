@@ -337,7 +337,7 @@ def create_ark(
         if validate_identifier(ark.identifier) is False:
             raise HTTPException(
                 status_code=422,
-                detail=f"Provided UUID {ark.identifier} is invalid.",
+                detail=f"Provided identifier {ark.identifier} is invalid.",
             )
     elif ark.identifier is not None and validate_identifier(ark.identifier) is False:
         raise HTTPException(
