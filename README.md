@@ -397,6 +397,11 @@ The "extras" directory contains three utility scripts:
 
 Instructions are at the top of each file.
 
+## Integrations
+
+- [larkm Manager](https://github.com/mjordan/larkm_manager), a very basic GUI for the larkm ARK manager/resolver that allows creating, editing, and deleting ARKs.
+- [Islandora Workbench larkm scripts](https://github.com/mjordan/islandora_workbench_larkm_scripts), a set of Workbench hook scripts to assign ARKs to objects created during Workbench "create" tasks and to automate population of larkm with those ARKs.
+
 ## Development
 
 * Run `larkm.py` and `test_larkm.py` through `black`.
