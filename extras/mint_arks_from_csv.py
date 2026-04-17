@@ -3,6 +3,8 @@ import sys
 import csv
 import json
 import argparse
+import sqlite3
+import uuid
 
 import requests
 
@@ -36,7 +38,11 @@ parser.add_argument(
 parser.add_argument(
     "--larkm_host",
     help="Hostname of the server running larkm, includig the leading https://. Trailing slash is optional. Defaults to http://localhost:8000/.",
-    default="http://localhost:8000/",
+    required=True,
+)
+parser.add_argument(
+    "--larkm_db_file_path",
+    help="The path to the larkm SQLite3 database file.",
 )
 parser.add_argument(
     "--naan",
@@ -53,7 +59,7 @@ parser.add_argument(
     help="An API key registered with larkm.",
 )
 parser.add_argument(
-    "--larkm_api_key_file",
+    "--larkm_api_key_file_path",
     help="Path to a file containing An API key registered with larkm. File should only have a single line, containing the key.",
 )
 parser.add_argument(
@@ -67,18 +73,30 @@ args = parser.parse_args()
 # Create the ARKs. #
 ####################
 
-if args.larkm_api_key is None and args.larkm_api_key_file is not None:
-    if os.path.exists(args.larkm_api_key_file) is True:
-        with open(args.larkm_api_key_file) as f:
+# Either the --larkm_api_key or the --larkm_api_key_file_path arguments is required,
+# unless the user has specified the path to the larkm SQLite db.
+if args.larkm_api_key is None and args.larkm_api_key_file_path is not None:
+    if os.path.exists(args.larkm_api_key_file_path) is True:
+        with open(args.larkm_api_key_file_path) as f:
             api_key = f.readline().strip()
     else:
-        sys.exit(f'Error: API key file "{args.larkm_api_key_file}" not found.')
-elif args.larkm_api_key_file is None and args.larkm_api_key is not None:
+        sys.exit(f'Error: API key file "{args.larkm_api_key_file_path}" not found.')
+elif args.larkm_api_key_file_path is None and args.larkm_api_key is not None:
     api_key = args.larkm_api_key
 else:
-    sys.exit(
-        "Either the --larkm_api_key or the --larkm_api_key_file arguments is required."
-    )
+    if args.larkm_db_file_path is None:
+        sys.exit(
+            "Either the --larkm_api_key or the --larkm_api_key_file_path arguments is required."
+        )
+
+if args.larkm_db_file_path is not None:
+    persister = "local_db"
+    if os.path.exists(args.larkm_db_file_path) is False:
+        sys.exit(f'Error: larkm database file "{args.larkm_db_file_path}" not found.')
+    else:
+        con = sqlite3.connect(args.larkm_db_file_path)
+else:
+    persister = "rest"
 
 # Open input CSV.
 input_csv_reader_file_handle = open(args.input_csv, "r", encoding="utf-8", newline="")
@@ -95,13 +113,11 @@ writer = csv.DictWriter(writer_file_handle, fieldnames=input_csv_reader_fieldnam
 writer.writeheader()
 
 for row in input_csv_reader:
-    larkm_host = args.larkm_host.rstrip("/")
-    endpoint = f"{larkm_host}/larkm"
-    if len(api_key) == 0:
-        headers = {"Content-Type": "application/json"}
-    else:
-        headers = {"Content-Type": "application/json", "Authorization": api_key}
     data = {"target": row["target"], "naan": args.naan, "what": row["title"]}
+    if "uuid" in row and len(row["uuid"]) > 0:
+        data["identifier"] = row["uuid"]
+    else:
+        data["identifier"] = str(uuid.uuid4())
     if "uuid" in row and len(row["uuid"]) > 0:
         data["identifier"] = row["uuid"]
     if "who" in row and len(row["who"]) > 0:
@@ -113,26 +129,134 @@ for row in input_csv_reader:
     if len(args.shoulder) > 0:
         data["shoulder"] = args.shoulder
 
-    r = requests.post(endpoint, json=data, headers=headers)
-    if r.status_code == 201:
-        body = json.loads(r.text)
-        row["ark_local_resolver"] = f'{larkm_host}/{body["ark"]["ark_string"]}'
-        row["ark_n2t_resolver"] = f'https://n2t.net/{body["ark"]["ark_string"]}'
+    if persister == "rest":
+        larkm_host = args.larkm_host.rstrip("/")
+        endpoint = f"{larkm_host}/larkm"
+        if len(api_key) == 0:
+            headers = {"Content-Type": "application/json"}
+        else:
+            headers = {"Content-Type": "application/json", "Authorization": api_key}
 
-        if args.confirm_arks is True:
-            cr = requests.get(row["ark_local_resolver"], allow_redirects=False)
-            if cr.headers.get("location") == row["target"]:
-                row["test_resolution"] = "confirmed"
+        try:
+            r = requests.post(endpoint, json=data, headers=headers)
+            if r.status_code == 201:
+                body = json.loads(r.text)
+                row["ark_local_resolver"] = f'{larkm_host}/{body["ark"]["ark_string"]}'
+                row["ark_n2t_resolver"] = f'https://n2t.net/{body["ark"]["ark_string"]}'
+
+                try:
+                    if args.confirm_arks is True:
+                        cr = requests.get(
+                            row["ark_local_resolver"], allow_redirects=False
+                        )
+                        if cr.headers.get("location") == row["target"]:
+                            row["test_resolution"] = "confirmed"
+                        else:
+                            row["test_resolution"] = "ARK not resolving"
+                except Exception as e:
+                    print(
+                        f'Sorry, there was a problem confirming the ARK, error connecting to {row["ark_local_resolver"]}: {e}'
+                    )
+
+                print(
+                    f'ARK for "{row["title"]}" ({row["target"]}) added to the database.'
+                )
             else:
-                row["test_resolution"] = "ARK not resolving"
-    else:
-        print(
-            f"Could not mint ARK. Response code is {r.status_code}, response body is {r.text}."
-        )
-        row["ark_local_resolver"] = "error"
-        row["ark_n2t_resolver"] = "error"
+                print(
+                    f"Could not mint ARK. Response code is {r.status_code}, response body is {r.text}."
+                )
+                row["ark_local_resolver"] = "error"
+                row["ark_n2t_resolver"] = "error"
+        except Exception as e:
+            print(f"Sorry, there was a problem connecting to {endpoint}: {e}")
+            continue
+    if persister == "local_db":
+        # policy column is required if we're persisting ARKs directly to the database, since
+        # larkm adds the default policy statement if there is none provided.
+        if "policy" not in row or row["policy"] is None:
+            sys.exit(
+                'If you are using the "--larkm_db_file_path" option, your input CSV must contain values in the "policy" column.'
+            )
+
+        # First check to see if the target is already registered. larkm doesn't allow
+        # multiple ARKs to use the same target, other than an empty target.
+        if len(row["target"].strip()) > 0:
+            try:
+                con.row_factory = sqlite3.Row
+                cur = con.cursor()
+                cur.execute(
+                    "select ark_string from arks where target = :a_s",
+                    {"a_s": row["target"]},
+                )
+                records = cur.fetchall()
+                if len(records) > 0:
+                    ark_strings = []
+                    for record in records:
+                        ark_strings.append(record["ark_string"])
+                    if len(ark_strings) > 0 and record["ark_string"] in ark_strings:
+                        print(
+                            f'WARNING: Target {row["target"]} is already used by ARK {record["ark_string"]}. Ark not created.'
+                        )
+                        continue
+            except sqlite3.DatabaseError as e:
+                print(e)
+                continue
+
+        identifier = data["identifier"].replace("-", "")[:12]
+        ark_string = f"ark:{args.naan}/{args.shoulder}{identifier}"
+        larkm_host = args.larkm_host.rstrip("/")
+
+        columns = ["title", "who", "when", "policy", "uuid"]
+        for column in columns:
+            if column not in row or len(row[column]) == 0:
+                data[column] = ":at"
+            else:
+                data[column] = row[column]
+
+            # We allow empty targets.
+            data["target"] = row["target"]
+        try:
+            ark_data = (
+                data["shoulder"],
+                data["identifier"],
+                ark_string,
+                row["target"],
+                data["who"],
+                data["what"],
+                data["when"],
+                ark_string,
+                data["policy"],
+            )
+            cur = con.cursor()
+            cur.execute(
+                "insert into arks values (datetime(), datetime(), ?,?,?,?,?,?,?,?,?)",
+                ark_data,
+            )
+            con.commit()
+            row["ark_local_resolver"] = f"{larkm_host}/{ark_string}"
+            row["ark_n2t_resolver"] = f"https://n2t.net/{ark_string}"
+            print(f'ARK for "{row["title"]}" ({row["target"]}) added to the database.')
+
+            if args.confirm_arks is True:
+                try:
+                    cr = requests.get(row["ark_local_resolver"], allow_redirects=False)
+                    if cr.headers.get("location") == row["target"]:
+                        row["test_resolution"] = "confirmed"
+                    else:
+                        row["test_resolution"] = "ARK not resolving"
+                except Exception as e:
+                    print(
+                        f'Sorry, there was a problem confirming the ARK, error connecting to {row["ark_local_resolver"]}: {e}'
+                    )
+
+        except sqlite3.DatabaseError as e:
+            print(e)
+            continue
 
     writer.writerow(row)
+
+if persister == "local_db":
+    con.close()
 
 writer_file_handle.close()
 
