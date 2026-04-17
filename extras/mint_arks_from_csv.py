@@ -108,7 +108,7 @@ if args.confirm_arks is True:
     input_csv_reader_fieldnames.append("test_resolution")
 
 # Write out CSV with columns from input CSV plus ARKs.
-writer_file_handle = open(args.output_csv, "w+", newline="")
+writer_file_handle = open(args.output_csv, "w+", newline="", encoding="utf-8")
 writer = csv.DictWriter(writer_file_handle, fieldnames=input_csv_reader_fieldnames)
 writer.writeheader()
 
@@ -159,7 +159,7 @@ for row in input_csv_reader:
                     )
 
                 print(
-                    f'ARK for "{row["title"]}" ({row["target"]}) added to the database.'
+                    f'ARK for "{row["title"]}" ({row["target"]}) registered with larkm.'
                 )
             else:
                 print(
@@ -253,7 +253,10 @@ for row in input_csv_reader:
             print(e)
             continue
 
-    writer.writerow(row)
+    try:
+        writer.writerow(row)
+    except Exception as e:
+        print(e)
 
 if persister == "local_db":
     con.close()
