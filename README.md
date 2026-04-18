@@ -255,7 +255,7 @@ Following ARK best practice, larkm requires the use of [shoulders](https://wiki.
 
 ## Metadata support
 
-larkm supports the [Electronic Resource Citation](https://www.dublincore.org/groups/kernel/spec/) (ERC) metadata format expressed in ANVL syntax. Note that larkm accepts the raw values provided by the client and does not validate or format the values against any schema. larkm also does not explicitly support multiple values in its implementation of ERC metadata; each property has a cardinality of one so if multiple values are required, larm implementors should establish local conventions on how to represent multiple values.
+larkm supports the [Electronic Resource Citation](https://www.dublincore.org/groups/kernel/spec/) (ERC) metadata format expressed in ANVL syntax. Note that larkm accepts the raw values provided by the client and does not validate or format the values against any schema. larkm also does not explicitly support multiple values in its implementation of ERC metadata; each property has a cardinality of one so if multiple values are required, larkm implementors should establish local conventions on how to represent multiple values (e.g. separated by a `|`).
 
 `target` is not an ERC property. It is used internally by larkm to simplify resolution to an HTTP[S] URL.
 
